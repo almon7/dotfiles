@@ -21,6 +21,9 @@ vim.opt.incsearch = true -- Show search results as you type
 -- Appearance
 vim.opt.termguicolors = true -- Enable true color support
 
+-- set confirm: ask for confirmation when closing unsaved files
+vim.opt.confirm = true
+
 
 -- Other Settings
 vim.opt.scrolloff = 8 -- Keep 8 lines visible when scrolling
