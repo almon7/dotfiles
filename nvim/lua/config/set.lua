@@ -2,9 +2,6 @@
 vim.opt.nu = true
 vim.opt.relativenumber = true
 vim.opt.fillchars:append { eob = " " } -- remove ~ in empty lines
--- Swap line nymbers and sign column
-vim.opt.signcolumn = "number"
-
 
 -- Indentation
 vim.opt.tabstop = 4
@@ -17,7 +14,7 @@ vim.opt.smartindent = true
 vim.opt.wrap = false
 
 -- Search Settings
--- vim.opt.ignorecase = true -- Case insensitive searching
+vim.opt.ignorecase = true -- Case insensitive searching
 vim.opt.hlsearch = true -- Highlight search results
 vim.opt.incsearch = true -- Show search results as you type
 
