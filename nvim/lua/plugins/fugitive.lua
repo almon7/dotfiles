@@ -7,6 +7,8 @@ return {
 		},
 		config = function()
 			vim.keymap.set('n', '<leader>gs', vim.cmd.Git)
+			-- Show all untracked files individually (VS Code style)
+			vim.env.GIT_CONFIG_PARAMETERS = "'status.showUntrackedFiles=all'"
 		end,
 	},
 }
