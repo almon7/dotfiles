@@ -29,4 +29,5 @@ vim.opt.isfname:append("@-@") -- Include @-@ in file names
 
 vim.opt.updatetime = 50 -- Decrease update time for better performance
 vim.opt.colorcolumn = "80" -- Highlight column 80
+vim.opt.laststatus = 3 -- Single global statusline (not one per split)
 
