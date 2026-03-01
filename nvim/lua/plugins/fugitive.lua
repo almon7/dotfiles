@@ -17,6 +17,7 @@ return {
 				vim.cmd('botright vertical Git')
 				vim.cmd('vertical resize 40')
 			end)
+			vim.keymap.set("n", "<leader>gp", "<cmd>Git push<cr>")
 			-- Show all untracked files individually (VS Code style)
 			vim.env.GIT_CONFIG_PARAMETERS = "'status.showUntrackedFiles=all'"
 		end,
