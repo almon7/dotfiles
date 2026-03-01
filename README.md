@@ -2,19 +2,23 @@
 
 ## nvim
 
-To install vim, you will need to :
+To install the nvim configuration:
 
 1. Install neovim
 ```
 brew install neovim
 ```
 
-2. Install Packer
+2. Install [nodejs](https://nodejs.org/en/download/) to use the Language Server features and Copilot
+
+
+3. Install Copilot CLI:
 ```
-git clone --depth 1 https://github.com/wbthomason/packer.nvim\
- ~/.local/share/nvim/site/pack/packer/start/packer.nvim
- ```
+curl -fsSL https://gh.io/copilot-install | bash
+```
 
-3. Install [nodejs](https://nodejs.org/en/download/) to use the LSP features and Copilot.
+4. Install OpenCode:
+```
+curl -fsSL https://opencode.ai/install | bash
+```
 
-4. You may need to run `:PackerSync` in nvim to install the plugins.
