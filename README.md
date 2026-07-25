@@ -146,3 +146,34 @@ and push, then `git pull` on your other machines:
 ```sh
 cd ~/dotfiles && git add -A && git commit -m "nvim: ..." && git push
 ```
+
+## GitHub Codespaces
+
+`install.sh` sets up this whole environment (recent Neovim + config + tools +
+the Claude Code CLI) in any Debian/Ubuntu box. To have Codespaces run it
+automatically in **every** codespace you open:
+
+1. Go to **[github.com/settings/codespaces](https://github.com/settings/codespaces)**
+   → **Dotfiles** → tick **"Automatically install dotfiles"** (it uses this repo).
+2. Create or rebuild a codespace. `install.sh` runs on create/rebuild and again
+   after any "Rebuild Container".
+
+Persistence note: a normal **Stop → Start** keeps the whole container, so nothing
+reinstalls. A **Rebuild** or a **new** codespace starts clean — that's when
+`install.sh` re-runs and restores everything.
+
+### Claude Code per-project (optional)
+
+Dotfiles install Claude Code for **you** in all your codespaces. If you also want
+a specific repo to ship it to **anyone** who opens it (teammates, CI), add the
+maintained feature to that repo's `.devcontainer/devcontainer.json`:
+
+```json
+{
+  "features": {
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
+  }
+}
+```
+
+Having it in both places is harmless — it just installs once from each.
