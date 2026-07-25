@@ -1,166 +1,49 @@
 # dotfiles
 
-## nvim
+My personal dev-environment config, and an installer that reproduces it in a
+GitHub Codespace (or any Debian/Ubuntu box).
 
-My Neovim config, built on [LazyVim](https://www.lazyvim.org/). It uses the
-Catppuccin colorscheme, GitHub Copilot + Claude Code integrations, and language
-support for Python, JSON, Markdown and TOML.
+## Contents
 
-The steps below set it up **from scratch** and work on **macOS, Linux and
-Windows**.
+| Path | What it is |
+|---|---|
+| [`nvim/`](nvim/README.md) | Neovim config (LazyVim). See its README for manual, per-OS setup. |
+| [`install.sh`](install.sh) | One-shot environment installer (Codespaces / Debian / Ubuntu). |
+| `vscode_coding_profile.code-profile` | Exported VS Code profile. |
 
-### 1. Install prerequisites
+## Install
 
-Every platform needs: **Neovim ≥ 0.11**, **git**, **Node.js**, a **C compiler**
-(for Treesitter), **ripgrep** + **fd** (for the file/grep pickers), and a
-[**Nerd Font**](https://www.nerdfonts.com) (for icons — set it as your terminal
-font afterwards).
+### GitHub Codespaces (automatic)
 
-#### macOS (Homebrew)
+`install.sh` sets up the whole environment: recent **Neovim** + the config,
+the tools it needs (**ripgrep**, **fd**, a C compiler), **lazygit**, the
+**Claude Code** CLI, `git` editor → `nvim`, and `EDITOR=nvim`.
 
-```sh
-brew install neovim git node ripgrep fd
-brew install --cask font-jetbrains-mono-nerd-font   # a Nerd Font
-xcode-select --install                              # C compiler (clang), if not already installed
-```
-
-#### Linux
-
-Debian / Ubuntu:
-
-```sh
-sudo apt update
-sudo apt install -y git nodejs npm ripgrep fd-find build-essential
-# apt's neovim is usually too old — install a current build instead:
-sudo snap install nvim --classic
-# (or grab the AppImage from https://github.com/neovim/neovim/releases)
-```
-
-Arch:
-
-```sh
-sudo pacman -S neovim git nodejs npm ripgrep fd base-devel
-```
-
-Fedora:
-
-```sh
-sudo dnf install -y neovim git nodejs npm ripgrep fd-find gcc make
-```
-
-Then install a [Nerd Font](https://www.nerdfonts.com) and select it in your terminal.
-
-#### Windows (winget, PowerShell)
-
-```powershell
-winget install Neovim.Neovim Git.Git OpenJS.NodeJS BurntSushi.ripgrep.MSVC sharkdp.fd
-winget install zig.zig        # C compiler for Treesitter (or use MinGW / MSVC build tools)
-```
-
-Install a [Nerd Font](https://www.nerdfonts.com) and set it in your terminal
-([Windows Terminal](https://aka.ms/terminal) recommended).
-
-### 2. Clone this repo
-
-macOS / Linux:
-
-```sh
-git clone git@github.com:almon7/dotfiles.git ~/dotfiles
-# use https://github.com/almon7/dotfiles.git if you haven't set up SSH
-```
-
-Windows (PowerShell):
-
-```powershell
-git clone https://github.com/almon7/dotfiles.git $env:USERPROFILE\dotfiles
-```
-
-### 3. Link the config into place
-
-> If a config already exists, back it up first
-> (e.g. `mv ~/.config/nvim ~/.config/nvim.bak`).
-
-macOS / Linux:
-
-```sh
-ln -s ~/dotfiles/nvim ~/.config/nvim
-```
-
-Windows — PowerShell (needs **Developer Mode** on, or run as **Administrator**):
-
-```powershell
-New-Item -ItemType SymbolicLink -Path "$env:LOCALAPPDATA\nvim" -Target "$env:USERPROFILE\dotfiles\nvim"
-```
-
-Windows — Command Prompt (as **Administrator**):
-
-```bat
-mklink /D "%LOCALAPPDATA%\nvim" "%USERPROFILE%\dotfiles\nvim"
-```
-
-### 4. First launch
-
-```sh
-nvim
-```
-
-LazyVim bootstraps itself and installs every plugin at the versions pinned in
-`lazy-lock.json`, then Mason installs the LSP servers, linters and formatters
-(stylua, shellcheck, shfmt, flake8, pyright, …). Give it a minute on first run.
-Run `:checkhealth` to confirm everything is wired up.
-
-### 5. AI tools (optional)
-
-This config enables two AI integrations:
-
-- **GitHub Copilot** — run `:Copilot auth` inside Neovim to sign in.
-- **Claude Code** — install the CLI, then use it from Neovim:
-  ```sh
-  npm install -g @anthropic-ai/claude-code
-  # see https://claude.com/claude-code for other install methods
-  ```
-
-### 6. tree-sitter CLI (optional)
-
-`nvim/package.json` pins `tree-sitter-cli`, used to build some grammars from
-source. It is gitignored as `node_modules/`, so install it if you want it:
-
-```sh
-cd ~/dotfiles/nvim && npm install
-```
-
-### Notes
-
-- **Markdown linting** uses `markdownlint-cli2`. The `MD013` (line-length) rule
-  is disabled via `nvim/.markdownlint-cli2.jsonc`, which `lua/plugins/lint.lua`
-  passes to the linter with `--config`. Both files live in this repo, so it
-  works automatically — no home-directory config needed. (A `~/.markdownlint*`
-  config would *not* work: nvim-lint lints over stdin, so the tool resolves
-  config from the cwd, never `$HOME`.)
-
-### Updating
-
-The config is symlinked, so editing `~/.config/nvim` edits `~/dotfiles`. Commit
-and push, then `git pull` on your other machines:
-
-```sh
-cd ~/dotfiles && git add -A && git commit -m "nvim: ..." && git push
-```
-
-## GitHub Codespaces
-
-`install.sh` sets up this whole environment (recent Neovim + config + tools +
-the Claude Code CLI) in any Debian/Ubuntu box. To have Codespaces run it
-automatically in **every** codespace you open:
+To run it automatically in **every** codespace you open:
 
 1. Go to **[github.com/settings/codespaces](https://github.com/settings/codespaces)**
    → **Dotfiles** → tick **"Automatically install dotfiles"** (it uses this repo).
-2. Create or rebuild a codespace. `install.sh` runs on create/rebuild and again
-   after any "Rebuild Container".
+2. Create or rebuild a codespace.
 
-Persistence note: a normal **Stop → Start** keeps the whole container, so nothing
+**Persistence:** a normal **Stop → Start** keeps the whole container, so nothing
 reinstalls. A **Rebuild** or a **new** codespace starts clean — that's when
 `install.sh` re-runs and restores everything.
+
+> **Fonts are client-side.** In a codespace the terminal font is rendered by your
+> local VS Code / browser, so set a [Nerd Font](https://www.nerdfonts.com) in
+> VS Code's `terminal.integrated.fontFamily` — installing one in the container
+> does nothing.
+
+### Local machine
+
+Clone the repo, then follow the editor setup in
+[`nvim/README.md`](nvim/README.md):
+
+```sh
+git clone git@github.com:almon7/dotfiles.git ~/dotfiles
+```
+
+On Debian/Ubuntu you can also just run `./install.sh`.
 
 ### Claude Code per-project (optional)
 
