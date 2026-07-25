@@ -1,0 +1,9 @@
+{
+  // markdownlint-cli2 config shipped with this Neovim config and passed to the
+  // linter via --config (see lua/plugins/lint.lua). The filename must keep a
+  // supported *.markdownlint-cli2.jsonc form or --config will reject it.
+  "config": {
+    // MD013: line length — disabled (don't warn on long lines).
+    "MD013": false
+  }
+}

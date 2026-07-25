@@ -129,6 +129,15 @@ source. It is gitignored as `node_modules/`, so install it if you want it:
 cd ~/dotfiles/nvim && npm install
 ```
 
+### Notes
+
+- **Markdown linting** uses `markdownlint-cli2`. The `MD013` (line-length) rule
+  is disabled via `nvim/.markdownlint-cli2.jsonc`, which `lua/plugins/lint.lua`
+  passes to the linter with `--config`. Both files live in this repo, so it
+  works automatically — no home-directory config needed. (A `~/.markdownlint*`
+  config would *not* work: nvim-lint lints over stdin, so the tool resolves
+  config from the cwd, never `$HOME`.)
+
 ### Updating
 
 The config is symlinked, so editing `~/.config/nvim` edits `~/dotfiles`. Commit
