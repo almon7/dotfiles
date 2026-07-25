@@ -19,15 +19,28 @@ GitHub Codespace (or any Debian/Ubuntu box).
 the tools it needs (**ripgrep**, **fd**, a C compiler), **lazygit**, the
 **Claude Code** CLI, `git` editor → `nvim`, and `EDITOR=nvim`.
 
-To run it automatically in **every** codespace you open:
+To run it automatically when you **create** a codespace:
 
 1. Go to **[github.com/settings/codespaces](https://github.com/settings/codespaces)**
    → **Dotfiles** → tick **"Automatically install dotfiles"** (it uses this repo).
-2. Create or rebuild a codespace.
+2. **Create a new codespace.** (Toggling the setting does *not* affect existing
+   codespaces, and rebuilding one does *not* pick dotfiles up — see below.)
 
-**Persistence:** a normal **Stop → Start** keeps the whole container, so nothing
-reinstalls. A **Rebuild** or a **new** codespace starts clean — that's when
-`install.sh` re-runs and restores everything.
+**Persistence — important:** personal dotfiles run **only when a codespace is
+first created**, *not* on rebuild and *not* on stop/start.
+
+- **Stop → Start** keeps the whole container, so nvim and everything else stay put.
+- **Rebuild** re-runs the devcontainer (image + features + `postCreateCommand`)
+  but **not** your dotfiles — a rebuilt codespace loses dotfiles-installed tools.
+- To make the setup survive **rebuilds** too, run the installer from the project's
+  devcontainer — `postCreateCommand` runs on create *and* rebuild:
+  ```json
+  {
+    "postCreateCommand": "git clone https://github.com/almon7/dotfiles ~/dotfiles 2>/dev/null; bash ~/dotfiles/install.sh"
+  }
+  ```
+  Only do this in repos that are **yours** — it installs your setup for anyone
+  who opens them.
 
 > **Fonts are client-side.** In a codespace the terminal font is rendered by your
 > local VS Code / browser, so set a [Nerd Font](https://www.nerdfonts.com) in
