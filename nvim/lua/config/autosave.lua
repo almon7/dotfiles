@@ -2,14 +2,17 @@
 
 local autosave_group = vim.api.nvim_create_augroup("AutoSave", { clear = true })
 
--- Function to save the current buffer if it is modifiable and not readonly
+-- Save the current buffer, but only when it's a real, modified file buffer.
 local function save_current_buffer()
   local buf = vim.api.nvim_get_current_buf()
-  if vim.bo[buf].modifiable and not vim.bo[buf].readonly then
-    vim.api.nvim_buf_call(buf, function()
-      vim.cmd("silent! write")
-    end)
-  end
+  local bo = vim.bo[buf]
+  if bo.buftype ~= "" then return end                     -- skip terminals, help, nofile, prompts
+  if vim.api.nvim_buf_get_name(buf) == "" then return end -- skip [No Name] buffers
+  if not bo.modifiable or bo.readonly then return end
+  if not bo.modified then return end                      -- nothing to write
+  vim.api.nvim_buf_call(buf, function()
+    vim.cmd("silent! write")
+  end)
 end
 
 -- Autosave on InsertLeave, TextChanged, FocusLost
@@ -30,6 +33,3 @@ vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHo
     end
   end,
 })
-
--- Other Settings
---- Diagnostics ---

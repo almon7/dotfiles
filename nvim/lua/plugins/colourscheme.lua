@@ -1,23 +1,32 @@
+-- Both colorschemes stay installed and configured (each with its own
+-- transparency API). Switch between them live with <leader>uC.
+-- The startup default is set at the bottom.
 return {
-  "catppuccin/nvim",
-  opts = {
-    transparent = true,
-    styles = {
-      sidebars = "transparent",
-      floats = "transparent",
+  -- Catppuccin (transparent)
+  {
+    "catppuccin/nvim",
+    opts = {
+      transparent_background = true,
+    },
+  },
+
+  -- Tokyonight (transparent)
+  {
+    "folke/tokyonight.nvim",
+    opts = {
+      transparent = true,
+      styles = {
+        sidebars = "transparent",
+        floats = "transparent",
+      },
+    },
+  },
+
+  -- Active colorscheme on startup (change to "tokyonight" to boot into that)
+  {
+    "LazyVim/LazyVim",
+    opts = {
+      colorscheme = "catppuccin",
     },
   },
 }
-
--- return {
---   "rose-pine/neovim",
---   name = "rose-pine",
---   priority = 1000,
---   lazy = false,
---   config = function()
---     vim.cmd("colorscheme rose-pine")
---     vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
---     vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
---   end
--- }
---
