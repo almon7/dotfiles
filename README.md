@@ -1,15 +1,23 @@
 # dotfiles
 
-My personal dev-environment config, and an installer that reproduces it in a
-GitHub Codespace (or any Debian/Ubuntu box).
+My personal dev-environment config, and an installer that reproduces it on a
+Mac, a Debian/Ubuntu VPS, or a GitHub Codespace.
 
 ## Contents
 
 | Path | What it is |
 |---|---|
 | [`nvim/`](nvim/README.md) | Neovim config (LazyVim). See its README for manual, per-OS setup. |
-| [`install.sh`](install.sh) | One-shot environment installer (Codespaces / Debian / Ubuntu). |
+| [`tmux/`](tmux/tmux.conf) | tmux config — `C-a` prefix, vim-style keys, truecolor. |
+| [`install.sh`](install.sh) | One-shot environment installer (macOS / Debian / Ubuntu / Codespaces). |
 | `vscode_coding_profile.code-profile` | Exported VS Code profile. |
+
+`install.sh` is split in two halves: **packages**, which are OS-specific and
+need a package manager (Homebrew on macOS, apt on Debian/Ubuntu), and
+**configs** — the symlinks, git settings and `EDITOR` — which are portable and
+always run. A box where you can't install anything still gets working configs.
+It's idempotent, so re-running it after a `git pull` is the normal way to
+update a machine.
 
 ## Install
 
@@ -47,16 +55,44 @@ first created**, *not* on rebuild and *not* on stop/start.
 > VS Code's `terminal.integrated.fontFamily` — installing one in the container
 > does nothing.
 
-### Local machine
+### Remote VPS
 
-Clone the repo, then follow the editor setup in
-[`nvim/README.md`](nvim/README.md):
+For running Claude Code on a server rather than a laptop that overheats.
+Assumes a fresh Debian/Ubuntu box where your SSH key already works.
 
 ```sh
-git clone git@github.com:almon7/dotfiles.git ~/dotfiles
+sudo apt update && sudo apt install -y git   # minimal images may not ship it
+git clone https://github.com/almon7/dotfiles ~/dotfiles && bash ~/dotfiles/install.sh
 ```
 
-On Debian/Ubuntu you can also just run `./install.sh`.
+The installer needs `sudo` for the package half. OVH disables SSH login *as*
+root but puts the distro user in the sudo group, so this works — check with
+`sudo -n true` if unsure. Without sudo it skips the packages and still links
+the configs.
+
+Before that, on the server: add swap, enable a firewall, and turn off password
+authentication. On OVHcloud note that root is disabled and the login user is
+named after the distro (`ubuntu`, `debian`, `rocky`) — it is created for you, so
+there is no user to add.
+
+> **Agent forwarding.** Put `ForwardAgent yes` in the host's `~/.ssh/config`
+> block on your laptop so git pushes from the server are signed by your local
+> key. Never copy a private key onto a VPS.
+
+### Local machine (macOS or Linux)
+
+Clone and run the same installer. On macOS it uses Homebrew — install that
+first from [brew.sh](https://brew.sh) — and additionally sets up the Xcode
+Command Line Tools (Treesitter needs a C compiler) and a Nerd Font.
+
+```sh
+git clone git@github.com:almon7/dotfiles.git ~/dotfiles && ~/dotfiles/install.sh
+```
+
+Afterwards set the Nerd Font as your terminal font, and see
+[`nvim/README.md`](nvim/README.md) for `:Copilot auth` and the rest of the
+first-launch steps. That README also covers doing all of this by hand, which is
+the path for Windows, Arch and Fedora — the installer doesn't cover those.
 
 ### Claude Code per-project (optional)
 
@@ -73,3 +109,50 @@ maintained feature to that repo's `.devcontainer/devcontainer.json`:
 ```
 
 Having it in both places is harmless — it just installs once from each.
+
+## tmux
+
+Everything on a remote box runs inside tmux, so a dropped connection or a closed
+laptop doesn't kill the work. Claude Code keeps running while you're on a train.
+
+```sh
+tmux new -s dev          # start
+tmux a -t dev            # come back to it
+tmux ls                  # what's running
+```
+
+The prefix is **`C-a`** (remapped from the default `C-b`, which is a bad key).
+Press it, release, then press the command key.
+
+| Key | Does |
+|---|---|
+| `C-a d` | Detach — everything keeps running server-side |
+| `C-a c` | New window (a tab) |
+| `C-a 1`…`9` | Jump to window N |
+| <code>C-a &#124;</code> / `C-a -` | Split vertically / horizontally |
+| `C-a h/j/k/l` | Move between panes |
+| `C-h/j/k/l` | Move between panes **and** Neovim splits (no prefix) |
+| `C-a z` | Zoom current pane fullscreen (toggle) |
+| `C-a [` | Scrollback / copy mode — vim keys, `q` to exit |
+| `C-a r` | Reload this config after editing it |
+| `C-a ?` | List every binding |
+
+That's the whole working set. The mouse is enabled too: drag borders to resize,
+scroll wheel for history.
+
+A typical layout: window 1 for `nvim`, window 2 for `claude`, window 3 for git
+and test runs. Give Claude a task, `C-a 1` back to the editor while it works.
+
+> **Colors.** The config sets `default-terminal` and truecolor overrides because
+> the Catppuccin/Tokyonight setup uses `transparent = true` — without them the
+> colorscheme renders wrong inside tmux.
+
+> **Clipboard.** `"+y` in Neovim reaches your laptop's clipboard over SSH via
+> OSC 52. Needs a terminal that supports it (WezTerm, Kitty, Ghostty, iTerm2).
+> Paste isn't wired up — use `Ctrl-Shift-V`.
+
+> **Clear screen.** `C-l` is taken over for pane navigation, so the shell's
+> clear-screen moves to `C-a C-l`.
+
+> **Autosave.** `focus-events on` is required: [`autosave.lua`](nvim/lua/config/autosave.lua)
+> hooks `FocusLost`/`FocusGained`, and tmux swallows those events by default.
