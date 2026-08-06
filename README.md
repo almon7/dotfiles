@@ -129,6 +129,10 @@ Press it, release, then press the command key.
 | `C-a d` | Detach — everything keeps running server-side |
 | `C-a c` | New window (a tab) |
 | `C-a 1`…`9` | Jump to window N |
+| `C-a n` / `C-a p` | Next / previous window |
+| `C-a ,` | Rename the current window |
+| `C-a w` | Pick a window from a list |
+| `C-a &` | Close the current window |
 | <code>C-a &#124;</code> / `C-a -` | Split vertically / horizontally |
 | `C-a h/j/k/l` | Move between panes |
 | `C-h/j/k/l` | Move between panes **and** Neovim splits (no prefix) |
@@ -147,9 +151,29 @@ and test runs. Give Claude a task, `C-a 1` back to the editor while it works.
 > the Catppuccin/Tokyonight setup uses `transparent = true` — without them the
 > colorscheme renders wrong inside tmux.
 
-> **Clipboard.** `"+y` in Neovim reaches your laptop's clipboard over SSH via
-> OSC 52. Needs a terminal that supports it (WezTerm, Kitty, Ghostty, iTerm2).
-> Paste isn't wired up — use `Ctrl-Shift-V`.
+### Copy and paste
+
+Four separate mechanisms, which is why this trips people up:
+
+| Want | Do |
+|---|---|
+| Copy text off the screen | `C-a [`, move to the start, `v`, select, `y` |
+| Paste from the system clipboard | `Cmd-V` (macOS) / `Ctrl-Shift-V` (Linux) |
+| Paste what you just yanked in tmux | `C-a ]` |
+| Select with the mouse | Hold **Shift** while dragging, then `Cmd-C` |
+
+`mode-keys vi` on its own does *not* give you vim's `v`/`y` — tmux leaves `y`
+unbound and puts `v` on rectangle-toggle. The config binds them properly;
+rectangle select moves to `C-v`.
+
+The Shift-drag is needed because `mouse on` makes tmux capture the mouse, so a
+plain drag selects into tmux's buffer rather than the terminal's. Shift tells
+WezTerm to bypass tmux and do a native selection.
+
+> **Over SSH.** `set-clipboard on` sends yanks to your laptop's clipboard via
+> OSC 52, so `y` in copy mode and `"+y` in Neovim both reach it. Needs a
+> terminal that supports OSC 52 (WezTerm, Kitty, Ghostty, iTerm2). Copy only —
+> most terminals refuse an OSC 52 *read*, so paste stays on `Cmd-V`.
 
 > **Clear screen.** `C-l` is taken over for pane navigation, so the shell's
 > clear-screen moves to `C-a C-l`.
