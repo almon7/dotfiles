@@ -1,25 +1,48 @@
 # dotfiles
 
-My personal dev-environment config, and an installer that reproduces it in a
-GitHub Codespace (or any Debian/Ubuntu box).
+My personal dev-environment config, and an installer that reproduces it on a
+Mac, a Debian/Ubuntu VPS, or a GitHub Codespace.
 
 ## Contents
 
 | Path | What it is |
 |---|---|
 | [`nvim/`](nvim/README.md) | Neovim config (LazyVim). See its README for manual, per-OS setup. |
-| [`install.sh`](install.sh) | One-shot environment installer (Codespaces / Debian / Ubuntu). |
+| [`tmux/`](tmux/tmux.conf) | tmux config — `C-a` prefix, vim-style keys, truecolor. |
+| [`install.sh`](install.sh) | One-shot environment installer (macOS / Debian / Ubuntu / Codespaces). |
 | `vscode_coding_profile.code-profile` | Exported VS Code profile. |
+
+`install.sh` is split in two halves: **packages**, which are OS-specific and
+need a package manager (Homebrew on macOS, apt on Debian/Ubuntu), and
+**configs** — the symlinks, git settings, `EDITOR` and `PATH` — which are
+portable and always run. A box where you can't install anything still gets
+working configs. It's idempotent, so re-running it after a `git pull` is the
+normal way to update a machine.
+
+### What it installs
+
+| What | Why |
+|---|---|
+| **Neovim** (recent) + this config | the editor |
+| **ripgrep**, **fd**, a C compiler, **Node** | what the Neovim config needs |
+| **python3-venv** | Mason installs the Python LSP from PyPI via `python3 -m venv` |
+| **tmux** + this config | so a dropped SSH connection doesn't kill the work |
+| **lazygit** | LazyVim's `<leader>gg` |
+| **Docker Engine** + **Compose v2** | Linux only — see [Docker](#docker) below |
+| **uv** | Python projects, on the host as well as in the container |
+| **Claude Code** CLI | |
+| `git` editor → `nvim`, `EDITOR=nvim`, `~/.local/bin` on `PATH` | defaults |
+
+It does *not* set `git config user.name` / `user.email` — that's per-machine
+state no repo can carry, so the script warns rather than guessing.
 
 ## Install
 
 ### GitHub Codespaces (automatic)
 
-`install.sh` sets up the whole environment: recent **Neovim** + the config,
-the tools it needs (**ripgrep**, **fd**, a C compiler), **lazygit**, the
-**Claude Code** CLI, `git` editor → `nvim`, and `EDITOR=nvim`.
-
-To run it automatically when you **create** a codespace:
+`install.sh` sets up the whole environment — see
+[What it installs](#what-it-installs). To run it automatically when you
+**create** a codespace:
 
 1. Go to **[github.com/settings/codespaces](https://github.com/settings/codespaces)**
    → **Dotfiles** → tick **"Automatically install dotfiles"** (it uses this repo).
@@ -47,16 +70,66 @@ first created**, *not* on rebuild and *not* on stop/start.
 > VS Code's `terminal.integrated.fontFamily` — installing one in the container
 > does nothing.
 
-### Local machine
+### Remote VPS
 
-Clone the repo, then follow the editor setup in
-[`nvim/README.md`](nvim/README.md):
+For running Claude Code on a server rather than a laptop that overheats.
+Assumes a fresh Debian/Ubuntu box where your SSH key already works.
 
 ```sh
-git clone git@github.com:almon7/dotfiles.git ~/dotfiles
+sudo apt update && sudo apt install -y git   # minimal images may not ship it
+git clone https://github.com/almon7/dotfiles ~/dotfiles && bash ~/dotfiles/install.sh
 ```
 
-On Debian/Ubuntu you can also just run `./install.sh`.
+The installer needs `sudo` for the package half. OVH disables SSH login *as*
+root but puts the distro user in the sudo group, so this works — check with
+`sudo -n true` if unsure. Without sudo it skips the packages and still links
+the configs.
+
+Before that, on the server: add swap, enable a firewall, and turn off password
+authentication. On OVHcloud note that root is disabled and the login user is
+named after the distro (`ubuntu`, `debian`, `rocky`) — it is created for you, so
+there is no user to add.
+
+Afterwards, **log out and back in**. The installer adds you to the `docker`
+group, and group membership is only picked up by new logins (`newgrp docker`
+for the current shell). Then set your git identity — the script deliberately
+doesn't guess it:
+
+```sh
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+```
+
+> **Agent forwarding.** Put `ForwardAgent yes` in the host's `~/.ssh/config`
+> block on your laptop so git pushes from the server are signed by your local
+> key. Never copy a private key onto a VPS.
+
+> **A firewall does not cover published Docker ports.** Docker writes its own
+> nat/`DOCKER` iptables rules, and those are consulted *before* ufw's `INPUT`
+> chain — so `ufw deny 5432` has no effect on a container published with
+> `-p 5432:5432`, and the port is open to the internet. Publish to loopback
+> instead (`127.0.0.1:5432:5432`) and reach it over an SSH tunnel:
+> `ssh -L 5432:localhost:5432 you@vps`. This bites hardest with a compose file
+> that publishes a database on default credentials.
+
+### Local machine (macOS or Linux)
+
+Clone and run the same installer. On macOS it uses Homebrew — install that
+first from [brew.sh](https://brew.sh) — and additionally sets up the Xcode
+Command Line Tools (Treesitter needs a C compiler) and a Nerd Font.
+
+```sh
+git clone git@github.com:almon7/dotfiles.git ~/dotfiles && ~/dotfiles/install.sh
+```
+
+Afterwards set the Nerd Font as your terminal font, and see
+[`nvim/README.md`](nvim/README.md) for `:Copilot auth` and the rest of the
+first-launch steps. That README also covers doing all of this by hand, which is
+the path for Windows, Arch and Fedora — the installer doesn't cover those.
+
+> **Docker on macOS** is Docker Desktop (or OrbStack/Colima) — a GUI app with a
+> VM behind it, not something to install unattended from a shell script. The
+> installer prints a note if `docker compose` is missing; install it yourself.
 
 ### Claude Code per-project (optional)
 
@@ -73,3 +146,109 @@ maintained feature to that repo's `.devcontainer/devcontainer.json`:
 ```
 
 Having it in both places is harmless — it just installs once from each.
+
+## Docker
+
+On Linux the installer adds Docker Engine and the **Compose v2 plugin** from
+docker.com's apt repo, falling back to distro packages when that repo doesn't
+carry the release. Both halves are checked, because a box can have a working
+daemon and still fail every `docker compose` command — the standalone
+`docker-compose` (v1, hyphen) is EOL and is *not* what `docker compose`
+resolves to. If only the daemon lands, the script says so rather than letting
+the first build be the one to find out.
+
+It also adds you to the `docker` group, so the socket doesn't need `sudo` on
+every command. **That needs a new login to take effect** — `newgrp docker`
+covers the current shell.
+
+### Working on a Dockerised Python project
+
+A project whose test runner and linters live inside the container still wants
+tooling on the host. Three things aren't obvious:
+
+```sh
+cp sample.env .env    # compose interpolates ${UID}/${GID} from here, not the shell
+uv sync --dev         # host-side .venv, so nvim's LSP can resolve imports
+```
+
+- **`.env` is not optional** if `compose.yaml` interpolates `${UID}`/`${GID}`.
+  Bash sets `UID` but doesn't export it, so Compose can't see it — without the
+  file both resolve to empty and the image build fails on `groupadd -g ""`.
+- **The host `.venv` is what the editor reads.** basedpyright resolves imports
+  against the host filesystem, not the container, so without one every import
+  in an otherwise healthy project shows up red. The venv is for the LSP; the
+  tests still run in Docker.
+- **`uv` on the host also backs the fallback paths** — pre-commit hooks that
+  shell out to `uv run` when the container isn't up, and e2e suites that drive
+  the stack from outside it.
+
+## tmux
+
+Everything on a remote box runs inside tmux, so a dropped connection or a closed
+laptop doesn't kill the work. Claude Code keeps running while you're on a train.
+
+```sh
+tmux new -s dev          # start
+tmux a -t dev            # come back to it
+tmux ls                  # what's running
+```
+
+The prefix is **`C-a`** (remapped from the default `C-b`, which is a bad key).
+Press it, release, then press the command key.
+
+| Key | Does |
+|---|---|
+| `C-a d` | Detach — everything keeps running server-side |
+| `C-a c` | New window (a tab) |
+| `C-a 1`…`9` | Jump to window N |
+| `C-a n` / `C-a p` | Next / previous window |
+| `C-a ,` | Rename the current window |
+| `C-a w` | Pick a window from a list |
+| `C-a &` | Close the current window |
+| <code>C-a &#124;</code> / `C-a -` | Split vertically / horizontally |
+| `C-a h/j/k/l` | Move between panes |
+| `C-h/j/k/l` | Move between panes **and** Neovim splits (no prefix) |
+| `C-a z` | Zoom current pane fullscreen (toggle) |
+| `C-a [` | Scrollback / copy mode — vim keys, `q` to exit |
+| `C-a r` | Reload this config after editing it |
+| `C-a ?` | List every binding |
+
+That's the whole working set. The mouse is enabled too: drag borders to resize,
+scroll wheel for history.
+
+A typical layout: window 1 for `nvim`, window 2 for `claude`, window 3 for git
+and test runs. Give Claude a task, `C-a 1` back to the editor while it works.
+
+> **Colors.** The config sets `default-terminal` and truecolor overrides because
+> the Catppuccin/Tokyonight setup uses `transparent = true` — without them the
+> colorscheme renders wrong inside tmux.
+
+### Copy and paste
+
+Four separate mechanisms, which is why this trips people up:
+
+| Want | Do |
+|---|---|
+| Copy text off the screen | `C-a [`, move to the start, `v`, select, `y` |
+| Paste from the system clipboard | `Cmd-V` (macOS) / `Ctrl-Shift-V` (Linux) |
+| Paste what you just yanked in tmux | `C-a ]` |
+| Select with the mouse | Hold **Shift** while dragging, then `Cmd-C` |
+
+`mode-keys vi` on its own does *not* give you vim's `v`/`y` — tmux leaves `y`
+unbound and puts `v` on rectangle-toggle. The config binds them properly;
+rectangle select moves to `C-v`.
+
+The Shift-drag is needed because `mouse on` makes tmux capture the mouse, so a
+plain drag selects into tmux's buffer rather than the terminal's. Shift tells
+WezTerm to bypass tmux and do a native selection.
+
+> **Over SSH.** `set-clipboard on` sends yanks to your laptop's clipboard via
+> OSC 52, so `y` in copy mode and `"+y` in Neovim both reach it. Needs a
+> terminal that supports OSC 52 (WezTerm, Kitty, Ghostty, iTerm2). Copy only —
+> most terminals refuse an OSC 52 *read*, so paste stays on `Cmd-V`.
+
+> **Clear screen.** `C-l` is taken over for pane navigation, so the shell's
+> clear-screen moves to `C-a C-l`.
+
+> **Autosave.** `focus-events on` is required: [`autosave.lua`](nvim/lua/config/autosave.lua)
+> hooks `FocusLost`/`FocusGained`, and tmux swallows those events by default.
