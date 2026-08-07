@@ -73,22 +73,111 @@ first created**, *not* on rebuild and *not* on stop/start.
 ### Remote VPS
 
 For running Claude Code on a server rather than a laptop that overheats.
-Assumes a fresh Debian/Ubuntu box where your SSH key already works.
+Assumes a fresh Debian/Ubuntu box.
+
+On OVHcloud, root SSH login is disabled and the login user is named after the
+distro (`ubuntu`, `debian`, `rocky`) — it is created for you and is in the sudo
+group, so there is no user to add. The temporary password arrives as a
+single-use secret link, and **you are prompted to change it on first login**.
+Keep the new one: it's your `sudo` password, and your way back in via the KVM
+console if you ever break SSH.
+
+#### 1. Key-based login
+
+From your laptop, once you can log in with the password:
+
+```sh
+ssh-copy-id -i ~/.ssh/id_ed25519.pub ubuntu@203.0.113.10
+ssh ubuntu@203.0.113.10        # must not prompt for a password
+```
+
+Then add a host block on your laptop, so later steps are just `ssh vps`:
+
+```
+Host vps
+    HostName 203.0.113.10
+    User ubuntu
+    IdentityFile ~/.ssh/id_ed25519
+    ForwardAgent yes
+    LocalForward 8000 localhost:8000
+    ServerAliveInterval 30
+```
+
+`LocalForward` is how you reach a service on the box from your laptop browser
+without opening a port — see [Reaching the server](#reaching-the-server).
+
+#### 2. Turn off password authentication
+
+Only once key login works, and **keep your current session open** until a fresh
+one succeeds — a bad config here leaves the KVM console as the only way back.
+
+The trap: `sshd_config` starts with `Include /etc/ssh/sshd_config.d/*.conf`,
+those files are read in lexical order, and for each keyword **the first value
+obtained wins** — the opposite of the last-wins convention every other `.d`
+directory uses. Cloud images commonly ship `50-cloud-init.conf` setting
+`PasswordAuthentication yes`, so a file named `99-hardening.conf` is read after
+it and silently ignored. No error, and passwords stay on.
+
+So look before writing, rather than guessing a prefix:
+
+```sh
+ls /etc/ssh/sshd_config.d/
+sudo grep -rE 'PasswordAuthentication|KbdInteractive' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/
+```
+
+Write a file that sorts *before* anything already setting these:
+
+```sh
+sudo tee /etc/ssh/sshd_config.d/10-hardening.conf >/dev/null <<'EOF'
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+EOF
+sudo sshd -t && sudo systemctl restart ssh
+```
+
+`KbdInteractiveAuthentication no` is the line people forget: without it PAM can
+still offer a password-shaped prompt. `PermitRootLogin no` is redundant on OVH,
+which disables it already.
+
+Then verify the *effective* config rather than reasoning about file order:
+
+```sh
+sudo sshd -T | grep -E 'passwordauthentication|kbdinteractive'
+```
+
+`sshd -T` prints the resolved configuration after all includes and precedence
+are applied. It is the only check that actually settles it.
+
+> Ubuntu has used systemd **socket activation** for SSH since 22.10. For
+> authentication changes `systemctl restart ssh` is fine, but changing `Port`
+> or `ListenAddress` needs `systemctl daemon-reload && systemctl restart
+> ssh.socket` — the socket unit owns the listener, not sshd.
+
+#### 3. Firewall and swap
+
+```sh
+sudo ufw default deny incoming && sudo ufw default allow outgoing
+sudo ufw allow OpenSSH && sudo ufw enable
+
+free -h && swapon --show          # skip the rest if the image already has swap
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+
+Only SSH is open; everything else is reached through the tunnel. (`fallocate`
+is fine on ext4. On btrfs it produces a swapfile the kernel rejects — use `dd`
+there.)
+
+#### 4. Install
 
 ```sh
 sudo apt update && sudo apt install -y git   # minimal images may not ship it
 git clone https://github.com/almon7/dotfiles ~/dotfiles && bash ~/dotfiles/install.sh
 ```
 
-The installer needs `sudo` for the package half. OVH disables SSH login *as*
-root but puts the distro user in the sudo group, so this works — check with
-`sudo -n true` if unsure. Without sudo it skips the packages and still links
-the configs.
-
-Before that, on the server: add swap, enable a firewall, and turn off password
-authentication. On OVHcloud note that root is disabled and the login user is
-named after the distro (`ubuntu`, `debian`, `rocky`) — it is created for you, so
-there is no user to add.
+The installer needs `sudo` for the package half — check with `sudo -n true` if
+unsure. Without sudo it skips the packages and still links the configs.
 
 Afterwards, **log out and back in**. The installer adds you to the `docker`
 group, and group membership is only picked up by new logins (`newgrp docker`
@@ -98,19 +187,36 @@ doesn't guess it:
 ```sh
 git config --global user.name "Your Name"
 git config --global user.email "you@example.com"
+docker compose version && uv --version    # confirm the package half landed
 ```
+
+#### Reaching the server
+
+Nothing needs to be published. `ssh -L 8000:localhost:8000 vps` opens port 8000
+on your laptop and forwards it to `localhost:8000` **as seen from the server**,
+so `http://localhost:8000` in your browser hits the container. Put the
+`LocalForward` lines in `~/.ssh/config` and plain `ssh vps` brings them up.
+
+The tunnel lives in your laptop's SSH client, so it dies with the connection and
+returns on reconnect — tmux protects the server-side processes, not the forward.
+It is also inbound-only: an external service that needs to POST to your box (a
+webhook) needs a real public endpoint, not a tunnel.
 
 > **Agent forwarding.** Put `ForwardAgent yes` in the host's `~/.ssh/config`
 > block on your laptop so git pushes from the server are signed by your local
 > key. Never copy a private key onto a VPS.
 
-> **A firewall does not cover published Docker ports.** Docker writes its own
-> nat/`DOCKER` iptables rules, and those are consulted *before* ufw's `INPUT`
-> chain — so `ufw deny 5432` has no effect on a container published with
-> `-p 5432:5432`, and the port is open to the internet. Publish to loopback
-> instead (`127.0.0.1:5432:5432`) and reach it over an SSH tunnel:
-> `ssh -L 5432:localhost:5432 you@vps`. This bites hardest with a compose file
-> that publishes a database on default credentials.
+> **A firewall does not cover published Docker ports.** Traffic to a published
+> port is DNAT'd in `PREROUTING` and then traverses the `FORWARD` chain — it
+> never reaches `INPUT`, which is where ufw's default-deny lives. ufw isn't
+> overridden, it simply isn't consulted: `ufw deny 5432` has no effect on a
+> container published with `-p 5432:5432`, and the port is open to the
+> internet. Publish to loopback instead (`127.0.0.1:5432:5432`) and reach it
+> over an SSH tunnel. Where a port genuinely must be public, the supported hook
+> is Docker's `DOCKER-USER` chain, which is evaluated before its own rules;
+> [`ufw-docker`](https://github.com/chaifeng/ufw-docker) wires ufw into it.
+> This bites hardest with a compose file that publishes a database on default
+> credentials.
 
 ### Local machine (macOS or Linux)
 
