@@ -14,20 +14,35 @@ Mac, a Debian/Ubuntu VPS, or a GitHub Codespace.
 
 `install.sh` is split in two halves: **packages**, which are OS-specific and
 need a package manager (Homebrew on macOS, apt on Debian/Ubuntu), and
-**configs** — the symlinks, git settings and `EDITOR` — which are portable and
-always run. A box where you can't install anything still gets working configs.
-It's idempotent, so re-running it after a `git pull` is the normal way to
-update a machine.
+**configs** — the symlinks, git settings, `EDITOR` and `PATH` — which are
+portable and always run. A box where you can't install anything still gets
+working configs. It's idempotent, so re-running it after a `git pull` is the
+normal way to update a machine.
+
+### What it installs
+
+| What | Why |
+|---|---|
+| **Neovim** (recent) + this config | the editor |
+| **ripgrep**, **fd**, a C compiler, **Node** | what the Neovim config needs |
+| **python3-venv** | Mason installs the Python LSP from PyPI via `python3 -m venv` |
+| **tmux** + this config | so a dropped SSH connection doesn't kill the work |
+| **lazygit** | LazyVim's `<leader>gg` |
+| **Docker Engine** + **Compose v2** | Linux only — see [Docker](#docker) below |
+| **uv** | Python projects, on the host as well as in the container |
+| **Claude Code** CLI | |
+| `git` editor → `nvim`, `EDITOR=nvim`, `~/.local/bin` on `PATH` | defaults |
+
+It does *not* set `git config user.name` / `user.email` — that's per-machine
+state no repo can carry, so the script warns rather than guessing.
 
 ## Install
 
 ### GitHub Codespaces (automatic)
 
-`install.sh` sets up the whole environment: recent **Neovim** + the config,
-the tools it needs (**ripgrep**, **fd**, a C compiler), **lazygit**, the
-**Claude Code** CLI, `git` editor → `nvim`, and `EDITOR=nvim`.
-
-To run it automatically when you **create** a codespace:
+`install.sh` sets up the whole environment — see
+[What it installs](#what-it-installs). To run it automatically when you
+**create** a codespace:
 
 1. Go to **[github.com/settings/codespaces](https://github.com/settings/codespaces)**
    → **Dotfiles** → tick **"Automatically install dotfiles"** (it uses this repo).
@@ -75,9 +90,27 @@ authentication. On OVHcloud note that root is disabled and the login user is
 named after the distro (`ubuntu`, `debian`, `rocky`) — it is created for you, so
 there is no user to add.
 
+Afterwards, **log out and back in**. The installer adds you to the `docker`
+group, and group membership is only picked up by new logins (`newgrp docker`
+for the current shell). Then set your git identity — the script deliberately
+doesn't guess it:
+
+```sh
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+```
+
 > **Agent forwarding.** Put `ForwardAgent yes` in the host's `~/.ssh/config`
 > block on your laptop so git pushes from the server are signed by your local
 > key. Never copy a private key onto a VPS.
+
+> **A firewall does not cover published Docker ports.** Docker writes its own
+> nat/`DOCKER` iptables rules, and those are consulted *before* ufw's `INPUT`
+> chain — so `ufw deny 5432` has no effect on a container published with
+> `-p 5432:5432`, and the port is open to the internet. Publish to loopback
+> instead (`127.0.0.1:5432:5432`) and reach it over an SSH tunnel:
+> `ssh -L 5432:localhost:5432 you@vps`. This bites hardest with a compose file
+> that publishes a database on default credentials.
 
 ### Local machine (macOS or Linux)
 
@@ -94,6 +127,10 @@ Afterwards set the Nerd Font as your terminal font, and see
 first-launch steps. That README also covers doing all of this by hand, which is
 the path for Windows, Arch and Fedora — the installer doesn't cover those.
 
+> **Docker on macOS** is Docker Desktop (or OrbStack/Colima) — a GUI app with a
+> VM behind it, not something to install unattended from a shell script. The
+> installer prints a note if `docker compose` is missing; install it yourself.
+
 ### Claude Code per-project (optional)
 
 Dotfiles install Claude Code for **you** in all your codespaces. If you also want
@@ -109,6 +146,41 @@ maintained feature to that repo's `.devcontainer/devcontainer.json`:
 ```
 
 Having it in both places is harmless — it just installs once from each.
+
+## Docker
+
+On Linux the installer adds Docker Engine and the **Compose v2 plugin** from
+docker.com's apt repo, falling back to distro packages when that repo doesn't
+carry the release. Both halves are checked, because a box can have a working
+daemon and still fail every `docker compose` command — the standalone
+`docker-compose` (v1, hyphen) is EOL and is *not* what `docker compose`
+resolves to. If only the daemon lands, the script says so rather than letting
+the first build be the one to find out.
+
+It also adds you to the `docker` group, so the socket doesn't need `sudo` on
+every command. **That needs a new login to take effect** — `newgrp docker`
+covers the current shell.
+
+### Working on a Dockerised Python project
+
+A project whose test runner and linters live inside the container still wants
+tooling on the host. Three things aren't obvious:
+
+```sh
+cp sample.env .env    # compose interpolates ${UID}/${GID} from here, not the shell
+uv sync --dev         # host-side .venv, so nvim's LSP can resolve imports
+```
+
+- **`.env` is not optional** if `compose.yaml` interpolates `${UID}`/`${GID}`.
+  Bash sets `UID` but doesn't export it, so Compose can't see it — without the
+  file both resolve to empty and the image build fails on `groupadd -g ""`.
+- **The host `.venv` is what the editor reads.** basedpyright resolves imports
+  against the host filesystem, not the container, so without one every import
+  in an otherwise healthy project shows up red. The venv is for the LSP; the
+  tests still run in Docker.
+- **`uv` on the host also backs the fallback paths** — pre-commit hooks that
+  shell out to `uv run` when the container isn't up, and e2e suites that drive
+  the stack from outside it.
 
 ## tmux
 
