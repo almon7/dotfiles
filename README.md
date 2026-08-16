@@ -12,7 +12,6 @@ Mac, a Debian/Ubuntu VPS, or a GitHub Codespace.
 | [`tmux/`](tmux/tmux.conf) | tmux config and installer — `C-a` prefix, vim-style keys, truecolor. |
 | [`wezterm/`](wezterm/.wezterm.lua) | WezTerm keyboard/font config and installer. |
 | [`install.sh`](install.sh) | Interactive launcher for the installers above. |
-| `vscode_coding_profile.code-profile` | Exported VS Code profile. |
 
 Run `./install.sh` to choose configs from an interactive checklist. You can also
 install everything with `./install.sh --all`, or name only what you want, such
