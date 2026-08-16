@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Personal Neovim and tmux dotfiles installer.
+# Personal Neovim, tmux, and WezTerm dotfiles installer.
 #
 # Works on:
 #   - macOS (via Homebrew)
 #   - Debian / Ubuntu, including a bare VPS
 #   - GitHub Codespaces
 #
-# Sets up Neovim and tmux, their dotfile links, and the tools the Neovim
+# Sets up Neovim, tmux, and WezTerm dotfile links, and the tools the Neovim
 # configuration expects: ripgrep, fd, a C compiler, make, Git, Node,
 # python3-venv, lazygit, and a Nerd Font on macOS.
 #
@@ -221,6 +221,9 @@ link "$DOTFILES/nvim" "$HOME/.config/nvim"
 
 log "Linking ~/.tmux.conf -> $DOTFILES/tmux/tmux.conf"
 link "$DOTFILES/tmux/tmux.conf" "$HOME/.tmux.conf"
+
+log "Linking ~/.wezterm.lua -> $DOTFILES/wezterm/.wezterm.lua"
+link "$DOTFILES/wezterm/.wezterm.lua" "$HOME/.wezterm.lua"
 
 if have git; then
   log "Setting Git's editor to nvim"

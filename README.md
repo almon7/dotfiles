@@ -9,6 +9,7 @@ Mac, a Debian/Ubuntu VPS, or a GitHub Codespace.
 |---|---|
 | [`nvim/`](nvim/README.md) | Neovim config (LazyVim). See its README for manual, per-OS setup. |
 | [`tmux/`](tmux/tmux.conf) | tmux config — `C-a` prefix, vim-style keys, truecolor. |
+| [`wezterm/`](wezterm/.wezterm.lua) | WezTerm keyboard and font config. |
 | [`install.sh`](install.sh) | One-shot environment installer (macOS / Debian / Ubuntu / Codespaces). |
 | `vscode_coding_profile.code-profile` | Exported VS Code profile. |
 

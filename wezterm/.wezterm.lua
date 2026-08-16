@@ -9,5 +9,8 @@ config.send_composed_key_when_left_alt_is_pressed = true
 config.send_composed_key_when_right_alt_is_pressed = true
 config.enable_kitty_keyboard = true
 
+-- Use nerdfont
+config.font = wezterm.font 'JetBrainsMono Nerd Font'
+
 -- Finally, return the configuration to wezterm:
 return config
