@@ -7,18 +7,21 @@ Mac, a Debian/Ubuntu VPS, or a GitHub Codespace.
 
 | Path | What it is |
 |---|---|
-| [`nvim/`](nvim/README.md) | Neovim config (LazyVim). See its README for manual, per-OS setup. |
-| [`tmux/`](tmux/tmux.conf) | tmux config — `C-a` prefix, vim-style keys, truecolor. |
-| [`wezterm/`](wezterm/.wezterm.lua) | WezTerm keyboard and font config. |
-| [`install.sh`](install.sh) | One-shot environment installer (macOS / Debian / Ubuntu / Codespaces). |
+| [`git/`](git/install.sh) | Git installer, Neovim editor default, and identity check. |
+| [`nvim/`](nvim/README.md) | Neovim config and its self-contained installer. |
+| [`tmux/`](tmux/tmux.conf) | tmux config and installer — `C-a` prefix, vim-style keys, truecolor. |
+| [`wezterm/`](wezterm/.wezterm.lua) | WezTerm keyboard/font config and installer. |
+| [`install.sh`](install.sh) | Interactive launcher for the installers above. |
 | `vscode_coding_profile.code-profile` | Exported VS Code profile. |
 
-`install.sh` is split in two halves: **packages**, which are OS-specific and
-need a package manager (Homebrew on macOS, apt on Debian/Ubuntu), and
-**configs** — the symlinks, git settings, `EDITOR` and `PATH` — which are
-portable and always run. A box where you can't install anything still gets
-working configs. It's idempotent, so re-running it after a `git pull` is the
-normal way to update a machine.
+Run `install.sh` to choose configs from an interactive checklist. Every folder
+also has an independent installer, so `./tmux/install.sh`, for example, installs
+only tmux and its config. Package installation uses Homebrew on macOS and apt on
+Debian/Ubuntu; `--config-only` skips packages. All scripts are idempotent.
+
+In a non-interactive shell the launcher installs everything, preserving the
+behavior expected by Codespaces and bootstrap scripts. You can be explicit with
+`./install.sh --all`, or select by name with `./install.sh nvim tmux`.
 
 ### What it installs
 
@@ -29,13 +32,13 @@ normal way to update a machine.
 | **python3-venv** | Mason installs the Python LSP from PyPI via `python3 -m venv` |
 | **tmux** + this config | so a dropped SSH connection doesn't kill the work |
 | **lazygit** | LazyVim's `<leader>gg` |
-| **Docker Engine** + **Compose v2** | Linux only — see [Docker](#docker) below |
-| **uv** | Python projects, on the host as well as in the container |
-| **Claude Code** CLI | |
-| `git` editor → `nvim`, `EDITOR=nvim`, `~/.local/bin` on `PATH` | defaults |
+| **JetBrainsMono Nerd Font** | Neovim icons (automatic on macOS with Neovim) |
+| **WezTerm** | terminal (automatic on macOS with WezTerm) |
+| **Git**, editor → `nvim` | version control and its editor default |
 
 It does *not* set `git config user.name` / `user.email` — that's per-machine
-state no repo can carry, so the script warns rather than guessing.
+state no repo can carry. The Git installer warns when either value is missing
+rather than guessing.
 
 ## Install
 
@@ -180,15 +183,12 @@ git clone https://github.com/almon7/dotfiles ~/dotfiles && bash ~/dotfiles/insta
 The installer needs `sudo` for the package half — check with `sudo -n true` if
 unsure. Without sudo it skips the packages and still links the configs.
 
-Afterwards, **log out and back in**. The installer adds you to the `docker`
-group, and group membership is only picked up by new logins (`newgrp docker`
-for the current shell). Then set your git identity — the script deliberately
-doesn't guess it:
+Afterwards, set your git identity — the scripts deliberately don't guess it:
 
 ```sh
 git config --global user.name "Your Name"
 git config --global user.email "you@example.com"
-docker compose version && uv --version    # confirm the package half landed
+nvim --version && tmux -V                 # confirm the selected packages landed
 ```
 
 #### Reaching the server
@@ -236,13 +236,13 @@ the path for Windows, Arch and Fedora — the installer doesn't cover those.
 
 > **Docker on macOS** is Docker Desktop (or OrbStack/Colima) — a GUI app with a
 > VM behind it, not something to install unattended from a shell script. The
-> installer prints a note if `docker compose` is missing; install it yourself.
+> dotfiles installers do not manage Docker; install it separately if needed.
 
 ### Claude Code per-project (optional)
 
-Dotfiles install Claude Code for **you** in all your codespaces. If you also want
-a specific repo to ship it to **anyone** who opens it (teammates, CI), add the
-maintained feature to that repo's `.devcontainer/devcontainer.json`:
+The dotfiles installers do not install Claude Code. To have a specific repo ship
+it to **anyone** who opens it (teammates, CI), add the maintained feature to that
+repo's `.devcontainer/devcontainer.json`:
 
 ```json
 {
@@ -252,21 +252,13 @@ maintained feature to that repo's `.devcontainer/devcontainer.json`:
 }
 ```
 
-Having it in both places is harmless — it just installs once from each.
-
 ## Docker
 
-On Linux the installer adds Docker Engine and the **Compose v2 plugin** from
-docker.com's apt repo, falling back to distro packages when that repo doesn't
-carry the release. Both halves are checked, because a box can have a working
-daemon and still fail every `docker compose` command — the standalone
-`docker-compose` (v1, hyphen) is EOL and is *not* what `docker compose`
-resolves to. If only the daemon lands, the script says so rather than letting
-the first build be the one to find out.
-
-It also adds you to the `docker` group, so the socket doesn't need `sudo` on
-every command. **That needs a new login to take effect** — `newgrp docker`
-covers the current shell.
+Install Docker Engine and the **Compose v2 plugin** separately on Linux; the
+dotfiles installers do not manage them. A box can have a working daemon and
+still fail every `docker compose` command, so check both. If your installation
+adds you to the `docker` group, start a new login (or run `newgrp docker`) before
+using the socket without `sudo`.
 
 ### Working on a Dockerised Python project
 
