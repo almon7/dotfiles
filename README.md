@@ -14,14 +14,12 @@ Mac, a Debian/Ubuntu VPS, or a GitHub Codespace.
 | [`install.sh`](install.sh) | Interactive launcher for the installers above. |
 | `vscode_coding_profile.code-profile` | Exported VS Code profile. |
 
-Run `install.sh` to choose configs from an interactive checklist. Every folder
-also has an independent installer, so `./tmux/install.sh`, for example, installs
-only tmux and its config. Package installation uses Homebrew on macOS and apt on
-Debian/Ubuntu; `--config-only` skips packages. All scripts are idempotent.
-
-In a non-interactive shell the launcher installs everything, preserving the
-behavior expected by Codespaces and bootstrap scripts. You can be explicit with
-`./install.sh --all`, or select by name with `./install.sh nvim tmux`.
+Run `./install.sh` to choose configs from an interactive checklist. You can also
+install everything with `./install.sh --all`, or name only what you want, such
+as `./install.sh nvim tmux`. Every folder has an independent installer. Package
+installation uses Homebrew on macOS and apt on Debian/Ubuntu; `--config-only`
+skips packages. All scripts are idempotent. Non-interactive runs install all
+components automatically.
 
 ### What it installs
 
@@ -31,7 +29,6 @@ behavior expected by Codespaces and bootstrap scripts. You can be explicit with
 | **ripgrep**, **fd**, a C compiler, **Node** | what the Neovim config needs |
 | **python3-venv** | Mason installs the Python LSP from PyPI via `python3 -m venv` |
 | **tmux** + this config | so a dropped SSH connection doesn't kill the work |
-| **lazygit** | LazyVim's `<leader>gg` |
 | **JetBrainsMono Nerd Font** | Neovim icons (automatic on macOS with Neovim) |
 | **WezTerm** | terminal (automatic on macOS with WezTerm) |
 | **Git**, editor → `nvim` | version control and its editor default |
