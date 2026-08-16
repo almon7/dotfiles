@@ -5,9 +5,9 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LABEL=tmux
 source "$DIR/../install-lib.sh"
-parse_args "$@"
+require_no_args "$@"
 
-if ! $CONFIG_ONLY && ! has tmux; then
+if ! has tmux; then
   case "$(uname -s)" in
     Darwin) brew install tmux ;;
     Linux) apt_install tmux ;;

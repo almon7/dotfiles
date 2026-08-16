@@ -5,7 +5,7 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LABEL=nvim
 source "$DIR/../install-lib.sh"
-parse_args "$@"
+require_no_args "$@"
 
 install_neovim_linux() {
   case "$(uname -m)" in
@@ -23,23 +23,21 @@ install_neovim_linux() {
   rm "$file"
 }
 
-if ! $CONFIG_ONLY; then
-  case "$(uname -s)" in
-    Darwin)
-      brew install neovim ripgrep fd node python
-      brew install --cask font-jetbrains-mono-nerd-font
-      xcode-select -p >/dev/null 2>&1 || xcode-select --install
-      ;;
-    Linux)
-      apt_install curl ca-certificates ripgrep fd-find nodejs npm python3 python3-venv build-essential
-      has nvim || install_neovim_linux
-      if ! has fd && has fdfind; then
-        as_root ln -sf "$(command -v fdfind)" /usr/local/bin/fd
-      fi
-      ;;
-    *) log 'Only macOS and Linux are supported.'; exit 1 ;;
-  esac
-fi
+case "$(uname -s)" in
+  Darwin)
+    brew install neovim ripgrep fd node python
+    brew install --cask font-jetbrains-mono-nerd-font
+    xcode-select -p >/dev/null 2>&1 || xcode-select --install
+    ;;
+  Linux)
+    apt_install curl ca-certificates ripgrep fd-find nodejs npm python3 python3-venv build-essential
+    has nvim || install_neovim_linux
+    if ! has fd && has fdfind; then
+      as_root ln -sf "$(command -v fdfind)" /usr/local/bin/fd
+    fi
+    ;;
+  *) log 'Only macOS and Linux are supported.'; exit 1 ;;
+esac
 
 link_config "$DIR" "$HOME/.config/nvim"
 log 'Run nvim to finish plugin setup.'

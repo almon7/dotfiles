@@ -5,9 +5,9 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LABEL=wezterm
 source "$DIR/../install-lib.sh"
-parse_args "$@"
+require_no_args "$@"
 
-if ! $CONFIG_ONLY && ! has wezterm; then
+if ! has wezterm; then
   case "$(uname -s)" in
     Darwin) brew install --cask wezterm ;;
     Linux) log 'Install WezTerm with your distribution package manager.' ;;

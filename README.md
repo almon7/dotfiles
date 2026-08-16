@@ -17,9 +17,8 @@ Mac, a Debian/Ubuntu VPS, or a GitHub Codespace.
 Run `./install.sh` to choose configs from an interactive checklist. You can also
 install everything with `./install.sh --all`, or name only what you want, such
 as `./install.sh nvim tmux`. Every folder has an independent installer. Package
-installation uses Homebrew on macOS and apt on Debian/Ubuntu; `--config-only`
-skips packages. All scripts are idempotent. Non-interactive runs install all
-components automatically.
+installation uses Homebrew on macOS and apt on Debian/Ubuntu. All scripts are
+idempotent. Non-interactive runs install all components automatically.
 
 ### What it installs
 

@@ -3,14 +3,12 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_ONLY=false
 INSTALL_ALL=false
 
 case "${1:-}" in
-  --config-only) CONFIG_ONLY=true; shift ;;
   --all) INSTALL_ALL=true; shift ;;
   -h|--help)
-    echo 'Usage: ./install.sh [--all|--config-only] [git nvim tmux wezterm]'
+    echo 'Usage: ./install.sh [--all] [git nvim tmux wezterm]'
     exit
     ;;
 esac
@@ -89,9 +87,5 @@ for component in "${components[@]}"; do
 
   echo
   echo "Installing $component"
-  if $CONFIG_ONLY; then
-    "$ROOT/$component/install.sh" --config-only
-  else
-    "$ROOT/$component/install.sh"
-  fi
+  "$ROOT/$component/install.sh"
 done

@@ -8,12 +8,10 @@ has() {
   command -v "$1" >/dev/null 2>&1
 }
 
-parse_args() {
-  CONFIG_ONLY=false
+require_no_args() {
   case "${1:-}" in
-    --config-only) CONFIG_ONLY=true ;;
     '') ;;
-    -h|--help) printf 'Usage: %s [--config-only]\n' "$0"; exit 0 ;;
+    -h|--help) printf 'Usage: %s\n' "$0"; exit 0 ;;
     *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
 }

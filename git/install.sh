@@ -4,9 +4,9 @@ set -euo pipefail
 
 LABEL=git
 source "$(dirname "${BASH_SOURCE[0]}")/../install-lib.sh"
-parse_args "$@"
+require_no_args "$@"
 
-if ! $CONFIG_ONLY && ! has git; then
+if ! has git; then
   case "$(uname -s)" in
     Darwin) brew install git ;;
     Linux) apt_install git ;;
