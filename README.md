@@ -8,6 +8,7 @@ Mac, a Debian/Ubuntu VPS, or a GitHub Codespace.
 | Path | What it is |
 |---|---|
 | [`git/`](git/install.sh) | Git installer, Neovim editor default, and identity check. |
+| [`hunk/`](hunk/install.sh) | Hunk terminal diff viewer installer. |
 | [`nvim/`](nvim/README.md) | Neovim config and its self-contained installer. |
 | [`tmux/`](tmux/tmux.conf) | tmux config and installer — `C-a` prefix, vim-style keys, truecolor. |
 | [`wezterm/`](wezterm/.wezterm.lua) | WezTerm keyboard/font config and installer. |
@@ -16,8 +17,10 @@ Mac, a Debian/Ubuntu VPS, or a GitHub Codespace.
 Run `./install.sh` to choose configs from an interactive checklist. You can also
 install everything with `./install.sh --all`, or name only what you want, such
 as `./install.sh nvim tmux`. Every folder has an independent installer. Package
-installation uses Homebrew on macOS and apt on Debian/Ubuntu. All scripts are
-idempotent. Non-interactive runs install all components automatically.
+installation uses Homebrew on both macOS and Linux whenever a formula is
+available. WezTerm is the exception because its Homebrew cask is macOS-only.
+All scripts are idempotent. Non-interactive runs install all components
+automatically.
 
 ### What it installs
 
@@ -25,11 +28,12 @@ idempotent. Non-interactive runs install all components automatically.
 |---|---|
 | **Neovim** (recent) + this config | the editor |
 | **ripgrep**, **fd**, a C compiler, **Node** | what the Neovim config needs |
-| **python3-venv** | Mason installs the Python LSP from PyPI via `python3 -m venv` |
+| **Python** | Mason installs the Python LSP from PyPI via `python3 -m venv` |
 | **tmux** + this config | so a dropped SSH connection doesn't kill the work |
 | **JetBrainsMono Nerd Font** | Neovim icons (automatic on macOS with Neovim) |
 | **WezTerm** | terminal (automatic on macOS with WezTerm) |
 | **Git**, editor → `nvim` | version control and its editor default |
+| **Hunk** | terminal UI for reviewing diffs and agent-authored changes |
 
 It does *not* set `git config user.name` / `user.email` — that's per-machine
 state no repo can carry. The Git installer warns when either value is missing
@@ -171,12 +175,18 @@ there.)
 #### 4. Install
 
 ```sh
-sudo apt update && sudo apt install -y git   # minimal images may not ship it
-git clone https://github.com/almon7/dotfiles ~/dotfiles && bash ~/dotfiles/install.sh
+sudo apt-get update
+sudo apt-get install -y build-essential procps curl file git
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+git clone https://github.com/almon7/dotfiles ~/dotfiles
+bash ~/dotfiles/install.sh
 ```
 
-The installer needs `sudo` for the package half — check with `sudo -n true` if
-unsure. Without sudo it skips the packages and still links the configs.
+The `apt-get` packages are Homebrew's Linux prerequisites; the dotfiles
+installer itself installs supported tools exclusively through Homebrew. Add the
+`brew shellenv` line printed by Homebrew's installer to your shell profile so
+`brew` and its packages remain on `PATH` in future sessions.
 
 Afterwards, set your git identity — the scripts deliberately don't guess it:
 
@@ -216,9 +226,9 @@ webhook) needs a real public endpoint, not a tunnel.
 
 ### Local machine (macOS or Linux)
 
-Clone and run the same installer. On macOS it uses Homebrew — install that
-first from [brew.sh](https://brew.sh) — and additionally sets up the Xcode
-Command Line Tools (Treesitter needs a C compiler) and a Nerd Font.
+Install [Homebrew](https://brew.sh), then clone and run the same installer. On
+macOS it additionally sets up the Xcode Command Line Tools (Treesitter needs a
+C compiler) and a Nerd Font.
 
 ```sh
 git clone git@github.com:almon7/dotfiles.git ~/dotfiles && ~/dotfiles/install.sh

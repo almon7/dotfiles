@@ -16,22 +16,13 @@ require_no_args() {
   esac
 }
 
-apt_install() {
-  if ! has apt-get; then
-    log 'apt-get is required on Linux.'
+brew_install() {
+  if ! has brew; then
+    log 'Homebrew is required. Install it from https://brew.sh and run this installer again.'
     return 1
   fi
 
-  as_root apt-get update
-  as_root apt-get install -y "$@"
-}
-
-as_root() {
-  if [ "$(id -u)" -eq 0 ]; then
-    "$@"
-  else
-    sudo "$@"
-  fi
+  brew install "$@"
 }
 
 link_config() {

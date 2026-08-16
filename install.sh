@@ -8,15 +8,16 @@ INSTALL_ALL=false
 case "${1:-}" in
   --all) INSTALL_ALL=true; shift ;;
   -h|--help)
-    echo 'Usage: ./install.sh [--all] [git nvim tmux wezterm]'
+    echo 'Usage: ./install.sh [--all] [git hunk nvim tmux wezterm]'
     exit
     ;;
 esac
 
 components=("$@")
-all_components=(git nvim tmux wezterm)
+all_components=(git hunk nvim tmux wezterm)
 descriptions=(
   'Git and its default editor'
+  'Hunk terminal diff viewer'
   'Neovim and command-line dependencies'
   'tmux and ~/.tmux.conf'
   'WezTerm and ~/.wezterm.lua'
@@ -24,7 +25,12 @@ descriptions=(
 
 choose_components() {
   local cursor=0 key rest i mark
-  local selected=(1 1 1 1)
+  local last_index=$((${#all_components[@]} - 1))
+  local selected=()
+
+  for i in "${!all_components[@]}"; do
+    selected+=(1)
+  done
 
   trap 'printf "\033[?25h"' EXIT INT TERM
   printf '\033[?25l'
@@ -48,13 +54,13 @@ choose_components() {
     case "$key" in
       '') break ;;
       ' ') selected[$cursor]=$((1 - selected[cursor])) ;;
-      j) [ "$cursor" -eq 3 ] || cursor=$((cursor + 1)) ;;
+      j) [ "$cursor" -eq "$last_index" ] || cursor=$((cursor + 1)) ;;
       k) [ "$cursor" -eq 0 ] || cursor=$((cursor - 1)) ;;
       $'\033')
         IFS= read -r -s -n 2 -t 1 rest || true
         case "$rest" in
           '[A') [ "$cursor" -eq 0 ] || cursor=$((cursor - 1)) ;;
-          '[B') [ "$cursor" -eq 3 ] || cursor=$((cursor + 1)) ;;
+          '[B') [ "$cursor" -eq "$last_index" ] || cursor=$((cursor + 1)) ;;
         esac
         ;;
     esac
@@ -81,7 +87,7 @@ fi
 
 for component in "${components[@]}"; do
   case "$component" in
-    git|nvim|tmux|wezterm) ;;
+    git|hunk|nvim|tmux|wezterm) ;;
     *) echo "Unknown component: $component" >&2; exit 2 ;;
   esac
 

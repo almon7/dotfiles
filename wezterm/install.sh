@@ -7,12 +7,10 @@ LABEL=wezterm
 source "$DIR/../install-lib.sh"
 require_no_args "$@"
 
-if ! has wezterm; then
-  case "$(uname -s)" in
-    Darwin) brew install --cask wezterm ;;
-    Linux) log 'Install WezTerm with your distribution package manager.' ;;
-    *) log 'Only macOS and Linux are supported.'; exit 1 ;;
-  esac
-fi
+case "$(uname -s)" in
+  Darwin) brew_install --cask wezterm ;;
+  Linux) log 'The Homebrew WezTerm cask is macOS-only; install WezTerm manually on Linux.' ;;
+  *) log 'Only macOS and Linux are supported.'; exit 1 ;;
+esac
 
 link_config "$DIR/.wezterm.lua" "$HOME/.wezterm.lua"

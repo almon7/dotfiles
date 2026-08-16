@@ -6,13 +6,10 @@ LABEL=git
 source "$(dirname "${BASH_SOURCE[0]}")/../install-lib.sh"
 require_no_args "$@"
 
-if ! has git; then
-  case "$(uname -s)" in
-    Darwin) brew install git ;;
-    Linux) apt_install git ;;
-    *) log 'Only macOS and Linux are supported.'; exit 1 ;;
-  esac
-fi
+case "$(uname -s)" in
+  Darwin|Linux) brew_install git ;;
+  *) log 'Only macOS and Linux are supported.'; exit 1 ;;
+esac
 
 if has git; then
   if [ "$(git config --global --get core.editor || true)" != nvim ]; then

@@ -16,39 +16,23 @@ Every platform needs: **Neovim ≥ 0.11**, **git**, **Node.js**, a **C compiler*
 [**Nerd Font**](https://www.nerdfonts.com) (for icons — set it as your terminal
 font afterwards).
 
-### macOS (Homebrew)
+### macOS / Linux (Homebrew)
 
 ```sh
 brew install neovim git node ripgrep fd
-brew install --cask font-jetbrains-mono-nerd-font   # a Nerd Font
-xcode-select --install                              # C compiler (clang), if not already installed
 ```
 
-### Linux
-
-Debian / Ubuntu:
+On macOS, also install a Nerd Font and the Xcode Command Line Tools:
 
 ```sh
-sudo apt update
-sudo apt install -y git nodejs npm ripgrep fd-find build-essential
-# apt's neovim is usually too old — install a current build instead:
-sudo snap install nvim --classic
-# (or grab the release tarball from https://github.com/neovim/neovim/releases)
+brew install --cask font-jetbrains-mono-nerd-font
+xcode-select --install
 ```
 
-Arch:
-
-```sh
-sudo pacman -S neovim git nodejs npm ripgrep fd base-devel
-```
-
-Fedora:
-
-```sh
-sudo dnf install -y neovim git nodejs npm ripgrep fd-find gcc make
-```
-
-Then install a [Nerd Font](https://www.nerdfonts.com) and select it in your terminal.
+On Linux, first follow Homebrew's
+[Linux prerequisites and installation guide](https://docs.brew.sh/Homebrew-on-Linux).
+Then install a [Nerd Font](https://www.nerdfonts.com) and select it in your
+terminal.
 
 ### Windows (winget, PowerShell)
 
@@ -116,17 +100,16 @@ This config enables two AI integrations:
 - **GitHub Copilot** — run `:Copilot auth` inside Neovim to sign in.
 - **Claude Code** — install the CLI, then use it from Neovim:
   ```sh
-  npm install -g @anthropic-ai/claude-code
-  # see https://claude.com/claude-code for other install methods
+  brew install --cask claude-code
   ```
 
 ## 6. tree-sitter CLI (optional)
 
-`package.json` pins `tree-sitter-cli`, used to build some grammars from source.
-It is gitignored as `node_modules/`, so install it only if you want it:
+Install `tree-sitter-cli`, used to build some grammars from source, only if you
+want it:
 
 ```sh
-cd ~/dotfiles/nvim && npm install
+brew install tree-sitter-cli
 ```
 
 ## Notes

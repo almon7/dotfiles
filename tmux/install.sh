@@ -7,12 +7,9 @@ LABEL=tmux
 source "$DIR/../install-lib.sh"
 require_no_args "$@"
 
-if ! has tmux; then
-  case "$(uname -s)" in
-    Darwin) brew install tmux ;;
-    Linux) apt_install tmux ;;
-    *) log 'Only macOS and Linux are supported.'; exit 1 ;;
-  esac
-fi
+case "$(uname -s)" in
+  Darwin|Linux) brew_install tmux ;;
+  *) log 'Only macOS and Linux are supported.'; exit 1 ;;
+esac
 
 link_config "$DIR/tmux.conf" "$HOME/.tmux.conf"
