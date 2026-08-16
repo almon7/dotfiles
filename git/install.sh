@@ -15,7 +15,9 @@ if ! has git; then
 fi
 
 if has git; then
-  git config --global core.editor nvim
+  if [ "$(git config --global --get core.editor || true)" != nvim ]; then
+    git config --global core.editor nvim
+  fi
   if ! git config --global user.name >/dev/null ||
      ! git config --global user.email >/dev/null; then
     log 'Set user.name and user.email before committing.'

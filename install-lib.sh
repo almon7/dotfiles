@@ -38,6 +38,11 @@ link_config() {
   local source=$1 target=$2
   mkdir -p "$(dirname "$target")"
 
+  if [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ]; then
+    log "Already linked $target"
+    return
+  fi
+
   if [ -e "$target" ] && [ ! -L "$target" ]; then
     local backup="${target}.bak.$(date +%s)"
     log "Backing up $target to $backup"
