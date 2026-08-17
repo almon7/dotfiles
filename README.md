@@ -315,6 +315,7 @@ Press it, release, then press the command key.
 | `C-a z` | Zoom current pane fullscreen (toggle) |
 | `C-a [` | Scrollback / copy mode — vim keys, `q` to exit |
 | `C-a r` | Reload this config after editing it |
+| `C-a C-s` / `C-a C-r` | Save / restore all tmux sessions |
 | `C-a ?` | List every binding |
 
 That's the whole working set. The mouse is enabled too: drag borders to resize,
@@ -322,6 +323,25 @@ scroll wheel for history.
 
 A typical layout: window 1 for `nvim`, window 2 for `claude`, window 3 for git
 and test runs. Give Claude a task, `C-a 1` back to the editor while it works.
+
+[`tmux-resurrect`](https://github.com/tmux-plugins/tmux-resurrect) and
+[`tmux-continuum`](https://github.com/tmux-plugins/tmux-continuum) preserve the
+session/window/pane layout and working directories across reboots. Continuum
+saves automatically every 15 minutes and restores the snapshot when tmux next
+starts. Running programs are relaunched where supported, not kept alive through
+a machine restart.
+
+Set it up once on each new machine:
+
+```sh
+~/dotfiles/tmux/install.sh
+tmux
+```
+
+Inside tmux, press `C-a`, release it, then press capital `I` to install the
+plugins. Before a planned reboot, press `C-a C-s` for the freshest snapshot.
+After rebooting, start `tmux`; Continuum restores the most recent snapshot
+automatically. If it does not, press `C-a C-r` to restore manually.
 
 > **Colors.** The config sets `default-terminal` and truecolor overrides because
 > the Catppuccin/Tokyonight setup uses `transparent = true` — without them the
