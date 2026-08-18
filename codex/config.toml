@@ -1,0 +1,8 @@
+# Note: to be appended to the codex config
+model = "gpt-5.6-sol"
+model_context_window = 1000000
+model_auto_compact_token_limit = 900000
+
+# Vim mode
+[tui]
+vim_mode_default = true
