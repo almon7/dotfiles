@@ -95,3 +95,6 @@ for component in "${components[@]}"; do
   echo "Installing $component"
   "$ROOT/$component/install.sh"
 done
+
+echo
+echo 'Installation complete.'
