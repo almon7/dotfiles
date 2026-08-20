@@ -16,13 +16,44 @@ require_no_args() {
   esac
 }
 
+# Bring each requested Homebrew package to the desired state:
+# install it when missing, upgrade it when outdated, or leave it alone when current.
+# Pass --cask first for graphical applications and fonts; formulas are the default.
 brew_install() {
   if ! has brew; then
     log 'Homebrew is required. Install it from https://brew.sh and run this installer again.'
     return 1
   fi
 
-  brew install "$@"
+  local kind_flag=--formula
+
+  if [ "${1:-}" = --cask ]; then
+    kind_flag=--cask
+    shift
+  fi
+
+  local package outdated
+  for package in "$@"; do
+    # `brew list` checks the local installation receipt without installing anything.
+    if ! brew list "$kind_flag" "$package" >/dev/null 2>&1; then
+      log "Installing $package"
+      brew install "$kind_flag" "$package"
+      continue
+    fi
+
+    # Ask Homebrew whether the installed receipt is older than its current metadata.
+    if ! outdated="$(brew outdated --quiet "$kind_flag" "$package")"; then
+      log "Could not check whether $package is outdated."
+      return 1
+    fi
+
+    if [ -n "$outdated" ]; then
+      log "Upgrading $package"
+      brew upgrade "$kind_flag" "$package"
+    else
+      log "$package is already up to date"
+    fi
+  done
 }
 
 link_config() {

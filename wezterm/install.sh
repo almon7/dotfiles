@@ -8,13 +8,7 @@ source "$DIR/../install-lib.sh"
 require_no_args "$@"
 
 case "$(uname -s)" in
-  Darwin)
-    if has brew && brew list --cask wezterm >/dev/null 2>&1; then
-      log 'Already installed'
-    else
-      brew_install --cask wezterm
-    fi
-    ;;
+  Darwin) brew_install --cask wezterm ;;
   Linux) log 'The Homebrew WezTerm cask is macOS-only; install WezTerm manually on Linux.' ;;
   *) log 'Only macOS and Linux are supported.'; exit 1 ;;
 esac

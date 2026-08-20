@@ -19,8 +19,9 @@ install everything with `./install.sh --all`, or name only what you want, such
 as `./install.sh nvim tmux`. Every folder has an independent installer. Package
 installation uses Homebrew on both macOS and Linux whenever a formula is
 available. WezTerm is the exception because its Homebrew cask is macOS-only.
-All scripts are idempotent. Non-interactive runs install all components
-automatically.
+Installed Homebrew packages are upgraded when Homebrew reports them as
+outdated. All scripts are idempotent. Non-interactive runs install all
+components automatically.
 
 ### What it installs
 
