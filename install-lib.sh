@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 
+# Print messages with the name of the component that is currently running.
 log() {
   printf '[%s] %s\n' "$LABEL" "$*"
 }
 
+# Return success when an executable is available on PATH.
 has() {
   command -v "$1" >/dev/null 2>&1
 }
 
+# Component installers take no options; keep their command-line interface strict.
 require_no_args() {
   case "${1:-}" in
     '') ;;
@@ -56,15 +59,19 @@ brew_install() {
   done
 }
 
+# Point a standard config location at a file or directory in this repository.
+# Preserve a user's real file/directory as a timestamped backup before replacing it.
 link_config() {
   local source=$1 target=$2
   mkdir -p "$(dirname "$target")"
 
+  # An exact existing link needs no work and, importantly, no new backup.
   if [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ]; then
     log "Already linked $target"
     return
   fi
 
+  # Back up only real files/directories. `ln -sfn` safely replaces other symlinks.
   if [ -e "$target" ] && [ ! -L "$target" ]; then
     local backup="${target}.bak.$(date +%s)"
     log "Backing up $target to $backup"
