@@ -35,7 +35,7 @@ brew_install() {
     shift
   fi
 
-  local package outdated
+  local package outdated outdated_status
   for package in "$@"; do
     # `brew list` checks the local installation receipt without installing anything.
     if ! brew list "$kind_flag" "$package" >/dev/null 2>&1; then
@@ -44,8 +44,16 @@ brew_install() {
       continue
     fi
 
-    # Ask Homebrew whether the installed receipt is older than its current metadata.
-    if ! outdated="$(brew outdated --quiet "$kind_flag" "$package")"; then
+    # Homebrew exits 1 when a specifically named package is outdated, so preserve
+    # both its output and status instead of treating every non-zero status as an error.
+    outdated=''
+    if outdated="$(brew outdated --quiet "$kind_flag" "$package")"; then
+      outdated_status=0
+    else
+      outdated_status=$?
+    fi
+
+    if [ "$outdated_status" -gt 1 ] || { [ "$outdated_status" -eq 1 ] && [ -z "$outdated" ]; }; then
       log "Could not check whether $package is outdated."
       return 1
     fi
