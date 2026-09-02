@@ -11,7 +11,18 @@ require_no_args "$@"
 
 # Homebrew's WezTerm cask is macOS-only. Linux still receives the config link below.
 case "$(uname -s)" in
-  Darwin) brew_install --cask wezterm ;;
+  Darwin)
+    # A manually installed WezTerm has the same /Applications destination as the
+    # Homebrew cask.  Trying to install the cask over it fails with "already an
+    # App", so accept a usable existing application instead of requiring a
+    # Homebrew receipt.
+    if [ -x /Applications/WezTerm.app/Contents/MacOS/wezterm ] &&
+       ! brew list --cask wezterm >/dev/null 2>&1; then
+      log 'WezTerm is already installed outside Homebrew; leaving it in place'
+    else
+      brew_install --cask wezterm
+    fi
+    ;;
   Linux) log 'The Homebrew WezTerm cask is macOS-only; install WezTerm manually on Linux.' ;;
   *) log 'Only macOS and Linux are supported.'; exit 1 ;;
 esac
