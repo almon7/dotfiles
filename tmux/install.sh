@@ -30,4 +30,5 @@ fi
 # tmux reads its per-user configuration from ~/.tmux.conf.
 link_config "$DIR/tmux.conf" "$HOME/.tmux.conf"
 
-log 'Inside tmux, press C-a I to install the persistence plugins'
+log 'Installing tmux plugins'
+"$TPM_DIR/bin/install_plugins"

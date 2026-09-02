@@ -339,10 +339,10 @@ Set it up once on each new machine:
 tmux
 ```
 
-Inside tmux, press `C-a`, release it, then press capital `I` to install the
-plugins. Before a planned reboot, press `C-a C-s` for the freshest snapshot.
-After rebooting, start `tmux`; Continuum restores the most recent snapshot
-automatically. If it does not, press `C-a C-r` to restore manually.
+The installer installs the TPM plugins automatically. Before a planned reboot,
+press `C-a C-s` for the freshest snapshot. After rebooting, start `tmux`;
+Continuum restores the most recent snapshot automatically. If it does not,
+press `C-a C-r` to restore manually.
 
 > **Colors.** The config sets `default-terminal` and truecolor overrides because
 > the Catppuccin/Tokyonight setup uses `transparent = true` — without them the
