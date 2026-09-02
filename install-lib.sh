@@ -10,6 +10,41 @@ has() {
   command -v "$1" >/dev/null 2>&1
 }
 
+# Keep Homebrew's executables ahead of the operating-system versions in future
+# shells. Homebrew may be available to this installer through an inherited PATH
+# even when a fresh login shell would not find it.
+persist_brew_shellenv() {
+  local brew_path profile source_line
+  brew_path="$(command -v brew)"
+
+  case "${SHELL:-}" in
+    */zsh) profile="$HOME/.zprofile" ;;
+    */bash)
+      case "$(uname -s)" in
+        Darwin) profile="$HOME/.bash_profile" ;;
+        *) profile="$HOME/.bashrc" ;;
+      esac
+      ;;
+    *)
+      log "Homebrew is installed, but ${SHELL:-the current shell} is not supported for automatic PATH setup."
+      return
+      ;;
+  esac
+
+  source_line="eval \"\$($brew_path shellenv)\""
+  if [ -f "$profile" ] && grep -Fq "$source_line" "$profile"; then
+    return
+  fi
+
+  if [ -s "$profile" ]; then
+    printf '\n' >> "$profile"
+  fi
+  printf '%s\n%s\n' \
+    '# Homebrew environment (managed by the dotfiles installer)' \
+    "$source_line" >> "$profile"
+  log "Enabled Homebrew in future shells via $profile"
+}
+
 # Component installers take no options; keep their command-line interface strict.
 require_no_args() {
   case "${1:-}" in
@@ -27,6 +62,8 @@ brew_install() {
     log 'Homebrew is required. Install it from https://brew.sh and run this installer again.'
     return 1
   fi
+
+  persist_brew_shellenv
 
   local kind_flag=--formula
 

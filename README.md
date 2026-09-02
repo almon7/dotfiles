@@ -186,9 +186,10 @@ bash ~/dotfiles/install.sh
 ```
 
 The `apt-get` packages are Homebrew's Linux prerequisites; the dotfiles
-installer itself installs supported tools exclusively through Homebrew. Add the
-`brew shellenv` line printed by Homebrew's installer to your shell profile so
-`brew` and its packages remain on `PATH` in future sessions.
+installer itself installs supported tools exclusively through Homebrew. The
+explicit `eval` above makes Homebrew available for this first run. The dotfiles
+installer then adds the appropriate `brew shellenv` command to your shell
+profile so `brew` and its packages remain on `PATH` in future sessions.
 
 Afterwards, set your git identity — the scripts deliberately don't guess it:
 
