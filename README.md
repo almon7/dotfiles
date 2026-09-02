@@ -30,6 +30,7 @@ components automatically.
 | **Neovim** (recent) + this config | the editor |
 | **ripgrep**, **fd**, a C compiler, **Node** | what the Neovim config needs |
 | **Python** | Mason installs the Python LSP from PyPI via `python3 -m venv` |
+| **lazygit** | LazyVim's `<leader>gg` Git interface |
 | **tmux** + this config | so a dropped SSH connection doesn't kill the work |
 | **JetBrainsMono Nerd Font** | Neovim icons (automatic on macOS with Neovim) |
 | **WezTerm** | terminal (automatic on macOS with WezTerm) |

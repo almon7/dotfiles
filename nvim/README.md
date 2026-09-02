@@ -12,14 +12,15 @@ Markdown and TOML.
 ## 1. Prerequisites
 
 Every platform needs: **Neovim ≥ 0.11**, **git**, **Node.js**, a **C compiler**
-(for Treesitter), **ripgrep** + **fd** (for the file/grep pickers), and a
+(for Treesitter), **ripgrep** + **fd** (for the file/grep pickers), **lazygit**
+(for `<leader>gg`), and a
 [**Nerd Font**](https://www.nerdfonts.com) (for icons — set it as your terminal
 font afterwards).
 
 ### macOS / Linux (Homebrew)
 
 ```sh
-brew install neovim git node ripgrep fd
+brew install neovim git node ripgrep fd lazygit
 ```
 
 On macOS, also install a Nerd Font and the Xcode Command Line Tools:

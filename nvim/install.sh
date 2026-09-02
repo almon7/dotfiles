@@ -12,7 +12,7 @@ require_no_args "$@"
 # Install Neovim plus the command-line tools used by this configuration.
 case "$(uname -s)" in
   Darwin)
-    brew_install neovim ripgrep fd node python
+    brew_install neovim ripgrep fd node python lazygit
     # The Nerd Font supplies the extra glyphs used by the configuration's icons.
     brew_install --cask font-jetbrains-mono-nerd-font
     # Treesitter parsers need Apple's compiler toolchain.
@@ -20,7 +20,7 @@ case "$(uname -s)" in
     xcode-select -p >/dev/null 2>&1 || xcode-select --install
     ;;
   Linux)
-    brew_install neovim ripgrep fd node python
+    brew_install neovim ripgrep fd node python lazygit
     ;;
   *) log 'Only macOS and Linux are supported.'; exit 1 ;;
 esac
