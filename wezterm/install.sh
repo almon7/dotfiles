@@ -18,3 +18,49 @@ esac
 
 # WezTerm reads this file directly from the user's home directory.
 link_config "$DIR/.wezterm.lua" "$HOME/.wezterm.lua"
+
+install_shell_integration() {
+  local integration= candidate rc_file source_line
+
+  for candidate in \
+    /Applications/WezTerm.app/Contents/Resources/wezterm.sh \
+    /opt/homebrew/share/wezterm/wezterm.sh \
+    /usr/local/share/wezterm/wezterm.sh \
+    /usr/share/wezterm/wezterm.sh
+  do
+    if [ -r "$candidate" ]; then
+      integration=$candidate
+      break
+    fi
+  done
+
+  if [ -z "$integration" ]; then
+    log 'Shell integration script not found; skipping shell setup.'
+    return
+  fi
+
+  case "${SHELL:-}" in
+    */zsh) rc_file="$HOME/.zshrc" ;;
+    */bash) rc_file="$HOME/.bashrc" ;;
+    *)
+      log "Shell integration supports zsh and bash; skipping ${SHELL:-unknown shell}."
+      return
+      ;;
+  esac
+
+  if [ -f "$rc_file" ] && grep -Fq "$integration" "$rc_file"; then
+    log "Shell integration is already enabled in $rc_file"
+    return
+  fi
+
+  if [ -s "$rc_file" ]; then
+    printf '\n' >> "$rc_file"
+  fi
+  source_line="source \"$integration\""
+  printf '%s\n%s\n' \
+    '# WezTerm shell integration (managed by the dotfiles installer)' \
+    "$source_line" >> "$rc_file"
+  log "Enabled shell integration in $rc_file"
+}
+
+install_shell_integration
