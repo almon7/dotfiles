@@ -5,6 +5,16 @@ local tmux_directions = {
   l = { flag = "R", edge = "right" },
 }
 
+local function terminal_navigation(command)
+  return function()
+    -- Terminal expression mappings run under text-lock, so defer the command
+    -- just as LazyVim's default terminal navigation does.
+    vim.schedule(function()
+      vim.cmd(command)
+    end)
+  end
+end
+
 local function select_tmux_pane(direction)
   local socket = vim.env.TMUX and vim.env.TMUX:match("^[^,]+")
   if not socket or not vim.env.TMUX_PANE then
@@ -135,6 +145,43 @@ local picker_navigation = {
 return {
   "folke/snacks.nvim",
   opts = {
+    terminal = {
+      win = {
+        -- LazyVim's defaults use wincmd directly and stop at the outermost
+        -- Neovim window. Route those buffer-local mappings through the tmux
+        -- navigator so they can continue into the adjacent tmux pane.
+        keys = {
+          nav_h = {
+            "<C-h>",
+            terminal_navigation("TmuxNavigateLeft"),
+            desc = "Go to left window/pane",
+            expr = true,
+            mode = "t",
+          },
+          nav_j = {
+            "<C-j>",
+            terminal_navigation("TmuxNavigateDown"),
+            desc = "Go to lower window/pane",
+            expr = true,
+            mode = "t",
+          },
+          nav_k = {
+            "<C-k>",
+            terminal_navigation("TmuxNavigateUp"),
+            desc = "Go to upper window/pane",
+            expr = true,
+            mode = "t",
+          },
+          nav_l = {
+            "<C-l>",
+            terminal_navigation("TmuxNavigateRight"),
+            desc = "Go to right window/pane",
+            expr = true,
+            mode = "t",
+          },
+        },
+      },
+    },
     picker = {
       actions = {
         navigate_left = function(picker)
