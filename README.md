@@ -315,6 +315,7 @@ Press it, release, then press the command key.
 | <code>C-a &#124;</code> / `C-a -` | Split vertically / horizontally |
 | `C-a h/j/k/l` | Move between panes |
 | `C-h/j/k/l` | Move between panes **and** Neovim splits (no prefix) |
+| `C-a H/J/K/L` | Move the current pane by swapping it left/down/up/right |
 | `C-a z` | Zoom current pane fullscreen (toggle) |
 | `C-a [` | Scrollback / copy mode — vim keys, `q` to exit |
 | `C-a r` | Reload this config after editing it |
