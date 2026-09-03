@@ -37,6 +37,32 @@ local function complete_selection(window, pane)
 end
 
 config.mouse_bindings = {
+  -- Open hyperlinks in the OS default browser with Ctrl-click. Define the
+  -- binding for both regular panes and mouse-aware programs such as tmux.
+  {
+    event = { Down = { streak = 1, button = 'Left' } },
+    mods = 'CTRL',
+    mouse_reporting = false,
+    action = act.Nop,
+  },
+  {
+    event = { Up = { streak = 1, button = 'Left' } },
+    mods = 'CTRL',
+    mouse_reporting = false,
+    action = act.OpenLinkAtMouseCursor,
+  },
+  {
+    event = { Down = { streak = 1, button = 'Left' } },
+    mods = 'CTRL',
+    mouse_reporting = true,
+    action = act.Nop,
+  },
+  {
+    event = { Up = { streak = 1, button = 'Left' } },
+    mods = 'CTRL',
+    mouse_reporting = true,
+    action = act.OpenLinkAtMouseCursor,
+  },
   {
     event = { Up = { streak = 1, button = 'Left' } },
     -- When Shift bypasses tmux mouse reporting, WezTerm deliberately strips

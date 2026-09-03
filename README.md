@@ -322,7 +322,8 @@ Press it, release, then press the command key.
 | `C-a ?` | List every binding |
 
 That's the whole working set. The mouse is enabled too: drag borders to resize,
-scroll wheel for history.
+scroll wheel for history. **Ctrl-click** a detected link to open it in the OS
+default browser, including from inside tmux.
 
 A typical layout: window 1 for `nvim`, window 2 for `claude`, window 3 for git
 and test runs. Give Claude a task, `C-a 1` back to the editor while it works.
