@@ -238,9 +238,9 @@ git clone git@github.com:almon7/dotfiles.git ~/dotfiles && ~/dotfiles/install.sh
 ```
 
 Afterwards set the Nerd Font as your terminal font, and see
-[`nvim/README.md`](nvim/README.md) for `:Copilot auth` and the rest of the
-first-launch steps. That README also covers doing all of this by hand, which is
-the path for Windows, Arch and Fedora — the installer doesn't cover those.
+[`nvim/README.md`](nvim/README.md) for the first-launch steps. That README also
+covers doing all of this by hand, which is the path for Windows, Arch and
+Fedora — the installer doesn't cover those.
 
 > **Docker on macOS** is Docker Desktop (or OrbStack/Colima) — a GUI app with a
 > VM behind it, not something to install unattended from a shell script. The

@@ -10,9 +10,7 @@
 require("config.autosave")
 
 local function disable_markdown_completions(buf)
-  -- Disable both Blink's completion menu and native Copilot suggestions.
   vim.b[buf].completion = false
-  vim.lsp.inline_completion.enable(false, { bufnr = buf })
 end
 
 vim.api.nvim_create_autocmd("FileType", {

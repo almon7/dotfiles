@@ -2,8 +2,7 @@
 
 My Neovim config, built on [LazyVim](https://www.lazyvim.org/): **Catppuccin**
 colorscheme (Tokyonight is also installed — switch live with `<leader>uC`),
-**GitHub Copilot** + **Claude Code**, and language support for Python, JSON,
-Markdown and TOML.
+**Claude Code**, and language support for Python, JSON, Markdown and TOML.
 
 > On GitHub Codespaces this installs automatically — see the repo
 > [README](../README.md#install). The steps below are for setting it up by hand
@@ -96,9 +95,8 @@ Run `:checkhealth` to confirm everything is wired up.
 
 ## 5. AI tools (optional)
 
-This config enables two AI integrations:
+This config enables one AI integration:
 
-- **GitHub Copilot** — run `:Copilot auth` inside Neovim to sign in.
 - **Claude Code** — install the CLI, then use it from Neovim:
   ```sh
   brew install --cask claude-code
