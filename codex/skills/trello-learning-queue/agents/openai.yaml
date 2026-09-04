@@ -1,0 +1,9 @@
+interface:
+  display_name: "Trello Learning Queue"
+  short_description: "Research and explain Trello learning reminders"
+  default_prompt: "Use $trello-learning-queue to research the learning reminders in my Trello queue."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "trello"
+      description: "Trello access for reading cards and syncing completion"
