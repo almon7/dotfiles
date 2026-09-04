@@ -317,14 +317,14 @@ Press it, release, then press the command key.
 | `C-h/j/k/l` | Move between panes **and** Neovim splits (no prefix) |
 | `C-a H/J/K/L` | Move the current pane by swapping it left/down/up/right |
 | `C-a z` | Zoom current pane fullscreen (toggle) |
-| `C-a [` | Scrollback / copy mode — vim keys, `q` to exit |
+| `C-a [` | Scrollback / copy mode |
 | `C-a r` | Reload this config after editing it |
 | `C-a C-s` / `C-a C-r` | Save / restore all tmux sessions |
 | `C-a ?` | List every binding |
 
-That's the whole working set. The mouse is enabled too: drag borders to resize,
-scroll wheel for history. **Ctrl-click** a detected link to open it in the OS
-default browser, including from inside tmux.
+That's the whole working set. The mouse is enabled too: click panes, drag borders
+to resize, and use the scroll wheel in terminal applications. **Ctrl-click** a
+detected link to open it in the OS default browser, including from inside tmux.
 
 A typical layout: window 1 for `nvim`, window 2 for `claude`, window 3 for git
 and test runs. Give Claude a task, `C-a 1` back to the editor while it works.
@@ -354,29 +354,22 @@ press `C-a C-r` to restore manually.
 
 ### Copy and paste
 
-Four separate mechanisms, which is why this trips people up:
+The regular terminal workflow is deliberately simple:
 
 | Want | Do |
 |---|---|
-| Copy text off the screen | `C-a [`, move to the start, `v`, select, `y` |
 | Paste from the system clipboard | `Cmd-V` (macOS) / `Ctrl-Shift-V` (Linux) |
 | Copy a Neovim selection to the system clipboard | Select with `v`, then `Space y` |
 | Copy the current Neovim line to the system clipboard | `Space Y` |
 | Paste the system clipboard in Neovim | `Space p` |
-| Paste what you just yanked in tmux | `C-a ]` |
-| Copy terminal text with the mouse | Hold **Shift** while dragging; release to copy |
+| Select terminal text with the mouse | Hold `Shift` and drag; `Cmd-C` copies it |
 
-`mode-keys vi` on its own does *not* give you vim's `v`/`y` — tmux leaves `y`
-unbound and puts `v` on rectangle-toggle. The config binds them properly;
-rectangle select moves to `C-v`.
-
-The Shift-drag is needed because `mouse on` makes tmux capture the mouse, so a
-plain drag selects into tmux's buffer rather than the terminal's. Shift tells
-WezTerm to bypass tmux and do a native selection. Releasing the mouse publishes
-that selection directly to the system clipboard.
+tmux and terminal applications receive ordinary mouse clicks and scrolling.
+Hold `Shift` while dragging to bypass their mouse handling and select text in
+WezTerm. Releasing never changes the clipboard; press `Cmd-C` to copy.
 
 > **Over SSH.** `set-clipboard on` sends yanks to your laptop's clipboard via
-> OSC 52, so `y` in copy mode and `"+y` in Neovim both reach it. Needs a
+> OSC 52, so explicit clipboard yanks in tmux or Neovim reach it. Needs a
 > terminal that supports OSC 52 (WezTerm, Kitty, Ghostty, iTerm2). Copy only —
 > most terminals refuse an OSC 52 *read*, so paste stays on `Cmd-V`.
 

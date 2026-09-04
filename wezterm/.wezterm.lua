@@ -12,8 +12,8 @@ config.send_composed_key_when_right_alt_is_pressed = true
 config.enable_kitty_keyboard = true
 config.hide_tab_bar_if_only_one_tab = true
 
--- Shift bypasses mouse-aware programs such as tmux and lets WezTerm select.
--- Completing the selection publishes it directly to the macOS clipboard.
+-- Mouse-aware programs receive normal clicks and scrolling. Hold Shift while
+-- dragging when WezTerm itself should select terminal text.
 config.bypass_mouse_reporting_modifiers = 'SHIFT'
 
 config.mouse_bindings = {
@@ -43,12 +43,21 @@ config.mouse_bindings = {
     mouse_reporting = true,
     action = act.OpenLinkAtMouseCursor,
   },
+  -- Releasing a WezTerm selection does not copy automatically. Cmd-C copies it.
   {
     event = { Up = { streak = 1, button = 'Left' } },
-    -- When Shift bypasses tmux mouse reporting, WezTerm deliberately strips
-    -- the modifier before matching this binding.
     mods = 'NONE',
-    action = act.CompleteSelectionOrOpenLinkAtMouseCursor 'Clipboard',
+    action = act.Nop,
+  },
+  {
+    event = { Up = { streak = 2, button = 'Left' } },
+    mods = 'NONE',
+    action = act.Nop,
+  },
+  {
+    event = { Up = { streak = 3, button = 'Left' } },
+    mods = 'NONE',
+    action = act.Nop,
   },
 }
 
