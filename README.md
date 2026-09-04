@@ -360,8 +360,11 @@ Four separate mechanisms, which is why this trips people up:
 |---|---|
 | Copy text off the screen | `C-a [`, move to the start, `v`, select, `y` |
 | Paste from the system clipboard | `Cmd-V` (macOS) / `Ctrl-Shift-V` (Linux) |
+| Copy a Neovim selection to the system clipboard | Select with `v`, then `Space y` |
+| Copy the current Neovim line to the system clipboard | `Space Y` |
+| Paste the system clipboard in Neovim | `Space p` |
 | Paste what you just yanked in tmux | `C-a ]` |
-| Select with the mouse | Hold **Shift** while dragging, then `Cmd-C` |
+| Copy terminal text with the mouse | Hold **Shift** while dragging; release to copy |
 
 `mode-keys vi` on its own does *not* give you vim's `v`/`y` — tmux leaves `y`
 unbound and puts `v` on rectangle-toggle. The config binds them properly;
@@ -369,7 +372,8 @@ rectangle select moves to `C-v`.
 
 The Shift-drag is needed because `mouse on` makes tmux capture the mouse, so a
 plain drag selects into tmux's buffer rather than the terminal's. Shift tells
-WezTerm to bypass tmux and do a native selection.
+WezTerm to bypass tmux and do a native selection. Releasing the mouse publishes
+that selection directly to the system clipboard.
 
 > **Over SSH.** `set-clipboard on` sends yanks to your laptop's clipboard via
 > OSC 52, so `y` in copy mode and `"+y` in Neovim both reach it. Needs a

@@ -113,6 +113,9 @@ brew install tree-sitter-cli
 
 ## Notes
 
+- **System clipboard:** regular `y`/`p` stay inside Neovim. Use `Space y` after
+  selecting with `v`, `Space Y` for the current line, and `Space p` to paste
+  from the system clipboard.
 - **Markdown linting** uses `markdownlint-cli2`. The `MD013` (line-length) rule
   is disabled via `.markdownlint-cli2.jsonc`, which `lua/plugins/lint.lua` passes
   to the linter with `--config`. Both files live here, so it works automatically
