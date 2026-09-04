@@ -7,6 +7,7 @@ Mac, a Debian/Ubuntu VPS, or a GitHub Codespace.
 
 | Path | What it is |
 |---|---|
+| [`codex/`](codex/install.sh) | Personal Codex skills and their user-level symlink installer. |
 | [`git/`](git/install.sh) | Git installer, personal identity routing, and SSH-key bootstrap. |
 | [`hunk/`](hunk/install.sh) | Hunk terminal diff viewer installer. |
 | [`nvim/`](nvim/README.md) | Neovim config and its self-contained installer. |
@@ -27,6 +28,7 @@ components automatically.
 
 | What | Why |
 |---|---|
+| **Codex user skills** | Makes the Git-tracked skills in `codex/skills` available through `~/.agents/skills`. |
 | **Neovim** (recent) + this config | the editor |
 | **ripgrep**, **fd**, a C compiler, **Node** | what the Neovim config needs |
 | **Python** | Mason installs the Python LSP from PyPI via `python3 -m venv` |

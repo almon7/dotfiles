@@ -11,14 +11,15 @@ INSTALL_ALL=false
 case "${1:-}" in
   --all) INSTALL_ALL=true; shift ;;
   -h|--help)
-    echo 'Usage: ./install.sh [--all] [git hunk nvim tmux wezterm]'
+    echo 'Usage: ./install.sh [--all] [codex git hunk nvim tmux wezterm]'
     exit
     ;;
 esac
 
 components=("$@")
-all_components=(git hunk nvim tmux wezterm)
+all_components=(codex git hunk nvim tmux wezterm)
 descriptions=(
+  'Codex user skills'
   'Git and its default editor'
   'Hunk terminal diff viewer'
   'Neovim and command-line dependencies'
@@ -99,7 +100,7 @@ fi
 # Validate every name before using it as part of an executable path.
 for component in "${components[@]}"; do
   case "$component" in
-    git|hunk|nvim|tmux|wezterm) ;;
+    codex|git|hunk|nvim|tmux|wezterm) ;;
     *) echo "Unknown component: $component" >&2; exit 2 ;;
   esac
 
