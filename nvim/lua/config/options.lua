@@ -8,7 +8,8 @@ vim.opt.clipboard = ""
 -- Add winbar to show the file name and modified status in the window title bar
 vim.opt.winbar = "%=%m %f"
 
--- Mark the preferred maximum line length
+-- Position the preferred maximum line-length guide. virt-column.nvim renders
+-- this as a thin character instead of ColorColumn's full-cell background.
 vim.opt.colorcolumn = "120"
 
 -- Over SSH there is no local clipboard tool, so route the + and * registers
