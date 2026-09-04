@@ -7,7 +7,7 @@ Mac, a Debian/Ubuntu VPS, or a GitHub Codespace.
 
 | Path | What it is |
 |---|---|
-| [`git/`](git/install.sh) | Git installer, Neovim editor default, and identity check. |
+| [`git/`](git/install.sh) | Git installer, personal identity routing, and SSH-key bootstrap. |
 | [`hunk/`](hunk/install.sh) | Hunk terminal diff viewer installer. |
 | [`nvim/`](nvim/README.md) | Neovim config and its self-contained installer. |
 | [`tmux/`](tmux/tmux.conf) | tmux config and installer — `C-a` prefix, vim-style keys, truecolor. |
@@ -37,9 +37,108 @@ components automatically.
 | **Git**, editor → `nvim` | version control and its editor default |
 | **Hunk** | terminal UI for reviewing diffs and agent-authored changes |
 
-It does *not* set `git config user.name` / `user.email` — that's per-machine
-state no repo can carry. The Git installer warns when either value is missing
-rather than guessing.
+### Git identity and GitHub SSH
+
+Git's name and email are commit metadata, not a GitHub login. Authentication
+is handled separately by the profile's SSH key.
+
+On its first interactive run, the installer offers three modes:
+
+1. **Directory profiles** (recommended) uses the personal identity only under
+   `~/dotfiles` and `~/code/personal`. Other repositories must choose a profile,
+   preventing accidental commits with the wrong account.
+2. **Personal globally** uses `almon7` for every repository by default. This is
+   convenient for machines that will never use another identity.
+3. **Skip** preserves all existing Git identity and authentication settings.
+
+A rerun detects a configuration already managed by this repository and reuses
+its previous mode without prompting. When an unrelated `~/.gitconfig` exists,
+Skip is the default so the installer cannot silently replace it. Unattended
+installs also skip by default; automation can make an explicit choice:
+
+```sh
+DOTFILES_GIT_MODE=profiles ~/dotfiles/install.sh git
+DOTFILES_GIT_MODE=global ~/dotfiles/install.sh git
+DOTFILES_GIT_MODE=skip ~/dotfiles/install.sh git
+```
+
+Directory mode deliberately leaves `user.name` and `user.email` unset globally.
+`user.useConfigOnly = true` makes Git stop instead of guessing an identity in
+an unrecognised repository. Global mode includes the personal profile as its
+fallback, while still allowing more-specific profiles in `~/.gitconfig.local`.
+
+On a new machine, clone over HTTPS because its SSH key does not exist yet:
+
+```sh
+git clone https://github.com/almon7/dotfiles.git ~/dotfiles
+~/dotfiles/install.sh
+```
+
+The installer creates `~/.ssh/id_ed25519_personal` only when it is missing. It
+never replaces an existing private key, so rerunning it is safe. When prompted,
+choose a passphrase or press Enter for none. The installer prints the public key
+and checks whether GitHub recognises it. In unattended environments such as
+Codespaces, it skips this interactive enrollment step.
+
+SSH enrollment is optional too: answer `n` to keep using HTTPS. If `origin`
+already uses the personal SSH URL, there is nothing to convert. A missing
+`origin` or any non-standard URL is left unchanged; the installer rewrites only
+the exact personal HTTPS dotfiles URL after the key authenticates as `almon7`.
+
+If the key is new:
+
+1. Open <https://github.com/settings/ssh/new> while signed in as `almon7`.
+2. Give the key a machine-specific title, such as `MacBook 2026`.
+3. Paste the complete output of:
+
+   ```sh
+   cat ~/.ssh/id_ed25519_personal.pub
+   ```
+
+4. Return to the installer and press Enter. It verifies authentication and
+   switches this repository's `origin` from HTTPS to SSH. Type `s` to skip;
+   rerunning `~/dotfiles/install.sh` safely resumes the process later.
+
+Private keys are machine-specific secrets and must never be committed to this
+repository. Creating a separate key per machine also lets one lost machine be
+revoked without replacing keys everywhere else.
+
+#### Add another profile
+
+Extra profiles are local machine state. Create a profile such as
+`~/.gitconfig-work`:
+
+```ini
+[user]
+    name = Your Name
+    email = you@company.example
+
+[core]
+    sshCommand = ssh -i ~/.ssh/id_ed25519_work -o IdentitiesOnly=yes
+```
+
+Then create `~/.gitconfig.local`, which the shared configuration includes
+last, and route the profile by directory:
+
+```ini
+[includeIf "gitdir:~/code/work/"]
+    path = ~/.gitconfig-work
+```
+
+Generate and register that account's key:
+
+```sh
+ssh-keygen -t ed25519 -C "you@company.example" -f ~/.ssh/id_ed25519_work
+cat ~/.ssh/id_ed25519_work.pub
+```
+
+Add the public key to that GitHub account (and authorise organisation SSO when
+required), then verify a repository resolves the intended profile:
+
+```sh
+git -C ~/code/work/example config --show-origin --get user.email
+git -C ~/code/work/example config --show-origin --get core.sshCommand
+```
 
 ## Install
 
@@ -234,7 +333,8 @@ macOS it additionally sets up the Xcode Command Line Tools (Treesitter needs a
 C compiler) and a Nerd Font.
 
 ```sh
-git clone git@github.com:almon7/dotfiles.git ~/dotfiles && ~/dotfiles/install.sh
+git clone https://github.com/almon7/dotfiles.git ~/dotfiles
+~/dotfiles/install.sh
 ```
 
 Afterwards set the Nerd Font as your terminal font, and see

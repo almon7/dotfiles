@@ -1,0 +1,19 @@
+[core]
+	editor = nvim
+
+# A repository outside a configured directory must choose an identity instead
+# of accidentally publishing commits with the wrong account.
+[user]
+	useConfigOnly = true
+
+# The public cold-start configuration knows only the personal profile.
+[includeIf "gitdir:~/dotfiles/"]
+	path = ~/.gitconfig-personal
+
+[includeIf "gitdir:~/code/personal/"]
+	path = ~/.gitconfig-personal
+
+# Add machine- or employer-specific includeIf rules here. A missing optional
+# include is harmless, keeping a fresh personal setup self-contained.
+[include]
+	path = ~/.gitconfig.local
