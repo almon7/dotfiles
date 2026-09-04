@@ -68,9 +68,12 @@ install_shell_integration() {
     printf '\n' >> "$rc_file"
   fi
   source_line="source \"$integration\""
-  printf '%s\n%s\n' \
+  printf '%s\n%s\n%s\n%s\n%s\n' \
     '# WezTerm shell integration (managed by the dotfiles installer)' \
-    "$source_line" >> "$rc_file"
+    '# Neovim terminals can expose tmux-wrapped OSC sequences as visible text.' \
+    'if [ -z "${NVIM:-}" ]; then' \
+    "  $source_line" \
+    'fi' >> "$rc_file"
   log "Enabled shell integration in $rc_file"
 }
 
