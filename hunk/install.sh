@@ -13,3 +13,5 @@ case "$(uname -s)" in
   Darwin|Linux) brew_install hunk ;;
   *) log 'Only macOS and Linux are supported.'; exit 1 ;;
 esac
+
+warn_if_shadowed hunk

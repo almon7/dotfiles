@@ -12,6 +12,8 @@ case "$(uname -s)" in
   *) log 'Only macOS and Linux are supported.'; exit 1 ;;
 esac
 
+warn_if_shadowed git
+
 has git || { log 'Git is not installed; skipping its configuration.'; exit 0; }
 
 link_config "$DIR/gitconfig" "$HOME/.gitconfig"

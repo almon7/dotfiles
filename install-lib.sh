@@ -10,11 +10,84 @@ has() {
   command -v "$1" >/dev/null 2>&1
 }
 
+# Delete a fixed-size block that an earlier version of this installer appended,
+# so the managed block written below replaces it instead of joining it.
+remove_legacy_lines() {
+  local file=$1 marker=$2 count=$3 temp
+
+  [ -f "$file" ] || return 0
+  grep -Fqx "$marker" "$file" || return 0
+
+  temp="$file.dotfiles-tmp.$$"
+  awk -v marker="$marker" -v count="$count" '
+    skip > 0 { skip--; next }
+    $0 == marker { skip = count - 1; next }
+    { print }
+  ' "$file" > "$temp"
+  # Copy the contents back so the original file keeps its permissions.
+  cat "$temp" > "$file"
+  rm -f "$temp"
+}
+
+# Keep one delimited block of lines in a shell start-up file. Rewrite the block
+# whenever its contents change, so a rerun after something moves - a new
+# Homebrew prefix, a new WezTerm location - updates the file in place instead of
+# appending a second, contradictory copy.
+write_managed_block() {
+  local file=$1 name=$2
+  shift 2
+
+  local begin="# >>> $name (managed by the dotfiles installer) >>>"
+  local end="# <<< $name (managed by the dotfiles installer) <<<"
+  local desired existing temp action=Enabled
+
+  desired="$(printf '%s\n' "$begin" "$@" "$end")"
+
+  if [ -f "$file" ] && grep -Fqx "$begin" "$file"; then
+    existing="$(awk -v begin="$begin" -v end="$end" '
+      $0 == begin { inside = 1 }
+      inside { print }
+      $0 == end { inside = 0 }
+    ' "$file")"
+
+    if [ "$existing" = "$desired" ]; then
+      return 0
+    fi
+
+    temp="$file.dotfiles-tmp.$$"
+    awk -v begin="$begin" -v end="$end" '
+      $0 == begin { skipping = 1 }
+      !skipping { print }
+      $0 == end { skipping = 0 }
+    ' "$file" > "$temp"
+    cat "$temp" > "$file"
+    rm -f "$temp"
+    action=Updated
+  fi
+
+  # Separate the block from the surrounding file, without stacking up blank
+  # lines each time the block is rewritten.
+  if [ -s "$file" ] && [ -n "$(tail -n 1 "$file")" ]; then
+    printf '\n' >> "$file"
+  fi
+  printf '%s\n' "$desired" >> "$file"
+  log "$action $name in $file"
+}
+
 # Keep Homebrew's executables ahead of the operating-system versions in future
 # shells. Homebrew may be available to this installer through an inherited PATH
 # even when a fresh login shell would not find it.
+BREW_SHELLENV_HANDLED=${BREW_SHELLENV_HANDLED:-0}
 persist_brew_shellenv() {
-  local brew_path profile source_line
+  local brew_path profile
+
+  # Several components install packages, and the answer cannot change during one
+  # run; check the start-up file once instead of once per package list.
+  if [ "$BREW_SHELLENV_HANDLED" -eq 1 ]; then
+    return 0
+  fi
+  BREW_SHELLENV_HANDLED=1
+
   brew_path="$(command -v brew)"
 
   case "${SHELL:-}" in
@@ -31,18 +104,10 @@ persist_brew_shellenv() {
       ;;
   esac
 
-  source_line="eval \"\$($brew_path shellenv)\""
-  if [ -f "$profile" ] && grep -Fq "$source_line" "$profile"; then
-    return
-  fi
-
-  if [ -s "$profile" ]; then
-    printf '\n' >> "$profile"
-  fi
-  printf '%s\n%s\n' \
-    '# Homebrew environment (managed by the dotfiles installer)' \
-    "$source_line" >> "$profile"
-  log "Enabled Homebrew in future shells via $profile"
+  remove_legacy_lines "$profile" \
+    '# Homebrew environment (managed by the dotfiles installer)' 2
+  write_managed_block "$profile" 'Homebrew environment' \
+    "eval \"\$($brew_path shellenv)\""
 }
 
 # Component installers take no options; keep their command-line interface strict.
@@ -104,6 +169,48 @@ brew_install() {
   done
 }
 
+# Install a graphical application from a cask, unless the user installed the same
+# application by hand. A manual copy occupies the same /Applications destination,
+# so the cask would fail with "It seems there is already an App at ...".
+brew_install_app() {
+  local app=$1 cask=$2
+
+  if [ -d "/Applications/$app.app" ] && ! brew list --cask "$cask" >/dev/null 2>&1; then
+    log "$app is already installed outside Homebrew; leaving it in place"
+    return 0
+  fi
+
+  brew_install --cask "$cask"
+}
+
+# Report a copy of a command that this installer cannot keep current: a program
+# installed by hand, or by another package manager, still wins the PATH lookup
+# and goes on running its own older version after Homebrew upgrades ours.
+warn_if_shadowed() {
+  local command_name=$1 active brew_prefix brew_copy
+
+  has brew || return 0
+  has "$command_name" || return 0
+
+  brew_prefix="$(brew --prefix 2>/dev/null)" || return 0
+  if [ -z "$brew_prefix" ]; then
+    return 0
+  fi
+
+  brew_copy="$brew_prefix/bin/$command_name"
+  if [ ! -x "$brew_copy" ]; then
+    return 0
+  fi
+
+  active="$(command -v "$command_name")"
+  if [ "$active" = "$brew_copy" ]; then
+    return 0
+  fi
+
+  log "$command_name runs from $active, which this installer does not update."
+  log "Homebrew's copy is $brew_copy; put $brew_prefix/bin earlier on PATH to use it."
+}
+
 # Point a standard config location at a file or directory in this repository.
 # Preserve a user's real file/directory as a timestamped backup before replacing it.
 link_config() {
@@ -116,8 +223,10 @@ link_config() {
     return
   fi
 
-  # Back up only real files/directories. `ln -sfn` safely replaces other symlinks.
-  if [ -e "$target" ] && [ ! -L "$target" ]; then
+  # Back up anything else that is already there, including a link to a different
+  # location and a link whose target is missing: both may be the user's own
+  # configuration, and replacing them outright would leave no way back.
+  if [ -e "$target" ] || [ -L "$target" ]; then
     local backup="${target}.bak.$(date +%s)"
     log "Backing up $target to $backup"
     mv "$target" "$backup"

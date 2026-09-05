@@ -21,8 +21,18 @@ as `./install.sh nvim tmux`. Every folder has an independent installer. Package
 installation uses Homebrew on both macOS and Linux whenever a formula is
 available. WezTerm is the exception because its Homebrew cask is macOS-only.
 Installed Homebrew packages are upgraded when Homebrew reports them as
-outdated. All scripts are idempotent. Non-interactive runs install all
-components automatically.
+outdated. Non-interactive runs install all components automatically.
+
+All scripts are idempotent, and a rerun is also the way to update: Homebrew
+packages are upgraded, the tmux plugin manager and its plugins are pulled, the
+blocks the installer maintains in your shell start-up files are rewritten in
+place when something moves, and configuration links that are already correct are
+left alone. Two things a rerun deliberately does not update. A program installed
+outside Homebrew is left in place, because it is not ours to replace; the
+installer reports it instead when it would run ahead of the Homebrew copy on
+`PATH`. And Neovim plugins stay at the versions pinned in `nvim/lazy-lock.json`,
+so moving them is a deliberate `:Lazy update` followed by a commit of the
+lockfile.
 
 ### What it installs
 
@@ -46,8 +56,9 @@ is handled separately by the profile's SSH key.
 
 The installer links `git/gitconfig` to `~/.gitconfig`. That sets the personal
 identity (`almon7`) globally, points `core.editor` at `nvim`, and selects the
-personal SSH key for every repository. A real `~/.gitconfig` that is already
-there is moved aside to a timestamped backup first, so nothing is lost.
+personal SSH key for every repository. Whatever is already at
+`~/.gitconfig` — a real file, or a link pointing somewhere else — is moved aside
+to a timestamped backup first, so nothing is lost.
 
 `~/.gitconfig.local` is included last and is never tracked in this repository.
 Machine-specific settings and any additional identities belong there; see
@@ -430,7 +441,8 @@ Set it up once on each new machine:
 tmux
 ```
 
-The installer installs the TPM plugins automatically. Before a planned reboot,
+The installer installs the TPM plugins automatically, and updates the plugin
+manager and the installed plugins on every later run. Before a planned reboot,
 press `C-a C-s` for the freshest snapshot. After rebooting, start `tmux`;
 Continuum restores the most recent snapshot automatically. If it does not,
 press `C-a C-r` to restore manually.

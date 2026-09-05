@@ -11,18 +11,7 @@ require_no_args "$@"
 
 # Homebrew's WezTerm cask is macOS-only. Linux still receives the config link below.
 case "$(uname -s)" in
-  Darwin)
-    # A manually installed WezTerm has the same /Applications destination as the
-    # Homebrew cask.  Trying to install the cask over it fails with "already an
-    # App", so accept a usable existing application instead of requiring a
-    # Homebrew receipt.
-    if [ -x /Applications/WezTerm.app/Contents/MacOS/wezterm ] &&
-       ! brew list --cask wezterm >/dev/null 2>&1; then
-      log 'WezTerm is already installed outside Homebrew; leaving it in place'
-    else
-      brew_install --cask wezterm
-    fi
-    ;;
+  Darwin) brew_install_app WezTerm wezterm ;;
   Linux) log 'The Homebrew WezTerm cask is macOS-only; install WezTerm manually on Linux.' ;;
   *) log 'Only macOS and Linux are supported.'; exit 1 ;;
 esac
@@ -31,7 +20,7 @@ esac
 link_config "$DIR/.wezterm.lua" "$HOME/.wezterm.lua"
 
 install_shell_integration() {
-  local integration= candidate rc_file source_line
+  local integration= candidate rc_file
 
   for candidate in \
     /Applications/WezTerm.app/Contents/Resources/wezterm.sh \
@@ -59,22 +48,17 @@ install_shell_integration() {
       ;;
   esac
 
-  if [ -f "$rc_file" ] && grep -Fq "$integration" "$rc_file"; then
-    log "Shell integration is already enabled in $rc_file"
-    return
-  fi
-
-  if [ -s "$rc_file" ]; then
-    printf '\n' >> "$rc_file"
-  fi
-  source_line="source \"$integration\""
-  printf '%s\n%s\n%s\n%s\n%s\n' \
-    '# WezTerm shell integration (managed by the dotfiles installer)' \
+  # Earlier versions appended a five-line block under a plain comment; remove it
+  # so the managed block below replaces it rather than being added beside it.
+  remove_legacy_lines "$rc_file" \
+    '# WezTerm shell integration (managed by the dotfiles installer)' 5
+  # A managed block is rewritten when WezTerm moves, instead of leaving the old
+  # path behind next to the new one.
+  write_managed_block "$rc_file" 'WezTerm shell integration' \
     '# Neovim terminals can expose tmux-wrapped OSC sequences as visible text.' \
     'if [ -z "${NVIM:-}" ]; then' \
-    "  $source_line" \
-    'fi' >> "$rc_file"
-  log "Enabled shell integration in $rc_file"
+    "  source \"$integration\"" \
+    'fi'
 }
 
 install_shell_integration
