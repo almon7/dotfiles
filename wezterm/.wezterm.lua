@@ -6,8 +6,16 @@ local act = wezterm.action
 local config = wezterm.config_builder()
 
 -- This is where you actually apply your config choices.
--- Left Option acts as Alt/Meta; right Option keeps macOS symbol composition.
-config.send_composed_key_when_left_alt_is_pressed = false
+
+-- British layout: # is Option+3. use_ime defaults to true, and the IME forward
+-- mask defaults to "SHIFT" only, so Option+key never reaches the IME to be
+-- composed. Adding ALT lets macOS compose Option symbols as usual.
+config.macos_forward_to_ime_modifier_mask = 'SHIFT|ALT'
+
+-- Non-IME fallback path, in case use_ime is ever turned off. Both Options
+-- compose symbols either way; the OPT+arrow assignments below still send
+-- Alt/Meta, because key assignments are matched before the IME sees the key.
+config.send_composed_key_when_left_alt_is_pressed = true
 config.send_composed_key_when_right_alt_is_pressed = true
 config.enable_kitty_keyboard = true
 config.hide_tab_bar_if_only_one_tab = true
