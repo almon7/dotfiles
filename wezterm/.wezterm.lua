@@ -86,6 +86,20 @@ config.keys = {
     mods = 'OPT',
     action = act.SendKey { key = 'f', mods = 'ALT' },
   },
+  -- The IME forwarding above turns Option+j/k into the composed symbols
+  -- (∆ and ˚), so tmux never sees M-j/M-k for cycling sessions. Key assignments
+  -- are matched before the IME, so carving out just these two restores the
+  -- Alt/Meta keypress while every other Option key keeps composing.
+  {
+    key = 'j',
+    mods = 'OPT',
+    action = act.SendKey { key = 'j', mods = 'ALT' },
+  },
+  {
+    key = 'k',
+    mods = 'OPT',
+    action = act.SendKey { key = 'k', mods = 'ALT' },
+  },
 }
 
 -- Use nerdfont
