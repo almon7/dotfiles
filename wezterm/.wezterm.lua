@@ -7,15 +7,15 @@ local config = wezterm.config_builder()
 
 -- This is where you actually apply your config choices.
 
--- British layout: # is Option+3. use_ime defaults to true, and the IME forward
--- mask defaults to "SHIFT" only, so Option+key never reaches the IME to be
--- composed. Adding ALT lets macOS compose Option symbols as usual.
-config.macos_forward_to_ime_modifier_mask = 'SHIFT|ALT'
-
--- Non-IME fallback path, in case use_ime is ever turned off. Both Options
--- compose symbols either way; the OPT+arrow assignments below still send
--- Alt/Meta, because key assignments are matched before the IME sees the key.
-config.send_composed_key_when_left_alt_is_pressed = true
+-- Left Option is Meta, right Option composes symbols.
+--
+-- Forwarding ALT to the IME (to get # from Option+3 on a British layout) also
+-- made the IME swallow Option+letter, so tmux never saw M-j/M-k. The IME wins
+-- over key assignments for character-producing keys -- an OPT+j assignment
+-- never matches, while OPT+LeftArrow does, because arrows are not composed.
+-- So keep ALT out of the mask and give each Option key a distinct job.
+config.macos_forward_to_ime_modifier_mask = 'SHIFT'
+config.send_composed_key_when_left_alt_is_pressed = false
 config.send_composed_key_when_right_alt_is_pressed = true
 config.enable_kitty_keyboard = true
 config.hide_tab_bar_if_only_one_tab = true
@@ -86,19 +86,13 @@ config.keys = {
     mods = 'OPT',
     action = act.SendKey { key = 'f', mods = 'ALT' },
   },
-  -- The IME forwarding above turns Option+j/k into the composed symbols
-  -- (∆ and ˚), so tmux never sees M-j/M-k for cycling sessions. Key assignments
-  -- are matched before the IME, so carving out just these two restores the
-  -- Alt/Meta keypress while every other Option key keeps composing.
+  -- The IME no longer composes Option+3 into #, and left Option is now Meta,
+  -- so bind # explicitly. This matches either Option key, keeping # where it
+  -- has always been rather than moving it to the right Option only.
   {
-    key = 'j',
+    key = '3',
     mods = 'OPT',
-    action = act.SendKey { key = 'j', mods = 'ALT' },
-  },
-  {
-    key = 'k',
-    mods = 'OPT',
-    action = act.SendKey { key = 'k', mods = 'ALT' },
+    action = act.SendString '#',
   },
 }
 
