@@ -1,8 +1,9 @@
 # Personal agent instructions
 
 One file, read by every coding agent on this machine: Claude Code loads it as
-`~/.claude/CLAUDE.md`, Codex as `~/.codex/AGENTS.md`. Both links point here, at
-`dotfiles/agents/AGENTS.md`.
+`~/.claude/CLAUDE.md`, Codex as `~/.codex/AGENTS.md`, and anything listed in
+`dotfiles/agents/targets` by its own name. Every one of those is a link to this
+file, at `dotfiles/agents/AGENTS.md`.
 
 Keep the contents general. Anything true of only one repository belongs in that
 repository's own `AGENTS.md` or `CLAUDE.md`, which each agent reads after this

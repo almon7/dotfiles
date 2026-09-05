@@ -59,7 +59,25 @@ each hard-codes its own path: `~/.claude/CLAUDE.md` for Claude Code,
 installer links both of those names to the single tracked file,
 [`agents/AGENTS.md`](agents/AGENTS.md). Editing it in the repository changes
 what both agents read; a real file already sitting at either path is moved
-aside as a timestamped backup first.
+aside as a timestamped backup first. Neither directory has to exist — the
+installer creates it, so the instructions are in place before the tool is.
+
+A third tool that reads its own instructions file gets a link too. Pass the
+path, or type it when the installer asks on a terminal:
+
+```
+./agents/install.sh ~/.cursor/AGENTS.md
+```
+
+Either way the path is remembered in [`agents/targets`](agents/targets), which
+is tracked, so a rerun here and a first run on another machine link the same
+places without asking again. `~` in that file means the home directory of
+whoever runs it.
+
+`~/.agents/AGENTS.md` is worth knowing about but is not enough on its own: it
+is a proposed convention, and neither agent installed here reads it today.
+Adding it to `agents/targets` costs nothing if you want to be ready for the
+tools that adopt it.
 
 The file is for preferences that hold everywhere. Each agent reads a project's
 own `AGENTS.md` or `CLAUDE.md` after this one, so repository-specific rules

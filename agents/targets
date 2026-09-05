@@ -1,0 +1,9 @@
+# Extra places to link agents/AGENTS.md, one path per line.
+#
+# The Claude Code and Codex paths are built into install.sh; this file is for
+# any other tool that reads a standing instructions file. Add a path here, or
+# type it when the installer asks, or pass it as an argument:
+#
+#   ./agents/install.sh ~/.cursor/AGENTS.md
+#
+# A leading ~ means the home directory, so the same list works on any machine.
