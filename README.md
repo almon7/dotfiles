@@ -8,7 +8,7 @@ Mac, a Debian/Ubuntu VPS, or a GitHub Codespace.
 | Path | What it is |
 |---|---|
 | [`codex/`](codex/install.sh) | Personal Codex skills and their user-level symlink installer. |
-| [`git/`](git/install.sh) | Git installer, personal identity routing, and SSH-key bootstrap. |
+| [`git/`](git/install.sh) | Git installer, personal identity and editor defaults, and SSH-key bootstrap. |
 | [`hunk/`](hunk/install.sh) | Hunk terminal diff viewer installer. |
 | [`nvim/`](nvim/README.md) | Neovim config and its self-contained installer. |
 | [`tmux/`](tmux/tmux.conf) | tmux config and installer — `C-a` prefix, vim-style keys, truecolor. |
@@ -44,30 +44,15 @@ components automatically.
 Git's name and email are commit metadata, not a GitHub login. Authentication
 is handled separately by the profile's SSH key.
 
-On its first interactive run, the installer offers three modes:
+The installer links `git/gitconfig` to `~/.gitconfig`. That sets the personal
+identity (`almon7`) globally, points `core.editor` at `nvim`, and selects the
+personal SSH key for every repository. A real `~/.gitconfig` that is already
+there is moved aside to a timestamped backup first, so nothing is lost.
 
-1. **Directory profiles** (recommended) uses the personal identity only under
-   `~/dotfiles` and `~/code/personal`. Other repositories must choose a profile,
-   preventing accidental commits with the wrong account.
-2. **Personal globally** uses `almon7` for every repository by default. This is
-   convenient for machines that will never use another identity.
-3. **Skip** preserves all existing Git identity and authentication settings.
-
-A rerun detects a configuration already managed by this repository and reuses
-its previous mode without prompting. When an unrelated `~/.gitconfig` exists,
-Skip is the default so the installer cannot silently replace it. Unattended
-installs also skip by default; automation can make an explicit choice:
-
-```sh
-DOTFILES_GIT_MODE=profiles ~/dotfiles/install.sh git
-DOTFILES_GIT_MODE=global ~/dotfiles/install.sh git
-DOTFILES_GIT_MODE=skip ~/dotfiles/install.sh git
-```
-
-Directory mode deliberately leaves `user.name` and `user.email` unset globally.
-`user.useConfigOnly = true` makes Git stop instead of guessing an identity in
-an unrecognised repository. Global mode includes the personal profile as its
-fallback, while still allowing more-specific profiles in `~/.gitconfig.local`.
+`~/.gitconfig.local` is included last and is never tracked in this repository.
+Machine-specific settings and any additional identities belong there; see
+[Add another profile](#add-another-profile) below. A missing include is
+harmless, so a fresh machine needs no extra setup.
 
 On a new machine, clone over HTTPS because its SSH key does not exist yet:
 

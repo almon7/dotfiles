@@ -1,19 +1,13 @@
+[user]
+	name = almon7
+	email = 71413117+almon7@users.noreply.github.com
+
 [core]
 	editor = nvim
+	sshCommand = ssh -i ~/.ssh/id_ed25519_personal -o IdentitiesOnly=yes
 
-# A repository outside a configured directory must choose an identity instead
-# of accidentally publishing commits with the wrong account.
-[user]
-	useConfigOnly = true
+[init]
+	defaultBranch = main
 
-# The public cold-start configuration knows only the personal profile.
-[includeIf "gitdir:~/dotfiles/"]
-	path = ~/.gitconfig-personal
-
-[includeIf "gitdir:~/code/personal/"]
-	path = ~/.gitconfig-personal
-
-# Add machine- or employer-specific includeIf rules here. A missing optional
-# include is harmless, keeping a fresh personal setup self-contained.
 [include]
 	path = ~/.gitconfig.local
