@@ -7,6 +7,7 @@ Mac, a Debian/Ubuntu VPS, or a GitHub Codespace.
 
 | Path | What it is |
 |---|---|
+| [`agents/`](agents/AGENTS.md) | Personal instructions shared by Claude Code and Codex, and their installer. |
 | [`codex/`](codex/install.sh) | Personal Codex skills and their user-level symlink installer. |
 | [`git/`](git/install.sh) | Git installer, personal identity and editor defaults, and SSH-key bootstrap. |
 | [`hunk/`](hunk/install.sh) | Hunk terminal diff viewer installer. |
@@ -38,6 +39,7 @@ lockfile.
 
 | What | Why |
 |---|---|
+| **Shared agent instructions** | Links `agents/AGENTS.md` to `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`. |
 | **Codex user skills** | Makes the Git-tracked skills in `codex/skills` available through `~/.agents/skills`. |
 | **Neovim** (recent) + this config | the editor |
 | **ripgrep**, **fd**, a C compiler, **Node** | what the Neovim config needs |
@@ -48,6 +50,20 @@ lockfile.
 | **WezTerm** | terminal (automatic on macOS with WezTerm) |
 | **Git**, editor → `nvim` | version control and its editor default |
 | **Hunk** | terminal UI for reviewing diffs and agent-authored changes |
+
+### One set of instructions for every agent
+
+Claude Code and Codex both take a Markdown file of standing instructions, but
+each hard-codes its own path: `~/.claude/CLAUDE.md` for Claude Code,
+`~/.codex/AGENTS.md` for Codex. Neither reads a plain `~/AGENTS.md`, so the
+installer links both of those names to the single tracked file,
+[`agents/AGENTS.md`](agents/AGENTS.md). Editing it in the repository changes
+what both agents read; a real file already sitting at either path is moved
+aside as a timestamped backup first.
+
+The file is for preferences that hold everywhere. Each agent reads a project's
+own `AGENTS.md` or `CLAUDE.md` after this one, so repository-specific rules
+belong there, where they can override it.
 
 ### Git identity and GitHub SSH
 
