@@ -111,9 +111,12 @@ Consequences to keep in mind while working here:
 - **`agents/skills/` is the shared skill folder for both agents**, which is why
   it sits beside `AGENTS.md` and is linked by the same installer. Skills are
   tracked here rather than written into `~/.claude` by a vendor's setup command,
-  so they reproduce on a new machine and show up in a diff. `find-docs` is
-  vendored from upstream `upstash/context7` — keep the provenance comment at the
-  top of `SKILL.md` when refreshing it.
+  so they reproduce on a new machine and show up in a diff. `find-docs` is one
+  skill over two sources: a short `SKILL.md`, since a skill's description is in
+  the context window of every request, plus a `references/` file read only when
+  that branch is taken. Only the Context7 reference is vendored, from upstream
+  `upstash/context7` — keep the provenance comment at the top of
+  `references/context7.md` when refreshing it.
 - **`codex/config.toml` is not linked**, because Codex writes to its own config
   and a link would hand it this repository. `codex/install.sh` compares the two
   a key at a time instead: it inserts a missing key into the table it belongs to
@@ -133,7 +136,7 @@ whichever of these owns it:
 | File | Owns |
 |---|---|
 | `README.md` | the quick start and the component table — the fast path, nothing else |
-| `agents/README.md` | shared agent instructions, the shared skills folder, `find-docs`/`ctx7`, the Codex settings check |
+| `agents/README.md` | shared agent instructions, the shared skills folder, `find-docs` and its two sources (`ctx7`, skills.sh), the Codex settings check |
 | `git/README.md` | identity vs authentication, the SSH-key bootstrap, extra profiles |
 | `tmux/README.md` | prefix and key bindings, resurrect/continuum, copy and paste |
 | `nvim/README.md` | the manual Windows path, first launch, linting and clipboard notes |

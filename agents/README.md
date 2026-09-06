@@ -54,22 +54,33 @@ something in the conversation calls for them, rather than carrying always.
   sit in the context window of every request whether the subject comes up or
   not; a skill costs one line until something activates it.
 
-## find-docs and the Context7 CLI
+## find-docs, and the two things it looks up
 
-[`find-docs`](skills/find-docs/SKILL.md) is the Context7 documentation lookup.
-It resolves a library name to a Context7 ID and pulls current, version-pinned
-snippets for it — worth having because an agent's training data goes stale on
-fast-moving libraries long before anything warns you about it.
+[`find-docs`](skills/find-docs/SKILL.md) is the one skill an agent reaches for
+when it needs a reference the session does not carry — worth having because an
+agent's training data goes stale on fast-moving libraries long before anything
+warns you about it. Its `SKILL.md` is short on purpose: it is in the context
+window of every request, so it holds the fast path and defers the rest to a file
+under [`references/`](skills/find-docs/references) that is read only when that
+branch is taken.
 
-- **It calls the `ctx7` command**, which the
+- **[Context7](skills/find-docs/references/context7.md) serves documentation.**
+  It resolves a library name to a Context7 ID and pulls current, version-pinned
+  snippets for it, through the `ctx7` command the
   [`context7`](../context7/install.sh) component installs.
 - **That component is the one place a package comes from npm** rather than
   Homebrew, because npm is where the CLI ships. It installs Node from Homebrew
   first, so selecting it alone is enough — it does not quietly depend on the
   `nvim` component having run.
-- **The skill's examples are edited to call the bare `ctx7`** where upstream
-  calls `npx ctx7@latest`. Rerunning `./install.sh context7` is what keeps the
-  CLI current, so the skill does not pin a version itself.
+- **[skills.sh](skills/find-docs/references/skills-sh.md) serves skills.** It
+  indexes public `SKILL.md` files from GitHub, reached through `npx`, so nothing
+  is installed for it. Reading a published skill is the default; installing one
+  with `-g` writes into this repository through the links above, where it shows
+  up as untracked files to commit by hand.
+- **What comes back from skills.sh is untrusted text from a stranger's
+  repository**, which the skill says at both levels: summarise it, treat its
+  commands as proposals, and let this repository's conventions and the user win
+  any contradiction.
 
 ### Raising the lookup quota
 
@@ -96,20 +107,23 @@ track, such as `~/.bashrc` or `~/.zshrc`.
   falling back to whatever the model remembers — which is the failure the skill
   exists to prevent.
 
-### Refreshing the vendored skill
+### Refreshing the vendored Context7 reference
 
-`find-docs` is vendored: a copy of an upstream file, kept here so it is
-versioned with everything else. Refresh it by copying the current version over
-it and committing the diff:
+The Context7 half is vendored: a copy of an upstream file, kept here so it is
+versioned with everything else. Upstream ships it as a `SKILL.md`; here it is a
+reference behind our own. Refresh it by copying the current version over it and
+committing the diff:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/upstash/context7/master/skills/find-docs/SKILL.md \
-  -o agents/skills/find-docs/SKILL.md
+  -o agents/skills/find-docs/references/context7.md
 ```
 
-Read that diff before keeping it. It reverts two local edits — the provenance
-comment at the top, and the change from `npx ctx7@latest` to the bare `ctx7` —
-so restore both before committing.
+Read that diff before keeping it. It reverts three local edits, all of them
+listed in the comment at the top of the file: the comment itself, the change from
+`npx ctx7@latest` to the bare `ctx7`, and the removal of its "Workflow" and
+"Authentication" sections, which `SKILL.md` and the quota section above now own.
+Restore all three before committing.
 
 ## Codex settings
 

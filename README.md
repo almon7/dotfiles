@@ -89,7 +89,7 @@ on both macOS and Linux wherever a formula exists.
 - **`context7`** — the `ctx7` CLI that the `find-docs` skill calls to fetch
   current library documentation, plus Node to run it. The one component
   installed from npm rather than Homebrew, because that is where it ships.
-  [find-docs and the Context7 CLI](agents/README.md#find-docs-and-the-context7-cli)
+  [The find-docs skill and its two sources](agents/README.md#find-docs-and-the-two-things-it-looks-up)
 - **`git`** — Git, a `~/.gitconfig` setting the commit identity and `nvim` as
   the editor, and a GitHub SSH key for this machine.
   [Git identity and GitHub SSH](git/README.md)
