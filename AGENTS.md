@@ -9,9 +9,9 @@ link for any agent that hard-codes a different one.
 
 A cold-start dev environment: POSIX-ish bash installers plus the config files
 they link into place, so one `git clone` and one `./install.sh` reproduce the
-setup on a Mac, a Debian/Ubuntu VPS, or a GitHub Codespace. There is no build,
-no test suite, and no CI. The scripts *are* the product, so correctness comes
-from reading them and running them, not from a runner.
+setup on a Mac or a Debian/Ubuntu VPS. There is no build, no test suite, and no
+CI. The scripts *are* the product, so correctness comes from reading them and
+running them, not from a runner.
 
 ## Commands
 
@@ -23,9 +23,8 @@ from reading them and running them, not from a runner.
 bash -n install.sh install-lib.sh */install.sh   # syntax check after editing
 ```
 
-With no TTY (`./install.sh < /dev/null`, Codespaces, CI) the picker is skipped
-and everything installs — that path is worth exercising after touching
-`install.sh`.
+With no TTY (`./install.sh < /dev/null`, CI) the picker is skipped and
+everything installs — that path is worth exercising after touching `install.sh`.
 
 Every installer is idempotent, and a rerun is the update path. Rerun freely
 while developing: Homebrew packages upgrade, correct symlinks are left alone,
@@ -86,14 +85,16 @@ lockfile.
 
 ### Agent configuration lives here
 
-`agents/` and `codex/` exist because Claude Code and Codex each hard-code their
-own paths, and neither reads a plain `~/AGENTS.md`. The installers point both
-names at one tracked file or folder:
+`agents/` holds what both agents share — the instructions file and the skills
+folder — and its installer links each to the paths Claude Code and Codex
+hard-code, since neither reads a plain `~/AGENTS.md`. `codex/` is a different
+kind of component: it installs nothing and only checks Codex's own settings.
+The links are:
 
 | Repo path | Linked to |
 |---|---|
 | `agents/AGENTS.md` | `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md` |
-| `codex/skills/` | `~/.claude/skills`, `~/.agents/skills` |
+| `agents/skills/` | `~/.claude/skills`, `~/.agents/skills` |
 | `nvim/` | `~/.config/nvim` |
 | `git/gitconfig` | `~/.gitconfig` |
 | `tmux/tmux.conf` | `~/.tmux.conf` |
@@ -107,34 +108,51 @@ Consequences to keep in mind while working here:
   change to it changes how every agent behaves in every repository, so keep it
   general — anything true of one project belongs in that project's own
   `AGENTS.md`/`CLAUDE.md`, which each agent reads afterwards and may contradict.
-- **`codex/skills/` is not Codex-specific**, despite the path; it is the shared
-  skill folder for both agents, kept where it started. Skills are tracked here
-  rather than written into `~/.claude` by a vendor's setup command, so they
-  reproduce on a new machine and show up in a diff. `find-docs` is vendored from
-  upstream `upstash/context7` — keep the provenance comment at the top of
-  `SKILL.md` when refreshing it.
-- **`codex/config.toml` is not linked**; it is a snippet to append to Codex's
-  own config by hand.
+- **`agents/skills/` is the shared skill folder for both agents**, which is why
+  it sits beside `AGENTS.md` and is linked by the same installer. Skills are
+  tracked here rather than written into `~/.claude` by a vendor's setup command,
+  so they reproduce on a new machine and show up in a diff. `find-docs` is
+  vendored from upstream `upstash/context7` — keep the provenance comment at the
+  top of `SKILL.md` when refreshing it.
+- **`codex/config.toml` is not linked**, because Codex writes to its own config
+  and a link would hand it this repository. `codex/install.sh` compares the two
+  a key at a time instead: it inserts a missing key into the table it belongs to
+  (a top-level key above the first `[table]` header, or the whole table appended
+  when it is absent), and reports — never rewrites — a key whose value differs,
+  since a deliberate local change is not ours to undo. Every key in the file is
+  one the machine is meant to have; there is no opt-out marker.
 - Skills are preferred over MCP servers for the same reason `find-docs` is: an
   MCP server's tool definitions occupy the context window of every request,
   while a skill costs one line until it activates.
 
 ## Keeping the docs in sync
 
-`README.md` is the user-facing installation and operations manual, and this file
-is what an agent reads first. Both go stale silently, because nothing here fails
-a build when they do. Treat them as part of the change, in the same commit:
+The documentation is split so that each fact has one home. A change belongs in
+whichever of these owns it:
 
-- A new or renamed component: add it to the `README.md` **Contents** table, to
-  **What it installs** if it installs something a user would look for, and to
-  the dispatcher's four lists above. (`context7/` is currently missing from the
-  Contents table — worth fixing when next in that file.)
+| File | Owns |
+|---|---|
+| `README.md` | the quick start and the component table — the fast path, nothing else |
+| `agents/README.md` | shared agent instructions, the shared skills folder, `find-docs`/`ctx7`, the Codex settings check |
+| `git/README.md` | identity vs authentication, the SSH-key bootstrap, extra profiles |
+| `tmux/README.md` | prefix and key bindings, resurrect/continuum, copy and paste |
+| `nvim/README.md` | the manual Windows path, first launch, linting and clipboard notes |
+| `docs/vps.md` | server setup and operations: sshd hardening, ufw, swap, tunnels, Docker |
+| `AGENTS.md` | this file — architecture and contracts, what an agent reads first |
+
+All of them go stale silently, because nothing here fails a build when they do.
+Treat the doc as part of the change, in the same commit:
+
+- A new or renamed component: add a row to the `README.md` component table and
+  edit the dispatcher's four lists above. Give it a README of its own only when
+  it has more to say than that row holds, and link it from the row.
 - New helpers in `install-lib.sh`, or a change to what an existing one
   guarantees: update the Architecture section here, since its whole purpose is
   to state contracts that are otherwise only visible by reading every caller.
-- Key bindings, install paths, or the symlink table changing: `README.md` and
-  `nvim/README.md` both document them concretely and both will contradict
-  reality otherwise.
+- Key bindings, install paths, or the symlink table changing: the component's
+  own README documents them concretely and will contradict reality otherwise.
+- Resist moving detail back into `README.md`. It is short on purpose — a reader
+  should be able to clone, run the installer, and stop reading.
 
-If a change makes a statement in either file wrong, correct the file rather than
-leaving the code and the prose to disagree.
+If a change makes a statement in any of these wrong, correct the file rather
+than leaving the code and the prose to disagree.

@@ -1,303 +1,42 @@
 # dotfiles
 
-My personal dev-environment config, and an installer that reproduces it on a
-Mac, a Debian/Ubuntu VPS, or a GitHub Codespace.
+My personal dev-environment config, and an installer that reproduces it on a Mac
+or a Debian/Ubuntu VPS.
 
-## Contents
+## Quick start
 
-| Path | What it is |
-|---|---|
-| [`agents/`](agents/AGENTS.md) | Personal instructions shared by Claude Code and Codex, and their installer. |
-| [`codex/`](codex/install.sh) | Personal Codex skills and their user-level symlink installer. |
-| [`git/`](git/install.sh) | Git installer, personal identity and editor defaults, and SSH-key bootstrap. |
-| [`hunk/`](hunk/install.sh) | Hunk terminal diff viewer installer. |
-| [`nvim/`](nvim/README.md) | Neovim config and its self-contained installer. |
-| [`tmux/`](tmux/tmux.conf) | tmux config and installer — `C-a` prefix, vim-style keys, truecolor. |
-| [`wezterm/`](wezterm/.wezterm.lua) | WezTerm keyboard/font config and installer. |
-| [`install.sh`](install.sh) | Interactive launcher for the installers above. |
+### macOS or Linux
 
-Run `./install.sh` to choose configs from an interactive checklist. You can also
-install everything with `./install.sh --all`, or name only what you want, such
-as `./install.sh nvim tmux`. Every folder has an independent installer. Package
-installation uses Homebrew on both macOS and Linux whenever a formula is
-available. WezTerm is the exception because its Homebrew cask is macOS-only.
-Installed Homebrew packages are upgraded when Homebrew reports them as
-outdated. Non-interactive runs install all components automatically.
-
-All scripts are idempotent, and a rerun is also the way to update: Homebrew
-packages are upgraded, the tmux plugin manager and its plugins are pulled, the
-blocks the installer maintains in your shell start-up files are rewritten in
-place when something moves, and configuration links that are already correct are
-left alone. Two things a rerun deliberately does not update. A program installed
-outside Homebrew is left in place, because it is not ours to replace; the
-installer reports it instead when it would run ahead of the Homebrew copy on
-`PATH`. And Neovim plugins stay at the versions pinned in `nvim/lazy-lock.json`,
-so moving them is a deliberate `:Lazy update` followed by a commit of the
-lockfile.
-
-### What it installs
-
-| What | Why |
-|---|---|
-| **Shared agent instructions** | Links `agents/AGENTS.md` to `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`. |
-| **Codex user skills** | Makes the Git-tracked skills in `codex/skills` available through `~/.agents/skills`. |
-| **Neovim** (recent) + this config | the editor |
-| **ripgrep**, **fd**, a C compiler, **Node** | what the Neovim config needs |
-| **Python** | Mason installs the Python LSP from PyPI via `python3 -m venv` |
-| **lazygit** | LazyVim's `<leader>gg` Git interface |
-| **tmux** + this config | so a dropped SSH connection doesn't kill the work |
-| **JetBrainsMono Nerd Font** | Neovim icons (automatic on macOS with Neovim) |
-| **WezTerm** | terminal (automatic on macOS with WezTerm) |
-| **Git**, editor → `nvim` | version control and its editor default |
-| **Hunk** | terminal UI for reviewing diffs and agent-authored changes |
-
-### One set of instructions for every agent
-
-Claude Code and Codex both take a Markdown file of standing instructions, but
-each hard-codes its own path: `~/.claude/CLAUDE.md` for Claude Code,
-`~/.codex/AGENTS.md` for Codex. Neither reads a plain `~/AGENTS.md`, so the
-installer links both of those names to the single tracked file,
-[`agents/AGENTS.md`](agents/AGENTS.md). Editing it in the repository changes
-what both agents read; a real file already sitting at either path is moved
-aside as a timestamped backup first. Neither directory has to exist — the
-installer creates it, so the instructions are in place before the tool is.
-
-A third tool that reads its own instructions file is a link away by hand:
-
-```
-ln -s "$PWD/agents/AGENTS.md" ~/.cursor/AGENTS.md
-```
-
-`~/.agents/AGENTS.md` is worth knowing about but is not enough on its own: it
-is a proposed convention, and neither agent installed here reads it today.
-
-The file is for preferences that hold everywhere. Each agent reads a project's
-own `AGENTS.md` or `CLAUDE.md` after this one, so repository-specific rules
-belong there, where they can override it.
-
-### Git identity and GitHub SSH
-
-Git's name and email are commit metadata, not a GitHub login. Authentication
-is handled separately by the profile's SSH key.
-
-The installer links `git/gitconfig` to `~/.gitconfig`. That sets the personal
-identity (`almon7`) globally, points `core.editor` at `nvim`, and selects the
-personal SSH key for every repository. Whatever is already at
-`~/.gitconfig` — a real file, or a link pointing somewhere else — is moved aside
-to a timestamped backup first, so nothing is lost.
-
-`~/.gitconfig.local` is included last and is never tracked in this repository.
-Machine-specific settings and any additional identities belong there; see
-[Add another profile](#add-another-profile) below. A missing include is
-harmless, so a fresh machine needs no extra setup.
-
-On a new machine, clone over HTTPS because its SSH key does not exist yet:
+Install [Homebrew](https://brew.sh) — the package manager everything here comes
+from — then:
 
 ```sh
 git clone https://github.com/almon7/dotfiles.git ~/dotfiles
 ~/dotfiles/install.sh
 ```
 
-The installer creates `~/.ssh/id_ed25519_personal` only when it is missing. It
-never replaces an existing private key, so rerunning it is safe. When prompted,
-choose a passphrase or press Enter for none. The installer prints the public key
-and checks whether GitHub recognises it. In unattended environments such as
-Codespaces, it skips this interactive enrollment step.
+On macOS the installer adds two things Linux does not need:
 
-SSH enrollment is optional too: answer `n` to keep using HTTPS. If `origin`
-already uses the personal SSH URL, there is nothing to convert. A missing
-`origin` or any non-standard URL is left unchanged; the installer rewrites only
-the exact personal HTTPS dotfiles URL after the key authenticates as `almon7`.
+- **The Xcode Command Line Tools**, because Neovim's Treesitter compiles its
+  syntax parsers from C source and needs a compiler to do it.
+- **A Nerd Font** (JetBrainsMono) — an ordinary font with icon glyphs patched
+  in, which is what draws the file-type icons and status-line symbols in the
+  editor. Set it as your terminal font afterwards or you get tofu boxes.
 
-If the key is new:
+### A fresh Debian/Ubuntu VPS
 
-1. Open <https://github.com/settings/ssh/new> while signed in as `almon7`.
-2. Give the key a machine-specific title, such as `MacBook 2026`.
-3. Paste the complete output of:
+A new server accepts password logins from the entire internet, so harden it
+before you put any work on it. That means four things, and
+[`docs/vps.md`](docs/vps.md) walks through each:
 
-   ```sh
-   cat ~/.ssh/id_ed25519_personal.pub
-   ```
+- Log in with an **SSH key** instead of a password.
+- **Turn password authentication off**, so a guessed password is no longer a
+  way in.
+- **Close every port but SSH** with a firewall; anything you run on the box is
+  reached through an SSH tunnel rather than published.
+- **Add swap**, so a memory spike suspends work instead of killing the box.
 
-4. Return to the installer and press Enter. It verifies authentication and
-   switches this repository's `origin` from HTTPS to SSH. Type `s` to skip;
-   rerunning `~/dotfiles/install.sh` safely resumes the process later.
-
-Private keys are machine-specific secrets and must never be committed to this
-repository. Creating a separate key per machine also lets one lost machine be
-revoked without replacing keys everywhere else.
-
-#### Add another profile
-
-Extra profiles are local machine state. Create a profile such as
-`~/.gitconfig-work`:
-
-```ini
-[user]
-    name = Your Name
-    email = you@company.example
-
-[core]
-    sshCommand = ssh -i ~/.ssh/id_ed25519_work -o IdentitiesOnly=yes
-```
-
-Then create `~/.gitconfig.local`, which the shared configuration includes
-last, and route the profile by directory:
-
-```ini
-[includeIf "gitdir:~/code/work/"]
-    path = ~/.gitconfig-work
-```
-
-Generate and register that account's key:
-
-```sh
-ssh-keygen -t ed25519 -C "you@company.example" -f ~/.ssh/id_ed25519_work
-cat ~/.ssh/id_ed25519_work.pub
-```
-
-Add the public key to that GitHub account (and authorise organisation SSO when
-required), then verify a repository resolves the intended profile:
-
-```sh
-git -C ~/code/work/example config --show-origin --get user.email
-git -C ~/code/work/example config --show-origin --get core.sshCommand
-```
-
-## Install
-
-### GitHub Codespaces (automatic)
-
-`install.sh` sets up the whole environment — see
-[What it installs](#what-it-installs). To run it automatically when you
-**create** a codespace:
-
-1. Go to **[github.com/settings/codespaces](https://github.com/settings/codespaces)**
-   → **Dotfiles** → tick **"Automatically install dotfiles"** (it uses this repo).
-2. **Create a new codespace.** (Toggling the setting does *not* affect existing
-   codespaces, and rebuilding one does *not* pick dotfiles up — see below.)
-
-**Persistence — important:** personal dotfiles run **only when a codespace is
-first created**, *not* on rebuild and *not* on stop/start.
-
-- **Stop → Start** keeps the whole container, so nvim and everything else stay put.
-- **Rebuild** re-runs the devcontainer (image + features + `postCreateCommand`)
-  but **not** your dotfiles — a rebuilt codespace loses dotfiles-installed tools.
-- To make the setup survive **rebuilds** too, run the installer from the project's
-  devcontainer — `postCreateCommand` runs on create *and* rebuild:
-  ```json
-  {
-    "postCreateCommand": "git clone https://github.com/almon7/dotfiles ~/dotfiles 2>/dev/null; bash ~/dotfiles/install.sh"
-  }
-  ```
-  Only do this in repos that are **yours** — it installs your setup for anyone
-  who opens them.
-
-> **Fonts are client-side.** In a codespace the terminal font is rendered by your
-> local VS Code / browser, so set a [Nerd Font](https://www.nerdfonts.com) in
-> VS Code's `terminal.integrated.fontFamily` — installing one in the container
-> does nothing.
-
-### Remote VPS
-
-For running Claude Code on a server rather than a laptop that overheats.
-Assumes a fresh Debian/Ubuntu box.
-
-On OVHcloud, root SSH login is disabled and the login user is named after the
-distro (`ubuntu`, `debian`, `rocky`) — it is created for you and is in the sudo
-group, so there is no user to add. The temporary password arrives as a
-single-use secret link, and **you are prompted to change it on first login**.
-Keep the new one: it's your `sudo` password, and your way back in via the KVM
-console if you ever break SSH.
-
-#### 1. Key-based login
-
-From your laptop, once you can log in with the password:
-
-```sh
-ssh-copy-id -i ~/.ssh/id_ed25519.pub ubuntu@203.0.113.10
-ssh ubuntu@203.0.113.10        # must not prompt for a password
-```
-
-Then add a host block on your laptop, so later steps are just `ssh vps`:
-
-```
-Host vps
-    HostName 203.0.113.10
-    User ubuntu
-    IdentityFile ~/.ssh/id_ed25519
-    ForwardAgent yes
-    LocalForward 8000 localhost:8000
-    ServerAliveInterval 30
-```
-
-`LocalForward` is how you reach a service on the box from your laptop browser
-without opening a port — see [Reaching the server](#reaching-the-server).
-
-#### 2. Turn off password authentication
-
-Only once key login works, and **keep your current session open** until a fresh
-one succeeds — a bad config here leaves the KVM console as the only way back.
-
-The trap: `sshd_config` starts with `Include /etc/ssh/sshd_config.d/*.conf`,
-those files are read in lexical order, and for each keyword **the first value
-obtained wins** — the opposite of the last-wins convention every other `.d`
-directory uses. Cloud images commonly ship `50-cloud-init.conf` setting
-`PasswordAuthentication yes`, so a file named `99-hardening.conf` is read after
-it and silently ignored. No error, and passwords stay on.
-
-So look before writing, rather than guessing a prefix:
-
-```sh
-ls /etc/ssh/sshd_config.d/
-sudo grep -rE 'PasswordAuthentication|KbdInteractive' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/
-```
-
-Write a file that sorts *before* anything already setting these:
-
-```sh
-sudo tee /etc/ssh/sshd_config.d/10-hardening.conf >/dev/null <<'EOF'
-PasswordAuthentication no
-KbdInteractiveAuthentication no
-EOF
-sudo sshd -t && sudo systemctl restart ssh
-```
-
-`KbdInteractiveAuthentication no` is the line people forget: without it PAM can
-still offer a password-shaped prompt. `PermitRootLogin no` is redundant on OVH,
-which disables it already.
-
-Then verify the *effective* config rather than reasoning about file order:
-
-```sh
-sudo sshd -T | grep -E 'passwordauthentication|kbdinteractive'
-```
-
-`sshd -T` prints the resolved configuration after all includes and precedence
-are applied. It is the only check that actually settles it.
-
-> Ubuntu has used systemd **socket activation** for SSH since 22.10. For
-> authentication changes `systemctl restart ssh` is fine, but changing `Port`
-> or `ListenAddress` needs `systemctl daemon-reload && systemctl restart
-> ssh.socket` — the socket unit owns the listener, not sshd.
-
-#### 3. Firewall and swap
-
-```sh
-sudo ufw default deny incoming && sudo ufw default allow outgoing
-sudo ufw allow OpenSSH && sudo ufw enable
-
-free -h && swapon --show          # skip the rest if the image already has swap
-sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
-sudo mkswap /swapfile && sudo swapon /swapfile
-echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-```
-
-Only SSH is open; everything else is reached through the tunnel. (`fallocate`
-is fine on ext4. On btrfs it produces a swapfile the kernel rejects — use `dd`
-there.)
-
-#### 4. Install
+Then:
 
 ```sh
 sudo apt-get update
@@ -308,198 +47,92 @@ git clone https://github.com/almon7/dotfiles ~/dotfiles
 bash ~/dotfiles/install.sh
 ```
 
-The `apt-get` packages are Homebrew's Linux prerequisites; the dotfiles
-installer itself installs supported tools exclusively through Homebrew. The
-explicit `eval` above makes Homebrew available for this first run. The dotfiles
-installer then adds the appropriate `brew shellenv` command to your shell
-profile so `brew` and its packages remain on `PATH` in future sessions.
+- The `apt-get` packages are Homebrew's own prerequisites on Linux. They are
+  the only things that come from apt — every tool this repo installs comes from
+  Homebrew.
+- The `curl` line installs Homebrew itself.
+- `brew shellenv` prints the environment variables that put `brew` and its
+  packages on `PATH`. The `eval` applies them to this shell only; the dotfiles
+  installer then writes the same line into your shell profile, so later logins
+  get it without being asked.
 
-Afterwards, set your git identity — the scripts deliberately don't guess it:
+### Choosing what to install
 
-```sh
-git config --global user.name "Your Name"
-git config --global user.email "you@example.com"
-nvim --version && tmux -V                 # confirm the selected packages landed
-```
+- `./install.sh` opens an interactive checklist (`↑`/`↓` or `j`/`k` to move,
+  Space to toggle, Enter to install).
+- `./install.sh --all` skips the prompt.
+- Components can be installed individually: `./install.sh nvim tmux`.
+- Every component folder also holds a standalone installer, so
+  `./nvim/install.sh` works on its own.
+- With no terminal to ask — a pipe, or CI — everything is installed.
 
-#### Reaching the server
+Afterwards, set the Nerd Font as your terminal font, and see
+[`git/README.md`](git/README.md) to enroll an SSH key with GitHub and
+[`nvim/README.md`](nvim/README.md) for the editor's first launch.
 
-Nothing needs to be published. `ssh -L 8000:localhost:8000 vps` opens port 8000
-on your laptop and forwards it to `localhost:8000` **as seen from the server**,
-so `http://localhost:8000` in your browser hits the container. Put the
-`LocalForward` lines in `~/.ssh/config` and plain `ssh vps` brings them up.
+## What's in it
 
-The tunnel lives in your laptop's SSH client, so it dies with the connection and
-returns on reconnect — tmux protects the server-side processes, not the forward.
-It is also inbound-only: an external service that needs to POST to your box (a
-webhook) needs a real public endpoint, not a tunnel.
+Each name below is a component: a folder with its own installer, and an
+argument you can pass to `install.sh`. Everything is installed through Homebrew
+on both macOS and Linux wherever a formula exists.
 
-> **Agent forwarding.** Put `ForwardAgent yes` in the host's `~/.ssh/config`
-> block on your laptop so git pushes from the server are signed by your local
-> key. Never copy a private key onto a VPS.
+- **`agents`** — the standing instructions and the skills folder both coding
+  agents read. Claude Code and Codex each hard-code their own paths, so one
+  tracked file and one tracked folder are linked to both.
+  [One instructions file for every agent](agents/README.md#one-set-of-instructions-for-every-agent),
+  [one skills folder for every agent](agents/README.md#one-set-of-skills-for-every-agent)
+- **`codex`** — a check, not an install. It reads Codex's own
+  `~/.codex/config.toml`, adds any setting from
+  [`codex/config.toml`](codex/config.toml) that is missing, and reports a key
+  that is already set to something else without touching it.
+  [Codex settings](agents/README.md#codex-settings)
+- **`context7`** — the `ctx7` CLI that the `find-docs` skill calls to fetch
+  current library documentation, plus Node to run it. The one component
+  installed from npm rather than Homebrew, because that is where it ships.
+  [find-docs and the Context7 CLI](agents/README.md#find-docs-and-the-context7-cli)
+- **`git`** — Git, a `~/.gitconfig` setting the commit identity and `nvim` as
+  the editor, and a GitHub SSH key for this machine.
+  [Git identity and GitHub SSH](git/README.md)
+- **`hunk`** — a terminal UI for reading diffs, which is mostly how you review
+  what an agent just wrote.
+- **`nvim`** — Neovim and this config, plus what it shells out to: ripgrep and
+  fd for the file and grep pickers, Node and a C compiler for plugins and
+  Treesitter, Python for the Mason-installed language server, lazygit for
+  `<leader>gg`, and a Nerd Font on macOS.
+  [Neovim config and first launch](nvim/README.md)
+- **`tmux`** — tmux, its config, and its plugins. Work runs inside a tmux
+  session so a dropped SSH connection leaves it running server-side instead of
+  killing it. [tmux keys, sessions and clipboard](tmux/README.md)
+- **`wezterm`** — WezTerm and its config. The Homebrew cask is macOS-only, so
+  on Linux install the terminal yourself; the config is linked either way.
 
-> **A firewall does not cover published Docker ports.** Traffic to a published
-> port is DNAT'd in `PREROUTING` and then traverses the `FORWARD` chain — it
-> never reaches `INPUT`, which is where ufw's default-deny lives. ufw isn't
-> overridden, it simply isn't consulted: `ufw deny 5432` has no effect on a
-> container published with `-p 5432:5432`, and the port is open to the
-> internet. Publish to loopback instead (`127.0.0.1:5432:5432`) and reach it
-> over an SSH tunnel. Where a port genuinely must be public, the supported hook
-> is Docker's `DOCKER-USER` chain, which is evaluated before its own rules;
-> [`ufw-docker`](https://github.com/chaifeng/ufw-docker) wires ufw into it.
-> This bites hardest with a compose file that publishes a database on default
-> credentials.
+Codex itself is not installed by any of them — the `codex` component only
+checks the settings of a Codex that is already there, or waiting to be.
 
-### Local machine (macOS or Linux)
+## Reruns and updates
 
-Install [Homebrew](https://brew.sh), then clone and run the same installer. On
-macOS it additionally sets up the Xcode Command Line Tools (Treesitter needs a
-C compiler) and a Nerd Font.
+Every installer is idempotent — running it twice leaves the machine as running
+it once did — so rerunning is also how you update:
 
-```sh
-git clone https://github.com/almon7/dotfiles.git ~/dotfiles
-~/dotfiles/install.sh
-```
+- Homebrew packages upgrade when Homebrew reports them as outdated.
+- tmux's plugin manager and its plugins are pulled.
+- The installer's own blocks in your shell start-up files are rewritten in
+  place, so a moved path is corrected rather than appended to below the stale
+  copy.
+- Config links that are already correct are left alone. Anything else sitting
+  at the target — a real file, a link pointing elsewhere — is moved aside to a
+  timestamped `.bak` first, so nothing is destroyed.
 
-Afterwards set the Nerd Font as your terminal font, and see
-[`nvim/README.md`](nvim/README.md) for the first-launch steps. That README also
-covers doing all of this by hand, which is the path for Windows, Arch and
-Fedora — the installer doesn't cover those.
+Two things a rerun deliberately does not touch:
 
-> **Docker on macOS** is Docker Desktop (or OrbStack/Colima) — a GUI app with a
-> VM behind it, not something to install unattended from a shell script. The
-> dotfiles installers do not manage Docker; install it separately if needed.
+- **A program installed outside Homebrew.** It is not ours to replace, so it is
+  left alone; the installer only warns when such a copy wins the `PATH` lookup
+  and shadows the one it manages.
+- **Neovim plugins**, which stay at the versions pinned in
+  `nvim/lazy-lock.json`. Moving them is a deliberate `:Lazy update` followed by
+  a commit of the lockfile, so an update is a reviewable change rather than a
+  surprise.
 
-### Claude Code per-project (optional)
-
-The dotfiles installers do not install Claude Code. To have a specific repo ship
-it to **anyone** who opens it (teammates, CI), add the maintained feature to that
-repo's `.devcontainer/devcontainer.json`:
-
-```json
-{
-  "features": {
-    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
-  }
-}
-```
-
-## Docker
-
-Install Docker Engine and the **Compose v2 plugin** separately on Linux; the
-dotfiles installers do not manage them. A box can have a working daemon and
-still fail every `docker compose` command, so check both. If your installation
-adds you to the `docker` group, start a new login (or run `newgrp docker`) before
-using the socket without `sudo`.
-
-### Working on a Dockerised Python project
-
-A project whose test runner and linters live inside the container still wants
-tooling on the host. Three things aren't obvious:
-
-```sh
-cp sample.env .env    # compose interpolates ${UID}/${GID} from here, not the shell
-uv sync --dev         # host-side .venv, so nvim's LSP can resolve imports
-```
-
-- **`.env` is not optional** if `compose.yaml` interpolates `${UID}`/`${GID}`.
-  Bash sets `UID` but doesn't export it, so Compose can't see it — without the
-  file both resolve to empty and the image build fails on `groupadd -g ""`.
-- **The host `.venv` is what the editor reads.** basedpyright resolves imports
-  against the host filesystem, not the container, so without one every import
-  in an otherwise healthy project shows up red. The venv is for the LSP; the
-  tests still run in Docker.
-- **`uv` on the host also backs the fallback paths** — pre-commit hooks that
-  shell out to `uv run` when the container isn't up, and e2e suites that drive
-  the stack from outside it.
-
-## tmux
-
-Everything on a remote box runs inside tmux, so a dropped connection or a closed
-laptop doesn't kill the work. Claude Code keeps running while you're on a train.
-
-```sh
-tmux new -s dev          # start
-tmux a -t dev            # come back to it
-tmux ls                  # what's running
-```
-
-The prefix is **`C-a`** (remapped from the default `C-b`, which is a bad key).
-Press it, release, then press the command key.
-
-| Key | Does |
-|---|---|
-| `C-a d` | Detach — everything keeps running server-side |
-| `C-a c` | New window (a tab) |
-| `C-a 1`…`9` | Jump to window N |
-| `C-a n` / `C-a p` | Next / previous window |
-| `C-a ,` | Rename the current window |
-| `C-a w` | Pick a window from a list |
-| `C-a &` | Close the current window |
-| <code>C-a &#124;</code> / `C-a -` | Split vertically / horizontally |
-| `C-a h/j/k/l` | Move between panes |
-| `C-h/j/k/l` | Move between panes **and** Neovim splits (no prefix) |
-| `C-a H/J/K/L` | Move the current pane by swapping it left/down/up/right |
-| `C-a z` | Zoom current pane fullscreen (toggle) |
-| `C-a [` | Scrollback / copy mode |
-| `C-a r` | Reload this config after editing it |
-| `C-a C-s` / `C-a C-r` | Save / restore all tmux sessions |
-| `C-a ?` | List every binding |
-
-That's the whole working set. The mouse is enabled too: click panes, drag borders
-to resize, and use the scroll wheel in terminal applications. **Ctrl-click** a
-detected link to open it in the OS default browser, including from inside tmux.
-
-A typical layout: window 1 for `nvim`, window 2 for `claude`, window 3 for git
-and test runs. Give Claude a task, `C-a 1` back to the editor while it works.
-
-[`tmux-resurrect`](https://github.com/tmux-plugins/tmux-resurrect) and
-[`tmux-continuum`](https://github.com/tmux-plugins/tmux-continuum) preserve the
-session/window/pane layout and working directories across reboots. Continuum
-saves automatically every 15 minutes and restores the snapshot when tmux next
-starts. Running programs are relaunched where supported, not kept alive through
-a machine restart.
-
-Set it up once on each new machine:
-
-```sh
-~/dotfiles/tmux/install.sh
-tmux
-```
-
-The installer installs the TPM plugins automatically, and updates the plugin
-manager and the installed plugins on every later run. Before a planned reboot,
-press `C-a C-s` for the freshest snapshot. After rebooting, start `tmux`;
-Continuum restores the most recent snapshot automatically. If it does not,
-press `C-a C-r` to restore manually.
-
-> **Colors.** The config sets `default-terminal` and truecolor overrides because
-> the Catppuccin/Tokyonight setup uses `transparent = true` — without them the
-> colorscheme renders wrong inside tmux.
-
-### Copy and paste
-
-The regular terminal workflow is deliberately simple:
-
-| Want | Do |
-|---|---|
-| Paste from the system clipboard | `Cmd-V` (macOS) / `Ctrl-Shift-V` (Linux) |
-| Copy a Neovim selection to the system clipboard | Select with `v`, then `Space y` |
-| Copy the current Neovim line to the system clipboard | `Space Y` |
-| Paste the system clipboard in Neovim | `Space p` |
-| Select terminal text with the mouse | Hold `Shift` and drag; `Cmd-C` copies it |
-
-tmux and terminal applications receive ordinary mouse clicks and scrolling.
-Hold `Shift` while dragging to bypass their mouse handling and select text in
-WezTerm. Releasing never changes the clipboard; press `Cmd-C` to copy.
-
-> **Over SSH.** `set-clipboard on` sends yanks to your laptop's clipboard via
-> OSC 52, so explicit clipboard yanks in tmux or Neovim reach it. Needs a
-> terminal that supports OSC 52 (WezTerm, Kitty, Ghostty, iTerm2). Copy only —
-> most terminals refuse an OSC 52 *read*, so paste stays on `Cmd-V`.
-
-> **Clear screen.** `C-l` is taken over for pane navigation, so the shell's
-> clear-screen moves to `C-a C-l`.
-
-> **Autosave.** `focus-events on` is required: [`autosave.lua`](nvim/lua/config/autosave.lua)
-> hooks `FocusLost`/`FocusGained`, and tmux swallows those events by default.
+The configs are symlinked rather than copied, so the link runs both ways:
+editing `~/.config/nvim` or `~/.claude/skills` edits this repository, and shows
+up in `git status`.

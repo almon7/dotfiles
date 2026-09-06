@@ -4,9 +4,9 @@ My Neovim config, built on [LazyVim](https://www.lazyvim.org/): **Catppuccin**
 colorscheme (Tokyonight is also installed — switch live with `<leader>uC`),
 **Claude Code**, and language support for Python, JSON, Markdown and TOML.
 
-> On GitHub Codespaces this installs automatically — see the repo
-> [README](../README.md#install). The steps below are for setting it up by hand
-> on a workstation. They work **from scratch** on **macOS, Linux and Windows**.
+> On macOS and Linux, `./install.sh nvim` does everything in steps 1–3 — see
+> the repo [quick start](../README.md#quick-start). The manual walkthrough below
+> exists for **Windows**, which the installer does not cover.
 
 ## 1. Prerequisites
 
@@ -15,24 +15,6 @@ Every platform needs: **Neovim ≥ 0.11**, **git**, **Node.js**, a **C compiler*
 (for `<leader>gg`), and a
 [**Nerd Font**](https://www.nerdfonts.com) (for icons — set it as your terminal
 font afterwards).
-
-### macOS / Linux (Homebrew)
-
-```sh
-brew install neovim git node ripgrep fd lazygit
-```
-
-On macOS, also install a Nerd Font and the Xcode Command Line Tools:
-
-```sh
-brew install --cask font-jetbrains-mono-nerd-font
-xcode-select --install
-```
-
-On Linux, first follow Homebrew's
-[Linux prerequisites and installation guide](https://docs.brew.sh/Homebrew-on-Linux).
-Then install a [Nerd Font](https://www.nerdfonts.com) and select it in your
-terminal.
 
 ### Windows (winget, PowerShell)
 
@@ -46,13 +28,6 @@ Install a [Nerd Font](https://www.nerdfonts.com) and set it in your terminal
 
 ## 2. Clone the dotfiles repo
 
-macOS / Linux:
-
-```sh
-git clone git@github.com:almon7/dotfiles.git ~/dotfiles
-# use https://github.com/almon7/dotfiles.git if you haven't set up SSH
-```
-
 Windows (PowerShell):
 
 ```powershell
@@ -62,13 +37,7 @@ git clone https://github.com/almon7/dotfiles.git $env:USERPROFILE\dotfiles
 ## 3. Link the config into place
 
 > If a config already exists, back it up first
-> (e.g. `mv ~/.config/nvim ~/.config/nvim.bak`).
-
-macOS / Linux:
-
-```sh
-ln -s ~/dotfiles/nvim ~/.config/nvim
-```
+> (e.g. `mv "$env:LOCALAPPDATA\nvim" "$env:LOCALAPPDATA\nvim.bak"`).
 
 Windows — PowerShell (needs **Developer Mode** on, or run as **Administrator**):
 
