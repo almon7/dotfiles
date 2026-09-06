@@ -19,8 +19,8 @@ esac
 components=("$@")    # component names given on the command line, possibly none
 all_components=(agents codex context7 git hunk nvim tmux wezterm)    # every installable component
 descriptions=(    # one line per component above, in the same order
-  'Shared agent instructions'
-  'Agent skills for Codex and Claude Code'
+  'Shared agent instructions and skills'
+  'Codex settings check (does not install Codex)'
   'Context7 CLI for the find-docs skill'
   'Git and its default editor'
   'Hunk terminal diff viewer'
