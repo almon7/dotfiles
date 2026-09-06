@@ -2,8 +2,8 @@
 
 ## Commits Style
 
-Commit messages follow [Conventional Commits 1.0.0][cc], whose requirement
-words carry their [RFC 2119][rfc2119] force: MUST is absolute, SHOULD may be
+Commit messages follow Conventional Commits 1.0.0, whose requirement
+words carry their RFC 2119 force: MUST is absolute, SHOULD may be
 set aside only once the consequences are understood, MAY is a free choice.
 
 ```
@@ -28,6 +28,3 @@ set aside only once the consequences are understood, MAY is a free choice.
   of the message is case-insensitive.
 - Types and scopes SHOULD be lowercase and the subject SHOULD fit in about 72
   columns, so `git log --oneline` stays readable.
-
-[cc]: https://www.conventionalcommits.org/en/v1.0.0/
-[rfc2119]: https://www.rfc-editor.org/rfc/rfc2119.txt
