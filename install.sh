@@ -107,7 +107,11 @@ for component in "${components[@]}"; do
   esac
 
   echo
-  echo "Installing $component"
+  for i in "${!all_components[@]}"; do    # the two arrays are parallel, so the index carries the description
+    if [ "${all_components[$i]}" = "$component" ]; then    # an if, so a non-matching last row is not a failing loop
+      echo "$component: ${descriptions[$i]}"    # what this component actually does, rather than "Installing"
+    fi
+  done
   "$ROOT/$component/install.sh"    # each component installs itself
 done
 

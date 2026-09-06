@@ -43,7 +43,8 @@ validates each name against a hard-coded `case`, then runs
 **four** places in that file — `all_components`, the positionally-parallel
 `descriptions` array, the `--help` usage line, and the validation `case` — plus
 creating `<component>/install.sh`. The two arrays are matched by index, so an
-insert in one without the other silently mislabels the menu.
+insert in one without the other silently mislabels the menu, and with it the
+line printed above each component as it runs.
 
 **`install-lib.sh` holds every behaviour worth being consistent about.** Each
 component installer is a thin script that sets `DIR` and `LABEL`, sources it,
