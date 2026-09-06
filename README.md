@@ -95,6 +95,8 @@ on both macOS and Linux wherever a formula exists.
   [Git identity and GitHub SSH](git/README.md)
 - **`hunk`** — a terminal UI for reading diffs, which is mostly how you review
   what an agent just wrote.
+- **`lazysql`** — a terminal UI for browsing a database, so a query is one
+  keystroke away from the shell rather than a detour through a GUI client.
 - **`nvim`** — Neovim and this config, plus what it shells out to: ripgrep and
   fd for the file and grep pickers, Node and a C compiler for plugins and
   Treesitter, Python for the Mason-installed language server, lazygit for
