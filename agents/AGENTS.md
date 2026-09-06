@@ -1,5 +1,11 @@
 # Personal agent instructions
 
+## Communication Style
+
+- I don't have infinite time: be succint but complete. Don't make me look up information or, as much as possible, code;
+- I don't have infinite memory: Don't make me look up information or, as much as possible, code;
+
+
 ## Commits Style
 
 Commit messages follow Conventional Commits 1.0.0, whose requirement
@@ -31,16 +37,9 @@ set aside only once the consequences are understood, MAY is a free choice.
 
 ## Starting work
 
-Before making changes in a repository, bring the checkout up to date, so the
-work is built on what is actually on the branch rather than on a stale copy.
+Before making changes in a repository, bring the checkout up to date:
 
-- Check the state first with `git status`, and note the current branch and
-  whether the tree is clean.
-- Fast-forward the branch with `git pull --ff-only`. It refuses rather than
-  creating a merge or rewriting local commits, which makes the divergence
-  visible instead of silently resolving it.
-- If the pull is refused, or the tree is dirty, stop and say so rather than
-  reaching for `--rebase`, `--force`, `stash`, or `reset` — deciding what
-  happens to diverged or uncommitted work is the user's call.
-- If there is no upstream or no network, say that and carry on with the local
-  state;
+- Check the state first with `git status`, and note the current branch and whether the tree is clean.
+- Fast-forward the branch with `git pull --ff-only`. It refuses rather than creating a merge or rewriting local commits, which makes the divergence visible instead of silently resolving it.
+- If the pull is refused, or the tree is dirty, stop and say so rather than reaching for `--rebase`, `--force`, `stash`, or `reset`
+— deciding what happens to diverged or uncommitted work is the user's call. If there is no upstream or no network, say that and carry on with the local state;
