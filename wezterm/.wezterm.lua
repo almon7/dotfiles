@@ -51,23 +51,20 @@ config.mouse_bindings = {
     mouse_reporting = true,
     action = act.OpenLinkAtMouseCursor,
   },
-  -- Releasing a WezTerm selection does not copy automatically. Cmd-C copies it.
-  {
-    event = { Up = { streak = 1, button = 'Left' } },
-    mods = 'NONE',
-    action = act.Nop,
-  },
-  {
-    event = { Up = { streak = 2, button = 'Left' } },
-    mods = 'NONE',
-    action = act.Nop,
-  },
-  {
-    event = { Up = { streak = 3, button = 'Left' } },
-    mods = 'NONE',
-    action = act.Nop,
-  },
 }
+
+-- Selection never copies on release, including Shift-extended and Alt-block
+-- selections outside mouse-aware apps. Shift is stripped when bypassing them.
+-- Keep Ctrl-click's link action separate. Cmd-C / Ctrl-Shift-C copies explicitly.
+for _, mods in ipairs { 'NONE', 'SHIFT', 'ALT', 'SHIFT|ALT' } do
+  for streak = 1, 3 do
+    table.insert(config.mouse_bindings, {
+      event = { Up = { streak = streak, button = 'Left' } },
+      mods = mods,
+      action = act.Nop,
+    })
+  end
+end
 
 -- Match Terminal.app's word-wise cursor movement in shells and through tmux.
 config.keys = {

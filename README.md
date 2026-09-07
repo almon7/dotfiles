@@ -107,6 +107,7 @@ on both macOS and Linux wherever a formula exists.
   killing it. [tmux keys, sessions and clipboard](tmux/README.md)
 - **`wezterm`** — WezTerm and its config. The Homebrew cask is macOS-only, so
   on Linux install the terminal yourself; the config is linked either way.
+  [WezTerm keys, mouse and terminal integration](wezterm/README.md)
 
 Codex itself is not installed by any of them — the `codex` component only
 checks the settings of a Codex that is already there, or waiting to be.

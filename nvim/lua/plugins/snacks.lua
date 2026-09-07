@@ -1,19 +1,11 @@
+local terminal_navigation = require("config.navigation").terminal
+
 local tmux_directions = {
   h = { flag = "L", edge = "left" },
   j = { flag = "D", edge = "bottom" },
   k = { flag = "U", edge = "top" },
   l = { flag = "R", edge = "right" },
 }
-
-local function terminal_navigation(command)
-  return function()
-    -- Terminal expression mappings run under text-lock, so defer the command
-    -- just as LazyVim's default terminal navigation does.
-    vim.schedule(function()
-      vim.cmd(command)
-    end)
-  end
-end
 
 local function select_tmux_pane(direction)
   local socket = vim.env.TMUX and vim.env.TMUX:match("^[^,]+")

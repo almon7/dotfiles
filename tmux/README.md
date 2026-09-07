@@ -24,7 +24,7 @@ it rather than for the program in the pane. It is remapped from the default
 `C-b`, which is a bad key. Press it, release, then press the command key.
 
 | Key | Does |
-|---|---|
+| --- | --- |
 | `C-a d` | Detach — everything keeps running server-side |
 | `C-a c` | New window (a tab) |
 | `C-a 1`…`9` | Jump to window N |
@@ -32,19 +32,25 @@ it rather than for the program in the pane. It is remapped from the default
 | `C-a ,` | Rename the current window |
 | `C-a w` | Pick a window from a list |
 | `C-a &` | Close the current window |
-| <code>C-a &#124;</code> / `C-a -` | Split vertically / horizontally |
-| `C-a h/j/k/l` | Move between panes |
-| `C-h/j/k/l` | Move between panes **and** Neovim splits (no prefix) |
+| `C-a \|` / `C-a -` | Split vertically / horizontally |
+| `C-a h/j/k/l` | Move between panes, stopping at the outer edges |
+| `C-h/j/k/l` | Move between panes **and** Neovim splits, stopping at the outer edges (also in tmux copy mode) |
+| Left `Option-j` / `Option-k` | Next / previous session in name order, stopping at either end |
+| `C-a a` | Return to the last window |
+| `C-a C-a` | Send `C-a` to the program in the pane |
 | `C-a H/J/K/L` | Move the current pane by swapping it left/down/up/right |
 | `C-a z` | Zoom current pane fullscreen (toggle) |
 | `C-a [` | Scrollback / copy mode |
+| `v` / `C-v` / `y` in copy mode | Begin selection / toggle rectangle / copy and leave copy mode |
 | `C-a r` | Reload this config after editing it |
 | `C-a C-s` / `C-a C-r` | Save / restore all tmux sessions |
 | `C-a ?` | List every binding |
 
-That is the whole working set. The mouse works too: click panes, drag borders to
-resize, scroll with the wheel, and **Ctrl-click** a detected link to open it in
-the OS browser, including from inside tmux.
+The mouse works too: click panes, drag borders to resize, scroll with the wheel, and **Ctrl-click** a detected link to open it in the OS browser, including from inside tmux.
+
+Neovim navigation works in Normal mode, plain `:terminal` buffers, Snacks terminals, and pickers. Ordinary editing buffers keep their Insert-mode shortcuts. In pickers, Ctrl-h/l moves between panels; Ctrl-j/k moves to tmux panes above/below, while j/k or Ctrl-n/p moves through results. See the [Neovim navigation notes](../nvim/README.md#navigation).
+
+New windows and splits start in the session's directory (set with `tmux new -s dev -c /path/to/project`), even after a shell changes directory.
 
 A typical layout: window 1 for `nvim`, window 2 for `claude`, window 3 for git
 and test runs. Give Claude a task, `C-a 1` back to the editor while it works.
@@ -75,34 +81,22 @@ holds — which is the whole reason this needs explaining. The workflow is
 deliberately simple:
 
 | Want | Do |
-|---|---|
+| --- | --- |
 | Paste from the system clipboard | `Cmd-V` (macOS) / `Ctrl-Shift-V` (Linux) |
 | Copy a Neovim selection to the system clipboard | Select with `v`, then `Space y` |
 | Copy the current Neovim line to the system clipboard | `Space Y` |
-| Paste the system clipboard in Neovim | `Space p` |
-| Select terminal text with the mouse | Hold `Shift` and drag; `Cmd-C` copies it |
+| Paste the system clipboard in local Neovim | `Space p` |
+| Select terminal text in WezTerm | Hold `Shift` and drag; `Cmd-C` / `Ctrl-Shift-C` copies it |
+| Select terminal text in tmux | Drag, double-click a word, or triple-click a line; `y` copies it |
 
-tmux and terminal programs receive ordinary clicks and scrolling, so a plain
-drag is theirs, not a selection. Hold `Shift` while dragging to bypass them and
-select text in WezTerm itself. Releasing never changes the clipboard; press
-`Cmd-C` to copy.
+tmux and terminal programs receive ordinary clicks and scrolling. In a shell pane, tmux selects text and keeps the selection after release; press `y` to copy or Escape to cancel. Mouse-aware applications such as Neovim handle their own selections. Hold `Shift` while dragging to bypass them and select text in WezTerm itself, then press `Cmd-C` (macOS) or `Ctrl-Shift-C` (Linux). Selecting, including double/triple clicks and rectangular selections, does not overwrite the clipboard.
 
-> **Over SSH.** OSC 52 is a terminal escape sequence that lets a remote program
-> hand text to your local clipboard. `set-clipboard on` enables it, so yanks in
-> tmux or Neovim on the server reach your laptop. Needs a terminal that supports
-> it (WezTerm, Kitty, Ghostty, iTerm2), and it is copy-only — most terminals
-> refuse an OSC 52 *read*, so paste stays on `Cmd-V`.
+**Over SSH.** OSC 52 lets explicit clipboard yanks in remote tmux or Neovim reach your laptop. Use a supporting terminal such as WezTerm, Kitty, Ghostty, or iTerm2. The Neovim provider is copy-only: paste with `Cmd-V` / `Ctrl-Shift-V`; `Space p` shows a reminder. The supported route is WezTerm → SSH → remote tmux/Neovim. Nesting a remote session inside local tmux requires a separate key-forwarding setup.
 
-> **Clear screen.** `C-l` is taken over for pane navigation, so the shell's
-> clear-screen moves to `C-a C-l`.
+**Clear screen.** `C-l` is taken over for pane navigation, so the shell's clear-screen moves to `C-a C-l`.
 
 ## Config notes
 
-> **Colors.** The config sets `default-terminal` and truecolor overrides because
-> the Catppuccin/Tokyonight setup uses `transparent = true`. Without them tmux
-> advertises a lesser color capability and the colorscheme renders wrong.
+**Colors.** The config sets `default-terminal` and truecolor overrides because the Catppuccin/Tokyonight setup uses `transparent = true`. Without them tmux advertises a lesser color capability and the colorscheme renders wrong.
 
-> **Autosave.** `focus-events on` is required:
-> [`autosave.lua`](../nvim/lua/config/autosave.lua) writes the buffer on
-> `FocusLost` and reloads externally-changed files on `FocusGained`. tmux
-> swallows both events by default, so without it neither fires inside tmux.
+**Autosave.** `focus-events on` is required: [`autosave.lua`](../nvim/lua/config/autosave.lua) writes the buffer on `FocusLost` and reloads externally-changed files on `FocusGained`. tmux swallows both events by default, so without it neither fires inside tmux.

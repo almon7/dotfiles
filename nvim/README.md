@@ -67,6 +67,7 @@ Run `:checkhealth` to confirm everything is wired up.
 This config enables one AI integration:
 
 - **Claude Code** — install the CLI, then use it from Neovim:
+
   ```sh
   brew install --cask claude-code
   ```
@@ -84,15 +85,21 @@ brew install tree-sitter-cli
 
 - **Markdown rendering:** disabled by default. Toggle it with `Space u m` or `:RenderMarkdown toggle`.
 - **Markdown diagnostics:** disabled by default. Enable them for the current buffer with `:lua vim.diagnostic.enable(true, { bufnr = 0 })`.
-- **System clipboard:** regular `y`/`p` stay inside Neovim. Use `Space y` after
-  selecting with `v`, `Space Y` for the current line, and `Space p` to paste
-  from the system clipboard.
+- **System clipboard:** regular `y`/`p` stay inside Neovim. Use `Space y` after selecting with `v`, `Space Y` for the current line, and `Space p` to paste from the system clipboard locally. Over SSH, clipboard yanks use OSC 52; paste with your terminal's `Cmd-V` (macOS) or `Ctrl-Shift-V` (Linux). `Space p` shows that reminder because the SSH provider is copy-only.
 - **Markdown linting** uses `markdownlint-cli2`. The `MD013` (line-length) rule
   is disabled via `.markdownlint-cli2.jsonc`, which `lua/plugins/lint.lua` passes
   to the linter with `--config`. Both files live here, so it works automatically
   — no home-directory config needed. (A `~/.markdownlint*` config would *not*
   work: nvim-lint lints over stdin, so the tool resolves config from the cwd,
   never `$HOME`.)
+
+## Navigation
+
+Ctrl-h/j/k/l moves left/down/up/right through Neovim splits and adjacent tmux panes, stopping at the outer edges. It works in Normal mode, plain `:terminal` buffers, and Snacks terminals, including the first navigation keypress before the plugin has loaded. Ordinary Insert-mode editing shortcuts are preserved. Ctrl-\ returns to the previous Neovim window or tmux pane from Normal mode.
+
+Snacks pickers treat the search input and results as one panel: Ctrl-h/l moves between panels (and the editor beside the explorer), then into tmux when there is no panel in that direction. Ctrl-j/k moves directly to tmux panes below/above; j/k in Normal mode and Ctrl-n/p move through results. Outside tmux, movement stops when there is no eligible Neovim window.
+
+The paired [tmux bindings](../tmux/README.md#keys) work locally and when SSH connects directly to remote tmux/Neovim. Existing Neovim sessions retain their loaded Lua configuration; open a fresh session after updating these mappings.
 
 ## Updating
 
