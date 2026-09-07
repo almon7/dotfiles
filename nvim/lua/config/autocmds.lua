@@ -9,21 +9,22 @@
 
 require("config.autosave")
 
-local function disable_markdown_completions(buf)
+local function set_markdown_defaults(buf)
   vim.b[buf].completion = false
+  vim.diagnostic.enable(false, { bufnr = buf })
 end
 
 vim.api.nvim_create_autocmd("FileType", {
   pattern = "markdown",
   callback = function(event)
-    disable_markdown_completions(event.buf)
+    set_markdown_defaults(event.buf)
   end,
-  desc = "Disable completions in Markdown files",
+  desc = "Disable completions and diagnostics in Markdown files",
 })
 
 -- The initial buffer can get its filetype before this config loads on VeryLazy.
 vim.schedule(function()
   if vim.bo.filetype == "markdown" then
-    disable_markdown_completions(0)
+    set_markdown_defaults(0)
   end
 end)

@@ -83,6 +83,7 @@ brew install tree-sitter-cli
 ## Notes
 
 - **Markdown rendering:** disabled by default. Toggle it with `Space u m` or `:RenderMarkdown toggle`.
+- **Markdown diagnostics:** disabled by default. Enable them for the current buffer with `:lua vim.diagnostic.enable(true, { bufnr = 0 })`.
 - **System clipboard:** regular `y`/`p` stay inside Neovim. Use `Space y` after
   selecting with `v`, `Space Y` for the current line, and `Space p` to paste
   from the system clipboard.
