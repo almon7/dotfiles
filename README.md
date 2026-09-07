@@ -60,6 +60,7 @@ bash ~/dotfiles/install.sh
 
 - `./install.sh` opens an interactive checklist (`↑`/`↓` or `j`/`k` to move,
   Space to toggle, Enter to install).
+- Everything starts ticked but `git`: it replaces `~/.gitconfig` with one naming a fixed account and SSH key, so tick it only on a machine that should commit as `almon7`. `--all` and a run with no terminal install it like any other component.
 - `./install.sh --all` skips the prompt.
 - Components can be installed individually: `./install.sh nvim tmux`.
 - Every component folder also holds a standalone installer, so
