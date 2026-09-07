@@ -12,15 +12,16 @@ Before answering or acting:
 
 ## Communication Style
 
-- I don't have infinite time: be succint but complete. Don't make me look up information or, as much as possible, code;
+- I don't have infinite time: be succinct but complete. Don't make me look up information or, as much as possible, code;
 - I don't have infinite memory: Don't make me look up information or, as much as possible, code;
 
+## Formatting Guide
+
+- Do not hard-wrap prose to a fixed column width. Keep each paragraph and list item on a single source line and let the editor or viewer wrap it visually. Preserve line breaks required by syntax or structure, such as code blocks and nested lists.
 
 ## Commits Style
 
-Commit messages follow Conventional Commits 1.0.0, whose requirement
-words carry their RFC 2119 force: MUST is absolute, SHOULD may be
-set aside only once the consequences are understood, MAY is a free choice.
+Commit messages follow Conventional Commits 1.0.0, whose requirement words carry their RFC 2119 force: MUST is absolute, SHOULD may be set aside only once the consequences are understood, MAY is a free choice.
 
 ```
 <type>[optional scope][!]: <description>
@@ -30,20 +31,12 @@ set aside only once the consequences are understood, MAY is a free choice.
 [optional footer(s)]
 ```
 
-- The subject MUST open with a type and `: ` — `feat` for a new feature, `fix`
-  for a bug fix, or one of `docs`, `test`, `refactor`, `perf`, `style`,
-  `build`, `ci`, `chore` for everything else.
-- A scope MAY follow the type in parentheses, naming the part of the codebase
-  that changed: `fix(parser): reject an unterminated string`.
-- A body MAY follow the description after one blank line, and is the place to
-  say why the change was needed rather than what the diff already shows.
-- Footers MAY follow the body after another blank line, written as
-  `Token: value` with hyphens standing in for spaces, e.g. `Refs: #12`.
-- A breaking change MUST be flagged, either with `!` before the colon or with a
-  `BREAKING CHANGE: <description>` footer. That token stays uppercase; the rest
-  of the message is case-insensitive.
-- Types and scopes SHOULD be lowercase and the subject SHOULD fit in about 72
-  columns, so `git log --oneline` stays readable.
+- The subject MUST open with a type and `: ` — `feat` for a new feature, `fix` for a bug fix, or one of `docs`, `test`, `refactor`, `perf`, `style`, `build`, `ci`, `chore` for everything else.
+- A scope MAY follow the type in parentheses, naming the part of the codebase that changed: `fix(parser): reject an unterminated string`.
+- A body MAY follow the description after one blank line, and is the place to say why the change was needed rather than what the diff already shows.
+- Footers MAY follow the body after another blank line, written as `Token: value` with hyphens standing in for spaces, e.g. `Refs: #12`.
+- A breaking change MUST be flagged, either with `!` before the colon or with a `BREAKING CHANGE: <description>` footer. That token stays uppercase; the rest of the message is case-insensitive.
+- Types and scopes SHOULD be lowercase and the subject SHOULD fit in about 72 columns, so `git log --oneline` stays readable.
 
 ## Starting work
 
@@ -51,5 +44,4 @@ Before making changes in a repository, bring the checkout up to date:
 
 - Check the state first with `git status`, and note the current branch and whether the tree is clean.
 - Fast-forward the branch with `git pull --ff-only`. It refuses rather than creating a merge or rewriting local commits, which makes the divergence visible instead of silently resolving it.
-- If the pull is refused, stop and say so rather than reaching for `--rebase`, `--force`, `stash`, or `reset`
-— deciding what happens to diverged is the user's call. If there is no upstream or no network, say that and carry on with the local state;
+- If the pull is refused, stop and say so rather than reaching for `--rebase`, `--force`, `stash`, or `reset` — deciding what happens to diverged is the user's call. If there is no upstream or no network, say that and carry on with the local state;
