@@ -10,12 +10,20 @@ FILE="$DIR/AGENTS.md"    # the single tracked instructions file both agents will
 SKILLS="$DIR/skills"    # the single tracked skills folder both agents will read
 
 usage() {
-  printf 'Usage: %s\n' "$0"    # how the script is invoked
+  printf 'Usage: %s [--check-updates|--refresh-skills]\n' "$0"    # how the script is invoked
   printf 'Links AGENTS.md and skills/ to the paths Claude Code and Codex read.\n'    # what it does
+  printf 'Also checks vendored skills for upstream changes; --check-updates only checks.\n'
+  printf -- '--refresh-skills replaces the two clean vendored skill folders with upstream.\n'
 }
 
-case "${1:-}" in    # this installer takes no options
+if (( $# > 1 )); then
+  usage >&2
+  exit 2
+fi
+case "${1:-}" in
   -h|--help) usage; exit 0 ;;    # print the usage text and stop
+  --check-updates) exec bash "$DIR/check-skill-updates.sh" ;;
+  --refresh-skills) exec bash "$DIR/check-skill-updates.sh" --refresh ;;
   '') ;;    # no argument: the normal case
   *) printf 'Unexpected argument: %s\n' "$1" >&2; exit 2 ;;    # anything else is a mistake
 esac
@@ -36,3 +44,5 @@ link_config "$SKILLS" "$HOME/.claude/skills"    # where Claude Code reads skills
 # CLI every documentation lookup it makes fails at the shell, so say so here
 # rather than leaving the agent to discover it mid-question.
 has ctx7 || log 'ctx7 is missing, so the find-docs skill cannot run. Install the context7 component.'    # warn, do not fail
+
+bash "$DIR/check-skill-updates.sh" || log 'Skill update check failed; installed skills were left as they were.'

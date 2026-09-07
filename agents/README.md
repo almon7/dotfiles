@@ -54,6 +54,62 @@ something in the conversation calls for them, rather than carrying always.
   sit in the context window of every request whether the subject comes up or
   not; a skill costs one line until something activates it.
 
+## Checking and refreshing the EveryInc skills
+
+`ce-simplify-code` and `ce-code-review` are vendored from
+[EveryInc/compound-engineering-plugin](https://github.com/EveryInc/compound-engineering-plugin).
+`./install.sh agents` checks them against upstream `main` after linking them.
+To run only the check:
+
+```sh
+./agents/install.sh --check-updates
+```
+
+The check downloads both skill folders into a temporary directory and compares
+all files, including references and scripts. It reports `up to date` or a
+difference and prints the upstream snapshot link. A difference can mean an
+upstream update or a local edit; this is a content comparison, not a version
+ordering claim. It never overwrites skills or runs downloaded code. Local
+skills such as `find-docs` and `trello-learning-queue` are outside this check.
+
+It requires Git, diff, and network access to GitHub. A failed check warns without
+blocking normal setup; the standalone check stops at the first fetch or comparison
+failure with exit 2, and exits 0 after a successful comparison, including when
+differences exist. Both downloads abort if the HTTP transfer stays below one byte
+per second for 60 seconds; this is a stalled-transfer limit, not a total deadline.
+The installer accepts at most one option, so a check cannot forward a refresh flag.
+
+To refresh both skills from the same upstream snapshot:
+
+```sh
+./agents/install.sh --refresh-skills
+git diff -- agents/skills/ce-simplify-code agents/skills/ce-code-review
+```
+
+Refresh requires rsync and refuses if either skill folder has staged, unstaged,
+untracked, or ignored files; unrelated dotfiles changes are allowed. It downloads
+and validates both upstream folders first, then replaces changed folders,
+including deleting files removed upstream. Committed local customizations are
+replaced too. Review and commit the resulting diff; Git retains the previous
+committed versions. Refresh never commits or pushes, and ordinary setup only
+checks. Cleanliness is checked before and after downloading and again just before
+each replacement. Copies use content checksums and are compared again before
+success is reported. If copying or verification fails, the command exits 2 and
+reports the partial refresh for inspection.
+
+Avoid editing the skill folders while a refresh is copying: the checks do not
+lock editors out. The update check compares content, not executable permission
+bits, so permission-only upstream changes are not detected.
+
+Run the offline regression tests with Python 3, Git, Bash, diff, and rsync:
+
+```sh
+python3 agents/test_skill_updates.py
+```
+
+Tests use disposable repositories and mock the network; installed skills and
+personal configuration are untouched.
+
 ## find-docs, and the two things it looks up
 
 [`find-docs`](skills/find-docs/SKILL.md) is the one skill an agent reaches for

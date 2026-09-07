@@ -9,9 +9,9 @@ link for any agent that hard-codes a different one.
 
 A cold-start dev environment: POSIX-ish bash installers plus the config files
 they link into place, so one `git clone` and one `./install.sh` reproduce the
-setup on a Mac or a Debian/Ubuntu VPS. There is no build, no test suite, and no
-CI. The scripts *are* the product, so correctness comes from reading them and
-running them, not from a runner.
+setup on a Mac or a Debian/Ubuntu VPS. There is no build or CI. The scripts
+*are* the product; the skill updater has a small offline regression suite, and
+the remaining installers are checked by reading and running them.
 
 ## Commands
 
@@ -21,6 +21,7 @@ running them, not from a runner.
 ./install.sh nvim tmux       # only the named components
 ./nvim/install.sh            # a single component, standalone; takes no options
 bash -n install.sh install-lib.sh */install.sh   # syntax check after editing
+python3 agents/test_skill_updates.py            # offline skill-updater tests
 ```
 
 With no TTY (`./install.sh < /dev/null`, CI) the picker is skipped and
@@ -79,10 +80,11 @@ Exceptions to know: the WezTerm cask is macOS-only (Linux still gets the config
 link), `context7` installs from npm because the CLI is not in Homebrew, and the
 nvim installer additionally triggers `xcode-select --install` for Treesitter.
 
-**Two things a rerun deliberately does not update:** a program installed outside
+**Things a rerun deliberately does not update:** a program installed outside
 Homebrew (reported by `warn_if_shadowed`), and Neovim plugins, which stay pinned
 in `nvim/lazy-lock.json` until a deliberate `:Lazy update` plus a commit of the
-lockfile.
+lockfile. Vendored agent skills are checked during setup and refreshed only with
+`./agents/install.sh --refresh-skills`.
 
 ### Agent configuration lives here
 
@@ -115,9 +117,10 @@ Consequences to keep in mind while working here:
   so they reproduce on a new machine and show up in a diff. `find-docs` is one
   skill over two sources: a short `SKILL.md`, since a skill's description is in
   the context window of every request, plus a `references/` file read only when
-  that branch is taken. Only the Context7 reference is vendored, from upstream
+  that branch is taken. Within `find-docs`, the Context7 reference is vendored from
   `upstash/context7` — keep the provenance comment at the top of
-  `references/context7.md` when refreshing it.
+  `references/context7.md` when refreshing it. The two EveryInc skills are also
+  vendored; their check/refresh commands and tests are documented in `agents/README.md`.
 - **`codex/config.toml` is not linked**, because Codex writes to its own config
   and a link would hand it this repository. `codex/install.sh` compares the two
   a key at a time instead: it inserts a missing key into the table it belongs to
