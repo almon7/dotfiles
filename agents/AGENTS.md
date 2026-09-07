@@ -19,6 +19,12 @@ Before answering or acting:
 - Resolve gaps from available context first. Ask a focused question only when the missing information would materially change the answer or action; otherwise proceed with a reasonable assumption, stating it when relevant.
 - Keep this step lightweight for simple requests. Share only the interpretation or assumptions the user needs to assess the result.
 
+## Plan, implement, and verify
+
+- Prefer a brief planning phase before implementation; keep trivial changes lightweight.
+- Identify useful skills, MCP servers, and documentation before implementing. Use `find-docs` to discover relevant skills and current docs, and check available MCP capabilities.
+- After code changes settle and before committing, run `ce-simplify-code`, then `ce-code-review`; address findings and run relevant checks.
+
 ## Communication Style
 
 - I don't have infinite time: be succinct but complete. Don't make me look up information or, as much as possible, code;
