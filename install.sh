@@ -36,9 +36,16 @@ choose_components() {
   local last_index=$((${#all_components[@]} - 1))    # the cursor may not move past this row
   local selected=()    # one flag per component
 
-  # Start with every component selected; Space toggles these 1/0 values.
+  # Start with every component selected except git; Space toggles these 1/0 values.
+  # git is the one component that replaces an identity rather than installing a
+  # tool: it moves ~/.gitconfig aside for one naming a fixed account and a fixed
+  # SSH key, so a machine that already commits as somebody else starts committing
+  # as almon7. That is worth ticking on purpose rather than accepting by default.
   for i in "${!all_components[@]}"; do    # iterate over indices, not values
-    selected+=(1)
+    case "${all_components[$i]}" in
+      git) selected+=(0) ;;    # unticked: the operator opts in
+      *) selected+=(1) ;;    # everything else installs a tool and is safe to accept
+    esac
   done
 
   # Hide the cursor while drawing, but always restore it if the script is interrupted.
