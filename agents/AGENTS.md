@@ -30,6 +30,22 @@ Before answering or acting:
 - I don't have infinite time: be succinct but complete. Don't make me look up information or, as much as possible, code;
 - I don't have infinite memory: Don't make me look up information or, as much as possible, code;
 
+### Say what you mean, concretely
+
+Everything you write is read without the context you had while writing it — a commit message, a code comment, a README line, a review finding, a chat reply. Each of these has to stand on its own.
+
+- Name the thing; never point at it. `this`, `these two`, `that one`, `the operator`, `the group`, `the heading`, `the filter` refer to nothing unless the noun is in the same sentence. Write the noun: "`link_config` and `brew_install`", not "these two"; "the `--all` path in `install.sh`", not "this one".
+- Never coin a term and then use it as if it were defined. "A contiguous group", "a filter over one heading" are not concepts a reader can look up; if a phrase like that is doing real work, define it where it first appears or replace it with the literal thing it describes.
+- Prefer the literal identifier over a paraphrase of it: file paths, function names, flags, keys, line numbers. `agents/install.sh --refresh-skills` beats "the refresh command".
+- Say who acts and what changes. "The picker leaves `git` unticked" — not "grouping these apart means the operator's app is this one minus a group".
+- Before sending anything, reread it as someone who has not seen the code or the conversation. If any noun phrase in it cannot be resolved from the text itself, rewrite that sentence.
+
+A real failure, sent as a standalone message with nothing around it:
+
+> The comment I wrote claimed that grouping these two apart means "the operator's app is this one minus a contiguous group", and the README restated it as "a filter over one heading".
+
+Every noun phrase in it is unanswerable: *these two* what? *The operator* is who — the person running the installer, a shell operator, an operator in some expression? *This one* is which one? *A contiguous group* of what, contiguous in what order? *One heading* in which file, and *a filter* over it doing what? The sentence also hides its subject behind "grouping ... means" and quotes two paraphrases instead of the text they paraphrase, so a reader cannot even go check. Written properly it would name the two functions, the file and heading, and the actual rule — and it would then be shorter than the version that says nothing.
+
 ## Formatting Guide
 
 - Do not hard-wrap prose to a fixed column width. Keep each paragraph and list item on a single source line and let the editor or viewer wrap it visually. Preserve line breaks required by syntax or structure, such as code blocks and nested lists.
