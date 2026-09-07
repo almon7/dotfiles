@@ -81,12 +81,13 @@ local function navigate_picker(picker, direction)
 
   local windows = {}
   local current
+  local current_id = vim.api.nvim_get_current_win()
 
   for _, name in ipairs({ "input", "list", "preview", "main" }) do
     local win = picker_window(picker, name)
     if win then
       windows[#windows + 1] = win
-      if win.id == vim.api.nvim_get_current_win() then
+      if win.id == current_id then
         current = win
       end
     end
