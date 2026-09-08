@@ -27,3 +27,12 @@ if vim.env.SSH_TTY or vim.env.SSH_CONNECTION then
 else
   vim.keymap.set({ "n", "x" }, "<leader>p", '"+p', { desc = "Paste from system clipboard" })
 end
+
+-- Use fixed English names so the date format does not depend on the locale.
+vim.keymap.set("n", "<leader>id", function()
+  local date = os.date("*t")
+  local months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec" }
+  local weekdays = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" }
+  local line = string.format("%02d %s %04d, %s", date.day, months[date.month], date.year, weekdays[date.wday])
+  vim.api.nvim_put({ line }, "l", true, false)
+end, { desc = "Insert today's date line" })

@@ -83,6 +83,8 @@ brew install tree-sitter-cli
 
 ## Notes
 
+- **Date line:** in Normal mode, press `Space i d` to insert today's local date on a new line below the cursor, for example `04 Sept 2026, Fri`. Month and weekday names are always English. Restart Neovim after updating, or run `:luafile ~/.config/nvim/lua/config/keymaps.lua` in an existing session.
+
 - **Markdown rendering:** disabled by default. Toggle it with `Space u m` or `:RenderMarkdown toggle`.
 - **Markdown diagnostics:** disabled by default. Enable them for the current buffer with `:lua vim.diagnostic.enable(true, { bufnr = 0 })`.
 - **System clipboard:** regular `y`/`p` stay inside Neovim. Use `Space y` after selecting with `v`, `Space Y` for the current line, and `Space p` to paste from the system clipboard locally. Over SSH, clipboard yanks use OSC 52; paste with your terminal's `Cmd-V` (macOS) or `Ctrl-Shift-V` (Linux). `Space p` shows that reminder because the SSH provider is copy-only.
