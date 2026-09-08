@@ -11,7 +11,7 @@ require_no_args "$@"    # reject anything but an empty argument list or --help
 
 # Install tmux itself from Homebrew on either supported platform.
 case "$(uname -s)" in    # branch on the kernel name
-  Darwin|Linux) brew_install tmux ;;    # install or upgrade the formula
+  Darwin|Linux) brew_install tmux python ;;    # install or upgrade the formula
   *) log 'Only macOS and Linux are supported.'; exit 1 ;;    # anything else is unsupported
 esac
 
@@ -32,6 +32,9 @@ else
   git -C "$TPM_DIR" pull --ff-only --quiet ||    # fast-forward only, never merge
     log 'Could not update the plugin manager; keeping the current checkout'    # carry on regardless
 fi
+
+# The selection bridge must be available when tmux first reads the config.
+link_config "$DIR/selection-state.sh" "$HOME/.tmux/selection-state.sh"
 
 # tmux reads its per-user configuration from ~/.tmux.conf.
 link_config "$DIR/tmux.conf" "$HOME/.tmux.conf"    # link the tracked config into place

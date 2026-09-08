@@ -20,58 +20,112 @@ config.send_composed_key_when_right_alt_is_pressed = true
 config.enable_kitty_keyboard = true
 config.hide_tab_bar_if_only_one_tab = true
 
--- Mouse-aware programs receive normal clicks and scrolling. Hold Shift while
--- dragging when WezTerm itself should select terminal text.
-config.bypass_mouse_reporting_modifiers = 'SHIFT'
+-- tmux receives ordinary mouse input and confines selection to its own panes.
+-- Alt bypasses reporting; Shift must remain visible to the no-op bindings.
+config.bypass_mouse_reporting_modifiers = 'ALT'
 
-config.mouse_bindings = {
-  -- Open hyperlinks in the OS default browser with Ctrl-click. Define the
-  -- binding for both regular panes and mouse-aware programs such as tmux.
-  {
-    event = { Down = { streak = 1, button = 'Left' } },
-    mods = 'CTRL',
-    mouse_reporting = false,
-    action = act.Nop,
-  },
-  {
-    event = { Up = { streak = 1, button = 'Left' } },
-    mods = 'CTRL',
-    mouse_reporting = false,
-    action = act.OpenLinkAtMouseCursor,
-  },
-  {
-    event = { Down = { streak = 1, button = 'Left' } },
-    mods = 'CTRL',
-    mouse_reporting = true,
-    action = act.Nop,
-  },
-  {
-    event = { Up = { streak = 1, button = 'Left' } },
-    mods = 'CTRL',
-    mouse_reporting = true,
-    action = act.OpenLinkAtMouseCursor,
-  },
-}
+local mouse_bindings = {}
+for _, mouse_reporting in ipairs { false, true } do
+  -- Cover rapid-click streaks beyond the documented single/double/triple cases.
+  for streak = 1, 32 do
+    -- Outside mouse-reporting applications, WezTerm selects terminal text.
+    -- Alt explicitly bypasses application mouse reporting.
+    if not mouse_reporting then
+      local selection_mode = streak == 2 and 'Word' or streak == 3 and 'Line' or 'Cell'
+      for _, mods in ipairs { 'NONE', 'ALT' } do
+        table.insert(mouse_bindings, {
+          event = { Down = { streak = streak, button = 'Left' } },
+          mods = mods,
+          mouse_reporting = false,
+          action = act.SelectTextAtMouseCursor(selection_mode),
+        })
+        table.insert(mouse_bindings, {
+          event = { Drag = { streak = streak, button = 'Left' } },
+          mods = mods,
+          mouse_reporting = false,
+          action = act.ExtendSelectionToMouseCursor(selection_mode),
+        })
+        table.insert(mouse_bindings, {
+          event = { Up = { streak = streak, button = 'Left' } },
+          mods = mods,
+          mouse_reporting = false,
+          action = act.Nop,
+        })
+      end
+    end
 
--- Selection never copies on release, including Shift-extended and Alt-block
--- selections outside mouse-aware apps. Shift is stripped when bypassing them.
--- Keep Ctrl-click's link action separate. Cmd-C / Ctrl-Shift-C copies explicitly.
-for _, mods in ipairs { 'NONE', 'SHIFT', 'ALT', 'SHIFT|ALT' } do
-  for streak = 1, 3 do
-    table.insert(config.mouse_bindings, {
-      event = { Up = { streak = streak, button = 'Left' } },
-      mods = mods,
-      action = act.Nop,
-    })
+    -- Suppress Shift even with other modifiers, preserving any selection.
+    for _, mods in ipairs {
+      'SHIFT', 'SHIFT|ALT', 'SHIFT|CTRL', 'SHIFT|SUPER',
+      'SHIFT|ALT|CTRL', 'SHIFT|ALT|SUPER', 'SHIFT|CTRL|SUPER', 'SHIFT|ALT|CTRL|SUPER',
+    } do
+      for _, event in ipairs { 'Down', 'Drag', 'Up' } do
+        table.insert(mouse_bindings, {
+          event = { [event] = { streak = streak, button = 'Left' } },
+          mods = mods,
+          mouse_reporting = mouse_reporting,
+          action = act.Nop,
+        })
+      end
+    end
+
+    -- Ctrl-click opens links without starting a selection in mouse-aware apps.
+    for _, event in ipairs { 'Down', 'Drag', 'Up' } do
+      table.insert(mouse_bindings, {
+        event = { [event] = { streak = streak, button = 'Left' } },
+        mods = 'CTRL',
+        mouse_reporting = mouse_reporting,
+        action = event == 'Up' and streak == 1 and act.OpenLinkAtMouseCursor or act.Nop,
+      })
+    end
   end
 end
+
+-- config_builder returns copies of tables: assign only after building the list.
+config.mouse_bindings = mouse_bindings
+
+-- tmux publishes this flag to the attached terminal, including over SSH.
+-- The alternate-screen check also ignores stale state after returning to a shell.
+local function has_tmux_selection(pane)
+  return pane:is_alt_screen_active() and pane:get_user_vars().TMUX_SELECTION == '1'
+end
+
+local copy_selection = wezterm.action_callback(function(window, pane)
+  if window:get_selection_text_for_pane(pane) ~= '' then
+    window:perform_action(act.CopyTo 'Clipboard', pane)
+  elseif has_tmux_selection(pane) then
+    window:perform_action(act.SendString '\x1b[99;13~', pane)
+  end
+end)
+
+local paste_clipboard = wezterm.action_callback(function(window, pane)
+  if has_tmux_selection(pane) then
+    window:perform_action(act.SendString '\x1b[99;14~', pane)
+  end
+  window:perform_action(act.PasteFrom 'Clipboard', pane)
+end)
 
 -- Match Terminal.app's word-wise cursor movement in shells and through tmux.
 config.keys = {
   {
+    key = 'c',
+    mods = 'SUPER',
+    action = copy_selection,
+  },
+  {
+    key = 'c',
+    mods = 'CTRL|SHIFT',
+    action = copy_selection,
+  },
+  {
     key = 'v',
     mods = 'SUPER',
-    action = act.PasteFrom 'Clipboard',
+    action = paste_clipboard,
+  },
+  {
+    key = 'v',
+    mods = 'CTRL|SHIFT',
+    action = paste_clipboard,
   },
   {
     key = 'LeftArrow',

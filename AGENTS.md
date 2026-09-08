@@ -9,9 +9,7 @@ link for any agent that hard-codes a different one.
 
 A cold-start dev environment: POSIX-ish bash installers plus the config files
 they link into place, so one `git clone` and one `./install.sh` reproduce the
-setup on a Mac or a Debian/Ubuntu VPS. There is no build or CI. The scripts
-*are* the product; the skill updater has a small offline regression suite, and
-the remaining installers are checked by reading and running them.
+setup on a Mac or a Debian/Ubuntu VPS. There is no build or CI. The scripts *are* the product. The skill updater and terminal selection have small regression suites; the remaining installers are checked by reading and running them.
 
 ## Commands
 
@@ -22,6 +20,8 @@ the remaining installers are checked by reading and running them.
 ./nvim/install.sh            # a single component, standalone; takes no options
 bash -n install.sh install-lib.sh */install.sh   # syntax check after editing
 python3 agents/test_skill_updates.py            # offline skill-updater tests
+python3 tmux/test_mouse_selection.py            # isolated tmux input/selection tests
+luajit wezterm/test_selection.lua               # clipboard routing without GUI access
 ```
 
 With no TTY (`./install.sh < /dev/null`, CI) the picker is skipped and
@@ -98,12 +98,13 @@ kind of component: it installs nothing and only checks Codex's own settings.
 The links are:
 
 | Repo path | Linked to |
-|---|---|
+| --- | --- |
 | `agents/AGENTS.md` | `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md` |
 | `agents/skills/` | `~/.claude/skills`, `~/.agents/skills` |
 | `nvim/` | `~/.config/nvim` |
 | `git/gitconfig` | `~/.gitconfig` |
 | `tmux/tmux.conf` | `~/.tmux.conf` |
+| `tmux/selection-state.sh` | `~/.tmux/selection-state.sh` |
 | `wezterm/.wezterm.lua` | `~/.wezterm.lua` |
 
 Consequences to keep in mind while working here:
@@ -141,7 +142,7 @@ The documentation is split so that each fact has one home. A change belongs in
 whichever of these owns it:
 
 | File | Owns |
-|---|---|
+| --- | --- |
 | `README.md` | the quick start and the component table — the fast path, nothing else |
 | `agents/README.md` | shared agent instructions, the shared skills folder, `find-docs` and its two sources (`ctx7`, skills.sh), the Codex settings check |
 | `git/README.md` | identity vs authentication, the SSH-key bootstrap, extra profiles |
