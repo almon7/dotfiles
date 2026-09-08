@@ -95,6 +95,8 @@ brew install tree-sitter-cli
 
 ## Navigation
 
+Ctrl-d/u scrolls down/up by one third of the current window height and centers the cursor. The distance adapts to resized windows; a numeric prefix overrides the distance in lines (for example, `5 Ctrl-d` moves down five lines).
+
 Ctrl-h/j/k/l moves left/down/up/right through Neovim splits and adjacent tmux panes, stopping at the outer edges. It works in Normal mode, plain `:terminal` buffers, and Snacks terminals, including the first navigation keypress before the plugin has loaded. Ordinary Insert-mode editing shortcuts are preserved. Ctrl-\ returns to the previous Neovim window or tmux pane from Normal mode.
 
 Snacks pickers treat the search input and results as one panel: Ctrl-h/l moves between panels (and the editor beside the explorer), then into tmux when there is no panel in that direction. Ctrl-j/k moves directly to tmux panes below/above; j/k in Normal mode and Ctrl-n/p move through results. Outside tmux, movement stops when there is no eligible Neovim window.

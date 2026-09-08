@@ -2,8 +2,16 @@
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
 
-vim.keymap.set("n", "<C-d>", "<C-d>zz") -- Center the cursor after scrolling down half a page
-vim.keymap.set("n", "<C-u>", "<C-u>zz") -- Center the cursor after scrolling up half a page
+-- Recalculate one-third scrolling on each press so resized windows stay proportional.
+for _, key in ipairs({ "<C-d>", "<C-u>" }) do
+  vim.keymap.set("n", key, function()
+    if vim.v.count > 0 then
+      return key .. "zz"
+    end
+    local lines = math.max(1, math.floor(vim.api.nvim_win_get_height(0) / 3))
+    return lines .. key .. "zz"
+  end, { expr = true, desc = "Scroll " .. (key == "<C-d>" and "down" or "up") .. " one third of a window" })
+end
 
 vim.keymap.set("n", "n", "nzzzv") -- Center and reveal the next search match
 vim.keymap.set("n", "N", "Nzzzv") -- Center and reveal the previous search match
