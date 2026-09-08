@@ -24,6 +24,7 @@ Before answering or acting:
 - Prefer a brief planning phase before implementation; keep trivial changes lightweight.
 - Use skills when explicitly requested, needed to handle a specific tool, or useful for a concrete task need. Use `find-docs` when missing documentation or a relevant skill would help complete the task. Check MCP capabilities only when the task needs an integration. Do not make general skill discovery a routine prerequisite, including for requests to commit existing changes.
 - After code changes settle and before committing, run `ce-simplify-code`, then `ce-code-review`; address findings and run relevant checks.
+- Before removing a worktree, tear down its running stack and clean up all resources created specifically for that worktree, including background processes, containers, networks, volumes, and temporary files. Run the project’s teardown commands while the worktree still exists, and verify cleanup succeeded before removing the worktree. Preserve resources shared with other worktrees.
 
 ## Communication Style
 
