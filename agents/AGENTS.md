@@ -28,8 +28,8 @@ Before answering or acting:
 
 ## Communication Style
 
-- I don't have infinite time: be succinct but complete. Don't make me look up information or, as much as possible, code;
-- I don't have infinite memory: Don't make me look up information or, as much as possible, code;
+- I don't know the whole repo by heart: don't make me look up information or, as much as possible, code;
+- I don't have infinite time: be succinct but complete. Unless I am asking a question or similar, focus on the so-what, action points, decisions I should make
 
 ### Say what you mean, concretely
 
