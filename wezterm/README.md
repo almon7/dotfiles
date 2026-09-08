@@ -19,9 +19,9 @@ WezTerm provides the terminal, fonts, system clipboard, and OS shortcuts. tmux o
 | Shift-click / Shift-drag | Does nothing, including with other modifiers; preserves the selection and clipboard |
 | Ctrl-click | Opens a detected hyperlink, including inside tmux |
 
-tmux handles ordinary selection so dragging across lines excludes neighboring panes without zooming. The highlight survives release and copying. Typing clears the selection and sends the first key to the application; paste and scrolling also release the selection. tmux temporarily holds the selected pane's displayed contents while highlighting text.
+tmux handles ordinary selection so dragging across lines excludes neighboring panes without zooming. The highlight survives release and copying. Typing clears the selection and sends the first key to the application; paste and scrolling also release the selection. tmux temporarily holds the pane's displayed contents while highlighting text or browsing history. Typing and paste return to live input; clicking and dragging older output lets you select it without jumping to the bottom.
 
-Shift-click and Shift-drag preserve the selection and clipboard. Ctrl-click opens links. Ordinary clicks focus tmux panes without moving Neovim's editing cursor. The wheel scrolls applications that request mouse input; tmux history scrolling remains disabled. Outside mouse-reporting applications, WezTerm handles normal text selection. Alt explicitly bypasses mouse reporting and therefore does not respect tmux pane boundaries. See [tmux copy and paste](../tmux/README.md#copy-and-paste).
+Shift-click and Shift-drag preserve the selection and clipboard. Ctrl-click opens links. Ordinary clicks focus tmux panes without moving Neovim's editing cursor. The wheel scrolls applications that request mouse input; otherwise tmux scrolls the pane's retained terminal output, including Codex chats and shell output, without changing keyboard focus. Outside mouse-reporting applications, WezTerm handles normal text selection. Alt explicitly bypasses mouse reporting and therefore does not respect tmux pane boundaries. See [tmux copy and paste](../tmux/README.md#copy-and-paste).
 
 Option-key composition settings are for macOS. On Linux, use Alt for Meta shortcuts and Ctrl-Shift-C/V for clipboard actions.
 

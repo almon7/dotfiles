@@ -128,8 +128,8 @@ class MouseSelectionTests(unittest.TestCase):
         os.write(self.master, data)
         self.drain()
 
-    def mouse(self, button, x, y, release=False):
-        self.send(f'\x1b[<{button};{x};{y}{"m" if release else "M"}'.encode())
+    def mouse(self, button, x, y, release=False, count=1):
+        self.send(f'\x1b[<{button};{x};{y}{"m" if release else "M"}'.encode() * count)
 
     def value(self, pane, expression):
         return self.tmux('display-message', '-p', '-t', pane, expression)
@@ -137,15 +137,40 @@ class MouseSelectionTests(unittest.TestCase):
     def selected(self, pane):
         return self.value(pane, '#{selection_present}') == '1'
 
+    def print_history(self, start=1, count=100):
+        # Writing to the fixture's terminal models output without injecting input.
+        with open(self.value(self.left, '#{pane_tty}'), 'wb', buffering=0) as terminal:
+            terminal.write(''.join(
+                f'HISTORY{number:03} alpha bravo charlie delta\r\n'
+                for number in range(start, start + count)
+            ).encode())
+        self.drain()
+        self.assertGreater(int(self.value(self.left, '#{history_size}')), 0)
+
+    def scroll_position(self):
+        return int(self.value(self.left, '#{scroll_position}') or 0)
+
+    def history_viewport(self):
+        # -M captures copy mode's backing history; apply the displayed offset.
+        position = self.scroll_position()
+        height = int(self.value(self.left, '#{pane_height}'))
+        return self.tmux('capture-pane', '-pM', '-t', self.left,
+                         '-S', str(-position), '-E', str(height - position - 1))
+
+    def wheel(self, up=True, pane=None, count=1):
+        pane = pane or self.left
+        x = int(self.value(pane, '#{pane_left}')) + 4
+        self.mouse(64 if up else 65, x, 4, count=count)
+
     def flag(self):
         values = re.findall(rb'\x1b\]1337;SetUserVar=TMUX_SELECTION=([^\x07]*)\x07', self.output)
         self.assertTrue(values, 'tmux did not publish selection state to its client')
         return base64.b64decode(values[-1])
 
-    def drag(self, pane=None, reverse=False):
+    def drag(self, pane=None, reverse=False, row=1):
         pane = pane or self.left
         x = int(self.value(pane, '#{pane_left}')) + 1
-        start, end = ((x+2, 1), (x+12, 3))
+        start, end = ((x+2, row), (x+12, row+2))
         if reverse:
             start, end = end, start
         self.mouse(0, *start)
@@ -287,6 +312,207 @@ class MouseSelectionTests(unittest.TestCase):
         self.send(b'\x01d')
         self.assertEqual(self.flag(), b'0')
         self.client.wait(timeout=5)
+
+    def test_history_scrolling_and_boundaries(self):
+        for mode in ('emacs', 'vi'):
+            with self.subTest(mode=mode):
+                self.tmux('set-option', '-w', 'mode-keys', mode)
+                self.wheel(up=False)
+                self.wheel()
+                self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                self.print_history()
+                before = self.left_log.read_bytes()
+                self.wheel()
+                self.assertEqual(self.scroll_position(), 3)
+                self.assertEqual(self.flag(), b'1')
+                self.wheel(count=3)
+                self.assertEqual(self.scroll_position(), 12)
+                self.wheel(up=False, count=2)
+                self.assertEqual(self.scroll_position(), 6)
+                self.wheel(count=100)
+                top = self.scroll_position()
+                self.assertEqual(top, int(self.value(self.left, '#{history_size}')))
+                self.wheel()
+                self.assertEqual(self.scroll_position(), top)
+                self.wheel(up=False, count=100)
+                self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                self.assertEqual(self.flag(), b'0')
+                self.wheel(up=False)
+                self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                self.assertEqual(self.left_log.read_bytes(), before)
+                self.tmux('clear-history', '-t', self.left)
+
+    def test_history_selection_and_copy(self):
+        self.print_history()
+        for mode in ('emacs', 'vi'):
+            with self.subTest(mode=mode):
+                self.tmux('set-option', '-w', 'mode-keys', mode)
+                for reverse in (False, True):
+                    self.wheel(count=5)
+                    position = self.scroll_position()
+                    viewport = self.history_viewport()
+                    self.tmux('set-buffer', 'clipboard-sentinel')
+                    copies_before = len(re.findall(rb'\x1b\]52;', self.output))
+                    self.send(COPY)
+                    self.assertEqual(self.tmux('show-buffer'), 'clipboard-sentinel')
+                    self.assertEqual(len(re.findall(rb'\x1b\]52;', self.output)), copies_before)
+                    self.assertEqual(self.scroll_position(), position)
+                    self.drag(reverse=reverse, row=2)
+                    self.assertEqual(self.scroll_position(), position)
+                    text = self.copied_text()
+                    self.assertIn(viewport.splitlines()[2], text)
+                    self.assertNotIn('RIGHT', text)
+                    self.assertEqual(len(text.splitlines()), 3)
+                    self.assertTrue(self.selected(self.left))
+                    self.wheel()
+                    self.assertFalse(self.selected(self.left))
+                    self.assertEqual(self.scroll_position(), position + 3)
+                    self.assertEqual(self.flag(), b'1')
+                    self.send(CANCEL)
+                self.wheel(count=5)
+                position = self.scroll_position()
+                viewport = self.history_viewport()
+                down, up = b'\x1b[<0;15;2M', b'\x1b[<0;15;2m'
+                self.send((down + up) * 2)
+                self.drain(.4)
+                self.assertEqual(self.copied_text(), 'alpha')
+                self.assertEqual(self.scroll_position(), position)
+                self.drain(.4)
+                self.send((down + up) * 3)
+                self.assertEqual(self.copied_text().rstrip(), viewport.splitlines()[1])
+                self.assertEqual(self.scroll_position(), position)
+                self.send(CANCEL)
+
+    def test_history_inactive_panes_and_mouse_forwarding(self):
+        self.print_history()
+        for mode in ('emacs', 'vi'):
+            with self.subTest(mode=mode):
+                self.tmux('set-option', '-w', 'mode-keys', mode)
+                self.tmux('select-pane', '-t', self.right)
+                right_viewport = self.tmux('capture-pane', '-p', '-t', self.right)
+                self.wheel(count=2)
+                self.assertEqual(self.value(self.right, '#{pane_active}'), '1')
+                self.assertEqual(self.scroll_position(), 6)
+                self.assertEqual(self.flag(), b'0')
+                self.wheel(up=False)
+                self.assertEqual(self.scroll_position(), 3)
+                self.assertEqual(self.tmux('capture-pane', '-p', '-t', self.right), right_viewport)
+                self.wheel(up=False)
+                self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                self.assertEqual(self.value(self.right, '#{pane_active}'), '1')
+                self.assertEqual(self.flag(), b'0')
+                self.wheel()
+                self.drag()
+                self.assertEqual(self.value(self.left, '#{pane_active}'), '1')
+                self.assertEqual(self.scroll_position(), 3)
+                for up in (True, False):
+                    before = self.right_log.read_bytes()
+                    self.wheel(up=up, pane=self.right)
+                    self.assertIn(f'\x1b[<{64 if up else 65};'.encode(), self.right_log.read_bytes()[len(before):])
+                    self.assertEqual(self.value(self.left, '#{pane_active}'), '1')
+                    self.assertEqual(self.scroll_position(), 3)
+                    self.drag(self.right)
+                    before = self.right_log.read_bytes()
+                    self.wheel(up=up, pane=self.right)
+                    self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
+                    self.assertIn(f'\x1b[<{64 if up else 65};'.encode(), self.right_log.read_bytes()[len(before):])
+                    self.tmux('select-pane', '-t', self.left)
+                    self.wheel()
+                self.send(CANCEL)
+
+    def test_history_input_output_and_navigation(self):
+        self.print_history()
+        for mode in ('emacs', 'vi'):
+            with self.subTest(mode=mode):
+                self.tmux('set-option', '-w', 'mode-keys', mode)
+                for data in (b'h', b'j', b'k', b'l', b'y', b'\x1b', b'\x1bb', 'é'.encode()):
+                    self.wheel(count=3)
+                    before = self.left_log.read_bytes()
+                    self.send(data)
+                    if data == b'\x1b':
+                        self.drain(.6)
+                    self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                    self.assertEqual(self.left_log.read_bytes()[len(before):], data)
+                    self.assertEqual(self.flag(), b'0')
+                self.wheel(count=3)
+                before = self.left_log.read_bytes()
+                paste = b'\x1b[200~first\nsecond\x1b[201~'
+                self.send(CANCEL + paste)
+                self.assertEqual(self.left_log.read_bytes()[len(before):], paste)
+                self.assertEqual(self.flag(), b'0')
+                self.wheel(count=3)
+                viewport = self.history_viewport()
+                self.print_history(start=101, count=10)
+                self.assertEqual(self.history_viewport(), viewport)
+                self.send(b'\x0c')
+                self.assertEqual(self.value(self.right, '#{pane_active}'), '1')
+                self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                self.assertEqual(self.flag(), b'0')
+                self.send(b'\x08')
+
+    def test_history_reload_window_change_and_detach(self):
+        self.print_history()
+        self.wheel(count=3)
+        position = self.scroll_position()
+        self.tmux('source-file', str(self.config))
+        self.drain()
+        self.assertEqual(self.scroll_position(), position)
+        self.assertEqual(self.flag(), b'1')
+        self.wheel()
+        self.assertEqual(self.scroll_position(), position + 3)
+        self.send(b'\x01c')
+        self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+        self.assertEqual(self.flag(), b'0')
+        self.tmux('select-window', '-t', self.left)
+        self.drain()
+        self.wheel()
+        self.send(b'\x01d')
+        self.assertEqual(self.flag(), b'0')
+        self.client.wait(timeout=5)
+
+    def test_history_edge_drag_stops_on_release(self):
+        self.print_history()
+        height = int(self.value(self.left, '#{pane_height}'))
+        for mode in ('emacs', 'vi'):
+            for start, end in ((3, 1), (height - 2, height)):
+                with self.subTest(mode=mode, edge=end):
+                    self.tmux('set-option', '-w', 'mode-keys', mode)
+                    self.wheel(count=10)
+                    self.mouse(0, 5, start)
+                    self.mouse(32, 13, end)
+                    self.mouse(0, 13, end, release=True)
+                    position = self.scroll_position()
+                    selection = self.value(self.left, '#{selection_start_y}:#{selection_end_y}')
+                    self.assertTrue(self.selected(self.left))
+                    self.drain(.4)
+                    self.assertEqual(self.scroll_position(), position)
+                    self.assertEqual(self.value(self.left, '#{selection_start_y}:#{selection_end_y}'), selection)
+                    self.assertTrue(self.copied_text())
+                    self.send(CANCEL)
+
+    def test_short_pane_edge_release_does_not_reverse_scroll(self):
+        self.print_history()
+        for height in (1, 2):
+            self.tmux('resize-window', '-t', self.left, '-y', str(height + 1))
+            self.assertEqual(int(self.value(self.left, '#{pane_height}')), height)
+            for mode in ('emacs', 'vi'):
+                for edge in range(1, height + 1):
+                    with self.subTest(height=height, mode=mode, edge=edge):
+                        self.tmux('set-option', '-w', 'mode-keys', mode)
+                        self.mouse(64, 4, 1, count=10)
+                        self.mouse(0, 5, height if edge == 1 else 1)
+                        self.mouse(32, 13, edge)
+                        before = self.scroll_position()
+                        self.mouse(0, 13, edge, release=True)
+                        self.drain(.4)
+                        # tmux may keep its native edge timer running in tiny panes.
+                        # A release must not move the cursor onto the opposite edge.
+                        if edge == 1:
+                            self.assertGreaterEqual(self.scroll_position(), before)
+                        else:
+                            self.assertLessEqual(self.scroll_position(), before)
+                        self.assertTrue(self.selected(self.left))
+                        self.send(CANCEL)
 
 
 if __name__ == '__main__':
