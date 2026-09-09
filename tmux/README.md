@@ -85,12 +85,12 @@ deliberately simple:
 | Copy the current Neovim line to the system clipboard | `Space Y` |
 | Paste the system clipboard in local Neovim | `Space p` |
 | Select terminal text | Drag normally within the tmux pane; release keeps the highlight without copying |
-| Copy selected terminal text | `Cmd-C` / `Ctrl-Shift-C`; the highlight remains |
-| Clear the terminal selection | Type, paste, scroll, or click elsewhere; the first typed key reaches the application |
+| Copy selected terminal text | `Cmd-C` / `Ctrl-Shift-C`; clears the highlight and keeps the scroll position |
+| Clear the terminal selection | Copy, type, paste, scroll, or click elsewhere; the first typed key reaches the application |
 
 tmux selects continuously from the starting character to the ending character across lines, confined to the pane where the drag starts. No zooming or selection modifier is needed, including over Codex and Neovim. Double-click selects a word; triple-click selects a line within the pane. Shift-click and Shift-drag do nothing and preserve any existing selection and clipboard.
 
-tmux uses copy mode internally to hold the highlight and the pane's displayed contents while selecting or browsing history. Typing returns to live output and delivers the original key, including `h`, `j`, `k`, `l`, and `y`; no Escape or `q` is required. Clipboard paste also returns to live input. Cmd-C / Ctrl-Shift-C copies highlighted text without clearing the highlight; copying without a selection leaves the clipboard unchanged.
+tmux uses copy mode internally to hold the highlight and the pane's displayed contents while selecting or browsing history. Typing returns to live output and delivers the original key, including `h`, `j`, `k`, `l`, and `y`; no Escape or `q` is required. Clipboard paste also returns to live input. Cmd-C / Ctrl-Shift-C copies highlighted text and clears the highlight while keeping the scroll position; copying without a selection leaves the clipboard unchanged.
 
 The wheel moves through terminal history three lines at a time in the pane under the pointer without changing keyboard focus. Scrolling clears highlighted text and continues from the current history position. Reaching the bottom returns to live output; clicking and dragging older output preserves the position so you can select and copy it. Switching panes or windows ends history browsing in the pane you leave. History contains up to 50,000 retained lines and can include shell output preceding Codex.
 

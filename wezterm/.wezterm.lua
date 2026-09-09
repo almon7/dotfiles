@@ -93,6 +93,7 @@ end
 local copy_selection = wezterm.action_callback(function(window, pane)
   if window:get_selection_text_for_pane(pane) ~= '' then
     window:perform_action(act.CopyTo 'Clipboard', pane)
+    window:perform_action(act.ClearSelection, pane)
   elseif has_tmux_selection(pane) then
     window:perform_action(act.SendString '\x1b[99;13~', pane)
   end

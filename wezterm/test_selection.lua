@@ -1,5 +1,9 @@
 -- Test copy/paste routing without opening a terminal or touching the clipboard.
-local action = setmetatable({ Nop = 'Nop', OpenLinkAtMouseCursor = 'OpenLinkAtMouseCursor' }, {
+local action = setmetatable({
+  Nop = 'Nop',
+  OpenLinkAtMouseCursor = 'OpenLinkAtMouseCursor',
+  ClearSelection = 'ClearSelection',
+}, {
   __index = function(_, name)
     return function(value)
       return { name = name, value = value }
@@ -20,7 +24,7 @@ local function key_action(key, mods)
   error('Missing key binding: ' .. mods .. '+' .. key)
 end
 
-local calls, text, selection, alt = {}, '', '0', true
+local calls, text, selection, alt, clipboard = {}, '', '0', true, ''
 local pane = {
   get_user_vars = function() return { TMUX_SELECTION = selection } end,
   is_alt_screen_active = function() return alt end,
@@ -30,6 +34,11 @@ local window = {
   perform_action = function(_, value, target)
     assert(target == pane)
     table.insert(calls, value)
+    if value == 'ClearSelection' then
+      text = ''
+    elseif value.name == 'CopyTo' then
+      clipboard = text
+    end
   end,
 }
 for _, mods in ipairs { 'SUPER', 'CTRL|SHIFT' } do
@@ -37,9 +46,21 @@ for _, mods in ipairs { 'SUPER', 'CTRL|SHIFT' } do
   calls, text, selection, alt = {}, '', '1', true
   copy(window, pane)
   assert(#calls == 1 and calls[1].name == 'SendString' and calls[1].value == '\x1b[99;13~')
-  calls, text = {}, 'terminal selection'
-  copy(window, pane)
-  assert(#calls == 1 and calls[1].name == 'CopyTo' and calls[1].value == 'Clipboard')
+  for _, tmux_state in ipairs { '0', '1' } do
+    calls, text, selection, clipboard = {}, 'terminal selection', tmux_state, 'clipboard sentinel'
+    copy(window, pane)
+    assert(#calls == 2 and calls[1].name == 'CopyTo' and calls[1].value == 'Clipboard')
+    assert(calls[2] == 'ClearSelection' and text == '')
+    assert(clipboard == 'terminal selection', 'Copy must finish before clearing the selection')
+    calls = {}
+    copy(window, pane)
+    assert(clipboard == 'terminal selection', 'Copy without a terminal selection must preserve the clipboard')
+    if tmux_state == '1' then
+      assert(#calls == 1 and calls[1].name == 'SendString' and calls[1].value == '\x1b[99;13~')
+    else
+      assert(#calls == 0)
+    end
+  end
   calls, text, selection = {}, '', '0'
   copy(window, pane)
   assert(#calls == 0)
@@ -66,4 +87,4 @@ for _, binding in ipairs(config.mouse_bindings) do
     if binding.event.Up then assert(binding.action == 'Nop') end
   end
 end
-print('PASS: copy/paste routing, stale-state guard, Shift suppression and tmux mouse ownership')
+print('PASS: copy clears selection, clipboard routing, stale-state guard, Shift suppression and tmux mouse ownership')

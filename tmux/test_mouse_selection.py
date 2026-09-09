@@ -180,11 +180,21 @@ class MouseSelectionTests(unittest.TestCase):
         self.assertEqual(self.flag(), b'1')
 
     def copied_text(self):
+        before = len(self.output)
         self.send(COPY)
         self.assertEqual(self.flag(), b'1')
-        copies = re.findall(rb'\x1b\]52;[^;]*;([^\x07\x1b]*)(?:\x07|\x1b\\)', self.output)
-        self.assertTrue(copies, 'copy did not emit OSC 52')
+        copies = re.findall(rb'\x1b\]52;[^;]*;([^\x07\x1b]*)(?:\x07|\x1b\\)', self.output[before:])
+        self.assertEqual(len(copies), 1, 'copy must emit exactly one OSC 52 sequence')
         return base64.b64decode(copies[-1]).decode()
+
+    def assert_copy_ignored(self):
+        buffer = self.tmux('show-buffer')
+        before = len(self.output)
+        logs = [path.read_bytes() for path in (self.left_log, self.right_log)]
+        self.send(COPY)
+        self.assertEqual(self.tmux('show-buffer'), buffer)
+        self.assertNotIn(b'\x1b]52;', self.output[before:])
+        self.assertEqual([path.read_bytes() for path in (self.left_log, self.right_log)], logs)
 
     def test_selection_clipboard_and_boundaries(self):
         for pane, name, neighbor in [(self.left, 'LEFT', 'RIGHT'), (self.right, 'RIGHT', 'LEFT')]:
@@ -199,7 +209,8 @@ class MouseSelectionTests(unittest.TestCase):
                     self.assertIn(f'{name}02 alpha bravo charlie delta', text)
                     self.assertNotIn(neighbor, text)
                     self.assertEqual(len(text.splitlines()), 3)
-                    self.assertTrue(self.selected(pane))
+                    self.assertFalse(self.selected(pane))
+                    self.assert_copy_ignored()
                     self.send(CANCEL)
                     self.assertEqual(self.flag(), b'0')
 
@@ -277,11 +288,12 @@ class MouseSelectionTests(unittest.TestCase):
         self.send(down + up + down + up)
         self.drain(.4)  # tmux waits for a possible third click before emitting DoubleClick.
         self.assertEqual(self.copied_text(), 'alpha')
-        self.assertTrue(self.selected(self.left))
+        self.assertFalse(self.selected(self.left))
         self.send(CANCEL)
         down, up = b'\x1b[<0;11;1M', b'\x1b[<0;11;1m'
         self.send((down + up) * 3)
         self.assertEqual(self.copied_text().rstrip(), 'LEFT01 alpha bravo charlie delta')
+        self.assertFalse(self.selected(self.left))
         self.send(CANCEL)
         for encoded, expected in [(b'\x01\x0c', b'\x0c'), (b'\x01\x01', b'\x01')]:
             self.drag()
@@ -352,10 +364,7 @@ class MouseSelectionTests(unittest.TestCase):
                     position = self.scroll_position()
                     viewport = self.history_viewport()
                     self.tmux('set-buffer', 'clipboard-sentinel')
-                    copies_before = len(re.findall(rb'\x1b\]52;', self.output))
-                    self.send(COPY)
-                    self.assertEqual(self.tmux('show-buffer'), 'clipboard-sentinel')
-                    self.assertEqual(len(re.findall(rb'\x1b\]52;', self.output)), copies_before)
+                    self.assert_copy_ignored()
                     self.assertEqual(self.scroll_position(), position)
                     self.drag(reverse=reverse, row=2)
                     self.assertEqual(self.scroll_position(), position)
@@ -363,7 +372,11 @@ class MouseSelectionTests(unittest.TestCase):
                     self.assertIn(viewport.splitlines()[2], text)
                     self.assertNotIn('RIGHT', text)
                     self.assertEqual(len(text.splitlines()), 3)
-                    self.assertTrue(self.selected(self.left))
+                    self.assertFalse(self.selected(self.left))
+                    self.assertEqual(self.scroll_position(), position)
+                    self.assertEqual(self.history_viewport(), viewport)
+                    self.assert_copy_ignored()
+                    self.assertEqual(self.scroll_position(), position)
                     self.wheel()
                     self.assertFalse(self.selected(self.left))
                     self.assertEqual(self.scroll_position(), position + 3)
@@ -376,10 +389,12 @@ class MouseSelectionTests(unittest.TestCase):
                 self.send((down + up) * 2)
                 self.drain(.4)
                 self.assertEqual(self.copied_text(), 'alpha')
+                self.assertFalse(self.selected(self.left))
                 self.assertEqual(self.scroll_position(), position)
                 self.drain(.4)
                 self.send((down + up) * 3)
                 self.assertEqual(self.copied_text().rstrip(), viewport.splitlines()[1])
+                self.assertFalse(self.selected(self.left))
                 self.assertEqual(self.scroll_position(), position)
                 self.send(CANCEL)
 
