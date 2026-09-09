@@ -12,16 +12,16 @@ WezTerm provides the terminal, fonts, system clipboard, and OS shortcuts. tmux o
 | Option-3 | Types `#` for the British Mac keyboard layout |
 | Cmd-C / Ctrl-Shift-C | Copies the terminal or tmux selection, clears its highlight, and keeps the scroll position |
 | Cmd-V / Ctrl-Shift-V | Pastes the system clipboard, including over SSH |
-| Left drag | Selects text across lines within the tmux pane, including over Codex and Neovim; release keeps the highlight without copying |
+| Left drag | In Neovim/Vim, resizes editor dividers or selects text in the editor; elsewhere, selects terminal text within the tmux pane without copying on release |
 | Alt-drag | Explicitly bypasses application mouse reporting and selects in WezTerm across the terminal |
-| Left click | Clears the previous selection and focuses the tmux pane |
-| Double-click / triple-click | Selects a word / line within the tmux pane |
+| Left click | Focuses the tmux pane and clears its terminal selection; in Neovim/Vim, also positions the editing cursor |
+| Double-click / triple-click | Selects a word / line in Neovim/Vim or the tmux pane's terminal text |
 | Shift-click / Shift-drag | Does nothing, including with other modifiers; preserves the selection and clipboard |
 | Ctrl-click | Opens a detected hyperlink, including inside tmux |
 
-tmux handles ordinary selection so dragging across lines excludes neighboring panes without zooming. The highlight survives release; copying clears the highlight and keeps the scroll position. Copying without a selection leaves the clipboard unchanged. Typing clears the selection and sends the first key to the application; paste and scrolling also release the selection. tmux temporarily holds the pane's displayed contents while highlighting text or browsing history. Typing and paste return to live input; clicking and dragging older output lets you select it without jumping to the bottom.
+tmux handles terminal selection outside Neovim/Vim so dragging across lines excludes neighboring panes without zooming. The terminal highlight survives release; copying clears the highlight and keeps the scroll position. Copying without a selection leaves the clipboard unchanged. Typing clears the terminal selection and sends the first key to the application; paste and scrolling also release the terminal selection. tmux temporarily holds the pane's displayed contents while highlighting text or browsing history. Typing and paste return to live input; clicking and dragging older output lets you select it without jumping to the bottom.
 
-Shift-click and Shift-drag preserve the selection and clipboard. Ctrl-click opens links. Ordinary clicks focus tmux panes without moving Neovim's editing cursor. The wheel scrolls applications that request mouse input; otherwise tmux scrolls the pane's retained terminal output, including Codex chats and shell output, without changing keyboard focus. Outside mouse-reporting applications, WezTerm handles normal text selection. Alt explicitly bypasses mouse reporting and therefore does not respect tmux pane boundaries. See [tmux copy and paste](../tmux/README.md#copy-and-paste).
+Neovim/Vim receives ordinary clicks and drags when it requests mouse input, including window-divider resizing. Copy a Neovim selection with `Space y`; `Cmd-C` / `Ctrl-Shift-C` copies terminal selections only. Shift-click and Shift-drag preserve the selection and clipboard. Ctrl-click opens links. The wheel scrolls applications that request mouse input; otherwise tmux scrolls the pane's retained terminal output, including Codex chats and shell output, without changing keyboard focus. Outside mouse-reporting applications, WezTerm handles normal text selection. Alt explicitly bypasses mouse reporting and therefore does not respect tmux pane boundaries. See [tmux copy and paste](../tmux/README.md#copy-and-paste).
 
 Option-key composition settings are for macOS. On Linux, use Alt for Meta shortcuts and Ctrl-Shift-C/V for clipboard actions.
 

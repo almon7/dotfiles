@@ -44,7 +44,7 @@ it rather than for the program in the pane. It is remapped from the default
 | `C-a C-s` / `C-a C-r` | Save / restore all tmux sessions |
 | `C-a ?` | List every binding |
 
-Click to focus a pane and drag to select text within that pane, including over Neovim and Codex. Drag borders to resize panes. The wheel scrolls applications that request mouse input; over Codex, shells, and other applications without mouse reporting, it scrolls the pane's retained terminal output. Ctrl-click opens detected links in the OS browser.
+Click to focus a pane and drag to select terminal text within that pane, including over Codex and shells. Neovim/Vim receives ordinary clicks and drags when it requests mouse input: clicks position the editing cursor, text drags select in the editor, and divider drags resize editor windows. Drag tmux borders to resize tmux panes. The wheel scrolls applications that request mouse input; over Codex, shells, and other applications without mouse reporting, it scrolls the pane's retained terminal output. Ctrl-click opens detected links in the OS browser.
 
 Neovim navigation works in Normal mode, plain `:terminal` buffers, Snacks terminals, and pickers. Ordinary editing buffers keep their Insert-mode shortcuts. In pickers, Ctrl-h/l moves between panels; Ctrl-j/k moves to tmux panes above/below, while j/k or Ctrl-n/p moves through results. See the [Neovim navigation notes](../nvim/README.md#navigation).
 
@@ -81,14 +81,14 @@ deliberately simple:
 | Want | Do |
 | --- | --- |
 | Paste from the system clipboard | `Cmd-V` (macOS) / `Ctrl-Shift-V` (Linux) |
-| Copy a Neovim selection to the system clipboard | Select with `v`, then `Space y` |
+| Copy a Neovim selection to the system clipboard | Select with `v` or a mouse drag, then `Space y` |
 | Copy the current Neovim line to the system clipboard | `Space Y` |
 | Paste the system clipboard in local Neovim | `Space p` |
-| Select terminal text | Drag normally within the tmux pane; release keeps the highlight without copying |
+| Select terminal text | Drag within a tmux pane outside Neovim/Vim; release keeps the highlight without copying |
 | Copy selected terminal text | `Cmd-C` / `Ctrl-Shift-C`; clears the highlight and keeps the scroll position |
 | Clear the terminal selection | Copy, type, paste, scroll, or click elsewhere; the first typed key reaches the application |
 
-tmux selects continuously from the starting character to the ending character across lines, confined to the pane where the drag starts. No zooming or selection modifier is needed, including over Codex and Neovim. Double-click selects a word; triple-click selects a line within the pane. Shift-click and Shift-drag do nothing and preserve any existing selection and clipboard.
+tmux selects terminal text continuously from the starting character to the ending character across lines, confined to the pane where the drag starts. No zooming or selection modifier is needed, including over Codex. Double-click selects a word; triple-click selects a line within the pane. Neovim/Vim handles its own selection and window resizing when mouse support is enabled; copy Neovim selections with `Space y`. Shift-click and Shift-drag do nothing and preserve any existing selection and clipboard.
 
 tmux uses copy mode internally to hold the highlight and the pane's displayed contents while selecting or browsing history. Typing returns to live output and delivers the original key, including `h`, `j`, `k`, `l`, and `y`; no Escape or `q` is required. Clipboard paste also returns to live input. Cmd-C / Ctrl-Shift-C copies highlighted text and clears the highlight while keeping the scroll position; copying without a selection leaves the clipboard unchanged.
 
@@ -114,4 +114,4 @@ History entry shortcuts (`C-a [` and `C-a PageUp`), scrollbar actions, and pane 
 
 WezTerm sends the private sequences `ESC [ 99 ; 13 ~` (copy) and `ESC [ 99 ; 14 ~` (cancel before paste) only when the flag is active in the alternate screen. tmux reserves `user-keys[90]` / `User90` and `user-keys[91]` / `User91` for the bridge and consumes both harmlessly outside copy mode. These sequences are used because tmux does not accept F13/F14 key names. Both copy-mode key tables are replaced on reload so old bindings cannot consume typing.
 
-Run `python3 tmux/test_mouse_selection.py` from the repository root for isolated two-pane terminal-protocol tests. The tests check selection boundaries, clipboard output, first-key delivery, navigation, paste, scrollback boundaries, selecting older output, inactive-pane scrolling, application mouse forwarding, reload, and detach, including both copy-mode key tables, without touching the running server or the system clipboard. Run `luajit wezterm/test_selection.lua` to check the terminal-side copy/paste routing. Rendering, actual OS clipboard access, and Ctrl-click browser opening still need a WezTerm GUI check.
+Run `python3 tmux/test_mouse_selection.py` from the repository root for isolated two-pane terminal-protocol tests. The tests check selection boundaries, clipboard output, first-key delivery, navigation, paste, scrollback boundaries, selecting older output, inactive-pane scrolling, application mouse forwarding, reload, and detach, including both copy-mode key tables, without touching the running server or the system clipboard. When `nvim` is installed, real Neovim tests also check divider resizing, cursor placement, text and multiple-click selection, release handling, and clearing copy mode after reload. Run `luajit wezterm/test_selection.lua` to check the terminal-side copy/paste routing. Rendering, actual OS clipboard access, and Ctrl-click browser opening still need a WezTerm GUI check.

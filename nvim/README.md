@@ -87,7 +87,7 @@ brew install tree-sitter-cli
 
 - **Markdown rendering:** disabled by default. Toggle it with `Space u m` or `:RenderMarkdown toggle`.
 - **Markdown diagnostics:** disabled by default. Enable them for the current buffer with `:lua vim.diagnostic.enable(true, { bufnr = 0 })`.
-- **System clipboard:** regular `y`/`p` stay inside Neovim. Use `Space y` after selecting with `v`, `Space Y` for the current line, and `Space p` to paste from the system clipboard locally. Over SSH, clipboard yanks use OSC 52; paste with your terminal's `Cmd-V` (macOS) or `Ctrl-Shift-V` (Linux). `Space p` shows that reminder because the SSH provider is copy-only.
+- **System clipboard:** regular `y`/`p` stay inside Neovim. Use `Space y` after selecting with `v` or dragging text with the mouse, `Space Y` for the current line, and `Space p` to paste from the system clipboard locally. Over SSH, clipboard yanks use OSC 52; paste with your terminal's `Cmd-V` (macOS) or `Ctrl-Shift-V` (Linux). `Space p` shows that reminder because the SSH provider is copy-only.
 - **Markdown linting** uses `markdownlint-cli2`. The `MD013` (line-length) rule
   is disabled via `.markdownlint-cli2.jsonc`, which `lua/plugins/lint.lua` passes
   to the linter with `--config`. Both files live here, so it works automatically
@@ -96,6 +96,8 @@ brew install tree-sitter-cli
   never `$HOME`.)
 
 ## Navigation
+
+Drag a vertical window separator left or right, or a horizontal window separator up or down, to resize Neovim splits. Ordinary clicks position the editing cursor; dragging text creates a Neovim selection, double-clicking selects a word, and triple-clicking selects a line. The paired tmux config forwards these gestures to Neovim when mouse support is enabled. After updating tmux's mouse bindings, reload with `C-a r`; existing Neovim sessions receive the change without restarting. Copy a Neovim selection with `Space y`; terminal `Cmd-C` / `Ctrl-Shift-C` copies terminal selections only.
 
 Ctrl-d/u scrolls down/up by one third of the current window height and centers the cursor. The distance adapts to resized windows; a numeric prefix overrides the distance in lines (for example, `5 Ctrl-d` moves down five lines).
 

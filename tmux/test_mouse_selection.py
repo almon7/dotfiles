@@ -3,6 +3,7 @@
 import base64
 import errno
 import fcntl
+import json
 import os
 from pathlib import Path
 import pty
@@ -195,6 +196,141 @@ class MouseSelectionTests(unittest.TestCase):
         self.assertEqual(self.tmux('show-buffer'), buffer)
         self.assertNotIn(b'\x1b]52;', self.output[before:])
         self.assertEqual([path.read_bytes() for path in (self.left_log, self.right_log)], logs)
+
+    def start_nvim(self):
+        if not shutil.which('nvim'):
+            self.skipTest('nvim is required for native mouse tests')
+        self.nvim_socket = str(Path(self.temp.name) / 'nvim.socket')
+        command = shlex.join([
+            'nvim', '--clean', '-i', 'NONE', '-n', '--listen', self.nvim_socket,
+            '-c', 'set mouse=a laststatus=3',
+            '-c', "call setline(1, repeat(['alpha bravo charlie delta'], 80))",
+        ])
+        self.tmux('respawn-pane', '-k', '-t', self.right, command)
+        deadline = time.monotonic() + 5
+        while not Path(self.nvim_socket).exists() or self.value(self.right, '#{mouse_any_flag}') != '1':
+            self.assertLess(time.monotonic(), deadline, 'Neovim did not start')
+            self.drain(.05)
+        self.drain()
+        self.assertEqual(self.value(self.right, '#{pane_current_command}'), 'nvim')
+
+    def nvim_expr(self, expression):
+        result = subprocess.run(
+            ['nvim', '--server', self.nvim_socket, '--remote-expr', f'json_encode({expression})'],
+            check=True, capture_output=True, text=True, timeout=5,
+        )
+        return json.loads(result.stdout)
+
+    def nvim_mouse(self, button, column, row, release=False):
+        left, top = map(int, self.value(self.right, '#{pane_left} #{pane_top}').split())
+        self.mouse(button, left + column, top + row, release=release)
+
+    def test_nvim_divider_resize(self):
+        self.start_nvim()
+        for layout, dimension in [('vsplit', 'width'), ('split', 'height')]:
+            with self.subTest(layout=layout):
+                self.nvim_expr(f'execute("only | {layout}")')
+                self.drain()
+                for delta in (5, -3):
+                    window = min(self.nvim_expr('getwininfo()'), key=lambda win: (win['winrow'], win['wincol']))
+                    column = window['wincol'] + (window['width'] if layout == 'vsplit' else 3)
+                    row = window['winrow'] + (window['height'] if layout == 'split' else 2)
+                    end_column = column + (delta if layout == 'vsplit' else 0)
+                    end_row = row + (delta if layout == 'split' else 0)
+                    self.nvim_mouse(0, column, row)
+                    self.nvim_mouse(32, end_column, end_row)
+                    self.nvim_mouse(0, end_column, end_row, release=True)
+                    resized = self.nvim_expr(f"getwininfo({window['winid']})[0]")
+                    self.assertEqual(resized[dimension], window[dimension] + delta)
+                    self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
+                    self.assertEqual(self.nvim_expr('mode()'), 'n')
+                    self.assertEqual(self.flag(), b'0')
+
+    def test_nvim_click_selection_and_release(self):
+        self.start_nvim()
+        self.assertEqual(self.value(self.left, '#{pane_active}'), '1')
+        self.nvim_mouse(0, 8, 3)
+        self.nvim_mouse(0, 8, 3, release=True)
+        self.assertEqual(self.value(self.right, '#{pane_active}'), '1')
+        self.assertEqual(self.nvim_expr('[line("."), col(".")]'), [3, 8])
+        self.nvim_mouse(0, 2, 4)
+        self.nvim_mouse(32, 10, 6)
+        self.nvim_mouse(0, 10, 6, release=True)
+        self.assertEqual(self.nvim_expr('mode()'), 'v')
+        self.assertEqual(self.nvim_expr('[line("v"), col("v"), line("."), col(".")]'), [4, 2, 6, 10])
+        self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
+        self.assertEqual(self.flag(), b'0')
+        self.nvim_mouse(35, 20, 8)  # Moving after release must not extend the selection.
+        self.assertEqual(self.nvim_expr('[line("."), col(".")]'), [6, 10])
+        self.nvim_mouse(0, 4, 2)
+        self.nvim_mouse(0, 4, 2, release=True)
+        self.assertEqual(self.nvim_expr('mode()'), 'n')
+        self.assertEqual(self.nvim_expr('[line("."), col(".")]'), [2, 4])
+
+    def test_nvim_multiple_clicks(self):
+        self.start_nvim()
+        for count, mode in [(2, 'v'), (3, 'V')]:
+            with self.subTest(count=count):
+                self.send(b'\x1b')
+                self.drain(.6)
+                column = int(self.value(self.right, '#{pane_left}')) + 8
+                down = f'\x1b[<0;{column};3M'.encode()
+                up = f'\x1b[<0;{column};3m'.encode()
+                self.send((down + up) * count)
+                self.drain(.4)  # Allow tmux's delayed double-click event to arrive.
+                self.assertEqual(self.nvim_expr('mode()'), mode)
+                self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
+                self.assertEqual(self.flag(), b'0')
+                self.send(b'y')
+                self.assertEqual(self.nvim_expr('getreg()'), 'bravo' if count == 2 else 'alpha bravo charlie delta\n')
+
+    def test_nvim_click_clears_copy_mode_after_reload(self):
+        self.start_nvim()
+        for mode in ('emacs', 'vi'):
+            with self.subTest(mode=mode):
+                self.tmux('set-option', '-w', 'mode-keys', mode)
+                self.tmux('select-pane', '-t', self.right)
+                self.tmux('copy-mode', '-t', self.right)
+                self.tmux('send-keys', '-t', self.right, '-X', 'begin-selection')
+                self.tmux('send-keys', '-t', self.right, '-X', 'cursor-right')
+                self.assertTrue(self.selected(self.right))
+                self.tmux('source-file', str(self.config))
+                self.drain()
+                self.assertEqual(self.flag(), b'1')
+                self.nvim_mouse(0, 9, 5)
+                self.nvim_mouse(0, 9, 5, release=True)
+                self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
+                self.assertEqual(self.nvim_expr('[line("."), col(".")]'), [5, 9])
+                self.assertEqual(self.flag(), b'0')
+
+    def test_nvim_click_clears_other_pane_selection(self):
+        self.start_nvim()
+        self.drag(self.left)
+        self.nvim_mouse(0, 7, 4)
+        self.nvim_mouse(0, 7, 4, release=True)
+        self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+        self.assertEqual(self.value(self.right, '#{pane_active}'), '1')
+        self.assertEqual(self.nvim_expr('[line("."), col(".")]'), [4, 7])
+        self.assertEqual(self.flag(), b'0')
+
+    def test_nvim_tmux_border_resize(self):
+        self.start_nvim()
+        before = int(self.value(self.left, '#{pane_width}'))
+        self.mouse(0, before + 1, 5)
+        self.mouse(32, before + 6, 5)
+        self.mouse(0, before + 6, 5, release=True)
+        self.assertEqual(int(self.value(self.left, '#{pane_width}')), before + 5)
+        self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
+        self.assertEqual(self.nvim_expr('mode()'), 'n')
+
+    def test_nvim_without_mouse_uses_terminal_selection(self):
+        self.start_nvim()
+        self.nvim_expr('execute("set mouse=")')
+        self.drain()
+        self.assertEqual(self.value(self.right, '#{mouse_any_flag}'), '0')
+        self.drag(self.right)
+        self.assertEqual(self.nvim_expr('mode()'), 'n')
+        self.assertEqual(self.nvim_expr('[line("."), col(".")]'), [1, 1])
 
     def test_selection_clipboard_and_boundaries(self):
         for pane, name, neighbor in [(self.left, 'LEFT', 'RIGHT'), (self.right, 'RIGHT', 'LEFT')]:
