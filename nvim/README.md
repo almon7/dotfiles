@@ -101,9 +101,11 @@ Drag a vertical window separator left or right, or a horizontal window separator
 
 Ctrl-d/u scrolls down/up by one third of the current window height and centers the cursor. The distance adapts to resized windows; a numeric prefix overrides the distance in lines (for example, `5 Ctrl-d` moves down five lines).
 
-Ctrl-h/j/k/l moves left/down/up/right through Neovim splits and adjacent tmux panes, stopping at the outer edges. It works in Normal mode, plain `:terminal` buffers, and Snacks terminals, including the first navigation keypress before the plugin has loaded. Ordinary Insert-mode editing shortcuts are preserved. Ctrl-\ returns to the previous Neovim window or tmux pane from Normal mode.
+Cmd-h/j/k/l in WezTerm moves left/down/up/right through Neovim splits and adjacent tmux panes, stopping at the outer edges. It works in Normal mode, plain `:terminal` buffers, and Snacks terminals, including the first navigation keypress before the plugin has loaded. Ctrl-h/j/k/l no longer triggers split or pane navigation; native editing and picker bindings receive those keys. Ordinary Insert-mode editing shortcuts are preserved. Ctrl-\ returns to the previous Neovim window or tmux pane from Normal mode.
 
-Snacks pickers treat the search input and results as one panel: Ctrl-h/l moves between panels (and the editor beside the explorer), then into tmux when there is no panel in that direction. Ctrl-j/k moves directly to tmux panes below/above; j/k in Normal mode and Ctrl-n/p move through results. Outside tmux, movement stops when there is no eligible Neovim window.
+Snacks pickers treat the search input and results as one panel: Cmd-h/l moves between panels (and the editor beside the explorer), then into tmux when there is no panel in that direction. Cmd-j/k moves directly to tmux panes below/above; j/k in Normal mode and Ctrl-n/p move through results. Outside tmux, movement stops when there is no eligible Neovim window.
+
+WezTerm sends Ctrl-F1/F2/F3/F4 for Cmd-h/j/k/l, and Neovim maps those terminal keys to navigation. Neovim also accepts the F25/F26/F27/F28 names produced by tmux’s terminfo encoding. Other terminal emulators must send the same keys. Cmd-n/p changes tmux windows; Cmd-]/[ changes tmux sessions.
 
 The paired [tmux bindings](../tmux/README.md#keys) work locally and when SSH connects directly to remote tmux/Neovim. Existing Neovim sessions retain their loaded Lua configuration; open a fresh session after updating these mappings.
 

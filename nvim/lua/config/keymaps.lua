@@ -2,6 +2,11 @@
 -- Default keymaps that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/keymaps.lua
 -- Add any additional keymaps here
 
+-- Command navigation uses dedicated terminal keys; restore native Control keys.
+for _, key in ipairs({ "<C-h>", "<C-j>", "<C-k>", "<C-l>" }) do
+  vim.keymap.del("n", key)
+end
+
 -- Recalculate one-third scrolling on each press so resized windows stay proportional.
 for _, key in ipairs({ "<C-d>", "<C-u>" }) do
   vim.keymap.set("n", key, function()

@@ -23,6 +23,10 @@ import unittest
 ROOT = Path(__file__).resolve().parent
 COPY = b'\x1b[99;13~'
 CANCEL = b'\x1b[99;14~'
+# xterm encodings sent by WezTerm for Command navigation (Ctrl-F1 through F8).
+LEFT, DOWN, UP, RIGHT = (b'\x1b[1;5P', b'\x1b[1;5Q', b'\x1b[1;5R', b'\x1b[1;5S')
+NEXT_WINDOW, PREV_WINDOW = b'\x1b[15;5~', b'\x1b[17;5~'
+NEXT_SESSION, PREV_SESSION = b'\x1b[18;5~', b'\x1b[19;5~'
 
 
 def fixture(log_path, name, mouse):
@@ -225,6 +229,47 @@ class MouseSelectionTests(unittest.TestCase):
         left, top = map(int, self.value(self.right, '#{pane_left} #{pane_top}').split())
         self.mouse(button, left + column, top + row, release=release)
 
+    def test_nvim_command_key_decoding(self):
+        self.start_nvim()
+        plugin = self.nvim_expr('stdpath("data")') + '/lazy/vim-tmux-navigator'
+        if not Path(plugin, 'plugin/tmux_navigator.vim').is_file():
+            self.skipTest('installed vim-tmux-navigator is required')
+        # Load the real mapping spec and navigator, without unrelated editor plugins.
+        # The PTY input must survive tmux's terminfo encoding, not just map lookup.
+        setup = """
+            vim.opt.rtp:prepend(%s)
+            vim.opt.rtp:prepend(%s)
+            local spec = dofile(%s)
+            spec.init()
+            vim.cmd('runtime plugin/tmux_navigator.vim')
+            for _, key in ipairs(spec.keys) do
+                vim.keymap.set(key.mode or 'n', key[1], key[2], {expr=key.expr, silent=true})
+            end
+            return true
+        """ % (json.dumps(str(ROOT.parent / 'nvim')), json.dumps(plugin),
+                   json.dumps(str(ROOT.parent / 'nvim/lua/plugins/tmux.lua')))
+        self.nvim_expr('luaeval(' + json.dumps('(function() ' + setup + ' end)()') + ')')
+        self.tmux('select-pane', '-t', self.right)
+        self.nvim_expr('execute("vsplit | wincmd h")')
+        left = self.nvim_expr('win_getid()')
+        self.send(RIGHT)
+        self.assertNotEqual(self.nvim_expr('win_getid()'), left)
+        self.send(LEFT)
+        self.assertEqual(self.nvim_expr('win_getid()'), left)
+        self.nvim_expr('execute("split | wincmd k")')
+        upper = self.nvim_expr('win_getid()')
+        self.send(DOWN)
+        self.assertNotEqual(self.nvim_expr('win_getid()'), upper)
+        self.send(UP)
+        self.assertEqual(self.nvim_expr('win_getid()'), upper)
+        self.send(LEFT)
+        self.assertEqual(self.value(self.left, '#{pane_active}'), '1')
+        self.send(RIGHT)
+        self.nvim_expr('execute("only | terminal | startinsert")')
+        self.drain(.3)
+        self.send(LEFT)
+        self.assertEqual(self.value(self.left, '#{pane_active}'), '1')
+
     def test_nvim_divider_resize(self):
         self.start_nvim()
         for layout, dimension in [('vsplit', 'width'), ('split', 'height')]:
@@ -373,11 +418,11 @@ class MouseSelectionTests(unittest.TestCase):
 
     def test_navigation_click_away_and_wheel(self):
         self.drag()
-        self.send(b'\x0c')
+        self.send(RIGHT)
         self.assertEqual(self.value(self.right, '#{pane_active}'), '1')
         self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
         self.assertEqual(self.flag(), b'0')
-        self.send(b'\x08')
+        self.send(LEFT)
         self.assertEqual(self.value(self.left, '#{pane_active}'), '1')
         self.drag()
         self.mouse(0, self.rx+5, 4)
@@ -394,6 +439,73 @@ class MouseSelectionTests(unittest.TestCase):
         self.mouse(64, 3, 3)
         self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
         self.assertEqual(self.left_log.read_bytes(), before)
+
+    def test_command_navigation_and_released_keys(self):
+        # Reload must retire bindings inherited from the previous configuration.
+        for key in ('C-h', 'C-j', 'C-k', 'C-l', 'M-j', 'M-k'):
+            self.tmux('bind-key', '-n', key, 'select-pane', '-t', self.right)
+        self.tmux('source-file', str(self.config))
+        for mode in ('emacs', 'vi'):
+            self.tmux('set-option', '-w', 'mode-keys', mode)
+            for selected in (False, True):
+                for key in (b'\x08', b'\x0a', b'\x0b', b'\x0c', b'\x1bj', b'\x1bk'):
+                    if selected:
+                        self.drag()
+                    before = self.left_log.read_bytes()
+                    self.send(key)
+                    self.assertEqual(self.value(self.left, '#{pane_active}'), '1')
+                    self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                    self.assertEqual(self.left_log.read_bytes()[len(before):], key)
+            self.drag()
+            self.send(RIGHT)
+            self.assertEqual(self.value(self.right, '#{pane_active}'), '1')
+            self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+            self.send(RIGHT)  # Stop at the right edge.
+            self.assertEqual(self.value(self.right, '#{pane_active}'), '1')
+            self.send(LEFT)
+            self.send(LEFT)  # Stop at the left edge.
+            self.assertEqual(self.value(self.left, '#{pane_active}'), '1')
+        lower = self.tmux('split-window', '-v', '-d', '-t', self.left, '-P', '-F', '#{pane_id}')
+        self.send(DOWN)
+        self.assertEqual(self.value(lower, '#{pane_active}'), '1')
+        self.send(DOWN)
+        self.assertEqual(self.value(lower, '#{pane_active}'), '1')
+        self.send(UP)
+        self.assertEqual(self.value(self.left, '#{pane_active}'), '1')
+
+    def test_command_windows_and_sessions(self):
+        following = self.tmux('new-window', '-d', '-t', 'test', '-P', '-F', '#{window_id}')
+        original = self.value(self.left, '#{window_id}')
+        first = self.tmux('list-windows', '-t', 'test', '-F', '#{window_id}').splitlines()[0]
+        for mode in ('emacs', 'vi'):
+            self.tmux('set-option', '-w', 'mode-keys', mode)
+            self.drag()
+            self.send(NEXT_WINDOW)
+            self.assertEqual(self.tmux('display-message', '-p', '#{window_id}'), following)
+            self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+            self.send(NEXT_WINDOW)  # Window navigation wraps.
+            self.assertEqual(self.tmux('display-message', '-p', '#{window_id}'), first)
+            self.send(PREV_WINDOW)
+            self.assertEqual(self.tmux('display-message', '-p', '#{window_id}'), following)
+            self.send(PREV_WINDOW)
+            self.assertEqual(self.tmux('display-message', '-p', '#{window_id}'), original)
+        self.tmux('new-session', '-d', '-s', 'aaa')
+        self.tmux('new-session', '-d', '-s', 'zzz')
+        for mode in ('emacs', 'vi'):
+            self.tmux('set-option', '-w', 'mode-keys', mode)
+            self.drag()
+            self.send(NEXT_SESSION)
+            self.assertEqual(self.tmux('display-message', '-p', '#{session_name}'), 'zzz')
+            self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+            self.send(NEXT_SESSION)  # Session navigation does not wrap.
+            self.assertEqual(self.tmux('display-message', '-p', '#{session_name}'), 'zzz')
+            self.send(PREV_SESSION)
+            self.assertEqual(self.tmux('display-message', '-p', '#{session_name}'), 'test')
+            self.send(PREV_SESSION)
+            self.send(PREV_SESSION)
+            self.assertEqual(self.tmux('display-message', '-p', '#{session_name}'), 'aaa')
+            self.send(NEXT_SESSION)
+            self.assertEqual(self.tmux('display-message', '-p', '#{session_name}'), 'test')
 
     def test_backed_up_client_does_not_block_healthy_client(self):
         master, slave = pty.openpty()
@@ -595,11 +707,11 @@ class MouseSelectionTests(unittest.TestCase):
                 viewport = self.history_viewport()
                 self.print_history(start=101, count=10)
                 self.assertEqual(self.history_viewport(), viewport)
-                self.send(b'\x0c')
+                self.send(RIGHT)
                 self.assertEqual(self.value(self.right, '#{pane_active}'), '1')
                 self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
                 self.assertEqual(self.flag(), b'0')
-                self.send(b'\x08')
+                self.send(LEFT)
 
     def test_history_reload_window_change_and_detach(self):
         self.print_history()

@@ -28,14 +28,14 @@ it rather than for the program in the pane. It is remapped from the default
 | `C-a d` | Detach — everything keeps running server-side |
 | `C-a c` | New window (a tab) |
 | `C-a 1`…`9` | Jump to window N |
-| `C-a n` / `C-a p` | Next / previous window |
+| `C-a n` / `C-a p`, or `Cmd-n` / `Cmd-p` in WezTerm | Next / previous window, wrapping at the ends |
 | `C-a ,` | Rename the current window |
 | `C-a w` | Pick a window from a list |
 | `C-a &` | Close the current window |
 | `C-a \|` / `C-a -` | Split vertically / horizontally |
 | `C-a h/j/k/l` | Move between panes, stopping at the outer edges |
-| `C-h/j/k/l` | Move between panes **and** Neovim splits, stopping at the outer edges |
-| Left `Option-j` / `Option-k` | Next / previous session in name order, stopping at either end |
+| `Cmd-h/j/k/l` (WezTerm) | Move between panes **and** Neovim splits, stopping at the outer edges |
+| `Cmd-]` / `Cmd-[` (WezTerm) | Next / previous session in name order, stopping at either end |
 | `C-a a` | Return to the last window |
 | `C-a C-a` | Send `C-a` to the program in the pane |
 | `C-a H/J/K/L` | Move the current pane by swapping it left/down/up/right |
@@ -46,7 +46,7 @@ it rather than for the program in the pane. It is remapped from the default
 
 Click to focus a pane and drag to select terminal text within that pane, including over Codex and shells. Neovim/Vim receives ordinary clicks and drags when it requests mouse input: clicks position the editing cursor, text drags select in the editor, and divider drags resize editor windows. Drag tmux borders to resize tmux panes. The wheel scrolls applications that request mouse input; over Codex, shells, and other applications without mouse reporting, it scrolls the pane's retained terminal output. Ctrl-click opens detected links in the OS browser.
 
-Neovim navigation works in Normal mode, plain `:terminal` buffers, Snacks terminals, and pickers. Ordinary editing buffers keep their Insert-mode shortcuts. In pickers, Ctrl-h/l moves between panels; Ctrl-j/k moves to tmux panes above/below, while j/k or Ctrl-n/p moves through results. See the [Neovim navigation notes](../nvim/README.md#navigation).
+Neovim navigation works in Normal mode, plain `:terminal` buffers, Snacks terminals, and pickers. Ordinary editing buffers keep their Insert-mode shortcuts. In pickers, Cmd-h/l moves between panels; Cmd-j/k moves to tmux panes above/below, while j/k or Ctrl-n/p moves through results. See the [Neovim navigation notes](../nvim/README.md#navigation).
 
 New windows and splits start in the session's directory (set with `tmux new -s dev -c /path/to/project`), even after a shell changes directory.
 
@@ -100,7 +100,7 @@ History entry shortcuts (`C-a [` and `C-a PageUp`), scrollbar actions, and pane 
 
 **Over SSH.** OSC 52 lets explicit clipboard yanks in remote tmux or Neovim reach your laptop. Use a supporting terminal such as WezTerm, Kitty, Ghostty, or iTerm2. The Neovim provider is copy-only: paste with `Cmd-V` / `Ctrl-Shift-V`; `Space p` shows a reminder. The supported route is WezTerm → SSH → remote tmux/Neovim. Nesting a remote session inside local tmux requires a separate key-forwarding setup.
 
-**Clear screen.** `C-l` is taken over for pane navigation, so the shell's clear-screen moves to `C-a C-l`.
+**Clear screen.** Ordinary `C-l` reaches the shell again; `C-a C-l` remains an explicit alternative. The old `C-h/j/k/l` and `Option-j/k` navigation bindings are removed on reload.
 
 ## Config notes
 

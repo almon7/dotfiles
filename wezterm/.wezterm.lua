@@ -106,8 +106,17 @@ local paste_clipboard = wezterm.action_callback(function(window, pane)
   window:perform_action(act.PasteFrom 'Clipboard', pane)
 end)
 
--- Match Terminal.app's word-wise cursor movement in shells and through tmux.
+-- Clipboard, shell editing, and Command navigation shortcuts.
 config.keys = {
+  -- Dedicated terminal keys keep Ctrl-h/j/k/l and Option-j/k available to apps. tmux and Neovim share this mapping, including through SSH.
+  { key = 'h', mods = 'SUPER', action = act.SendKey { key = 'F1', mods = 'CTRL' } },
+  { key = 'j', mods = 'SUPER', action = act.SendKey { key = 'F2', mods = 'CTRL' } },
+  { key = 'k', mods = 'SUPER', action = act.SendKey { key = 'F3', mods = 'CTRL' } },
+  { key = 'l', mods = 'SUPER', action = act.SendKey { key = 'F4', mods = 'CTRL' } },
+  { key = 'n', mods = 'SUPER', action = act.SendKey { key = 'F5', mods = 'CTRL' } },
+  { key = 'p', mods = 'SUPER', action = act.SendKey { key = 'F6', mods = 'CTRL' } },
+  { key = ']', mods = 'SUPER', action = act.SendKey { key = 'F7', mods = 'CTRL' } },
+  { key = '[', mods = 'SUPER', action = act.SendKey { key = 'F8', mods = 'CTRL' } },
   {
     key = 'c',
     mods = 'SUPER',

@@ -64,7 +64,7 @@ end
 -- treat as directional splits. Move geometrically within the picker and hand
 -- navigation to tmux when there is no picker window in that direction.
 local function navigate_picker(picker, direction)
-  -- The input and result list are one logical picker panel. Keep Ctrl-j/k
+  -- The input and result list are one logical picker panel. Keep Cmd-j/k
   -- available for tmux navigation; plain j/k and Ctrl-n/p still move results.
   if direction == "j" or direction == "k" then
     select_tmux_pane(direction)
@@ -129,13 +129,17 @@ local function navigate_picker(picker, direction)
 end
 
 local picker_navigation = {
-  ["<c-h>"] = { "navigate_left", mode = { "n", "i" } },
-  ["<c-j>"] = { "navigate_down", mode = { "n", "i" } },
-  ["<c-k>"] = { "navigate_up", mode = { "n", "i" } },
-  ["<c-l>"] = { "navigate_right", mode = { "n", "i" } },
+  ["<C-F1>"] = { "navigate_left", mode = { "n", "i" } },
+  ["<F25>"] = { "navigate_left", mode = { "n", "i" } },
+  ["<C-F2>"] = { "navigate_down", mode = { "n", "i" } },
+  ["<F26>"] = { "navigate_down", mode = { "n", "i" } },
+  ["<C-F3>"] = { "navigate_up", mode = { "n", "i" } },
+  ["<F27>"] = { "navigate_up", mode = { "n", "i" } },
+  ["<C-F4>"] = { "navigate_right", mode = { "n", "i" } },
+  ["<F28>"] = { "navigate_right", mode = { "n", "i" } },
 }
 
-return {
+local spec = {
   "folke/snacks.nvim",
   opts = {
     terminal = {
@@ -145,28 +149,28 @@ return {
         -- navigator so they can continue into the adjacent tmux pane.
         keys = {
           nav_h = {
-            "<C-h>",
+            "<C-F1>",
             terminal_navigation("TmuxNavigateLeft"),
             desc = "Go to left window/pane",
             expr = true,
             mode = "t",
           },
           nav_j = {
-            "<C-j>",
+            "<C-F2>",
             terminal_navigation("TmuxNavigateDown"),
             desc = "Go to lower window/pane",
             expr = true,
             mode = "t",
           },
           nav_k = {
-            "<C-k>",
+            "<C-F3>",
             terminal_navigation("TmuxNavigateUp"),
             desc = "Go to upper window/pane",
             expr = true,
             mode = "t",
           },
           nav_l = {
-            "<C-l>",
+            "<C-F4>",
             terminal_navigation("TmuxNavigateRight"),
             desc = "Go to right window/pane",
             expr = true,
@@ -228,3 +232,13 @@ return {
     },
   },
 }
+
+-- tmux terminfo names Ctrl-F1/F2/F3/F4 as F25/F26/F27/F28.
+for index, direction in ipairs({ "h", "j", "k", "l" }) do
+  local keys = spec.opts.terminal.win.keys
+  local alias = vim.deepcopy(keys["nav_" .. direction])
+  alias[1] = "<F" .. (24 + index) .. ">"
+  keys["nav_" .. direction .. "_terminfo"] = alias
+end
+
+return spec

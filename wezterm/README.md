@@ -6,10 +6,14 @@ WezTerm provides the terminal, fonts, system clipboard, and OS shortcuts. tmux o
 
 | Input | Behavior |
 | --- | --- |
-| Left Option | Sends Meta shortcuts, including Option-j/k for tmux sessions |
+| Left Option | Sends Meta shortcuts to the application |
 | Right Option | Composes symbols using the keyboard layout |
 | Option-Left / Option-Right | Sends Alt-b / Alt-f for shell word movement |
 | Option-3 | Types `#` for the British Mac keyboard layout |
+| Cmd-H/J/K/L | Moves left/down/up/right through tmux panes and Neovim splits |
+| Cmd-N / Cmd-P | Next / previous tmux window in the session, wrapping at the ends |
+| Cmd-] / Cmd-[ | Next / previous tmux session in name order, stopping at the ends |
+| Ctrl-Shift-H / Ctrl-Shift-K / Ctrl-Shift-N | Hides WezTerm / clears WezTerm scrollback / creates a native WezTerm window |
 | Cmd-C / Ctrl-Shift-C | Copies the terminal or tmux selection, clears its highlight, and keeps the scroll position |
 | Cmd-V / Ctrl-Shift-V | Pastes the system clipboard, including over SSH |
 | Left drag | In Neovim/Vim, resizes editor dividers or selects text in the editor; elsewhere, selects terminal text within the tmux pane without copying on release |
@@ -22,6 +26,10 @@ WezTerm provides the terminal, fonts, system clipboard, and OS shortcuts. tmux o
 tmux handles terminal selection outside Neovim/Vim so dragging across lines excludes neighboring panes without zooming. The terminal highlight survives release; copying clears the highlight and keeps the scroll position. Copying without a selection leaves the clipboard unchanged. Typing clears the terminal selection and sends the first key to the application; paste and scrolling also release the terminal selection. tmux temporarily holds the pane's displayed contents while highlighting text or browsing history. Typing and paste return to live input; clicking and dragging older output lets you select it without jumping to the bottom.
 
 Neovim/Vim receives ordinary clicks and drags when it requests mouse input, including window-divider resizing. Copy a Neovim selection with `Space y`; `Cmd-C` / `Ctrl-Shift-C` copies terminal selections only. Shift-click and Shift-drag preserve the selection and clipboard. Ctrl-click opens links. The wheel scrolls applications that request mouse input; otherwise tmux scrolls the pane's retained terminal output, including Codex chats and shell output, without changing keyboard focus. Outside mouse-reporting applications, WezTerm handles normal text selection. Alt explicitly bypasses mouse reporting and therefore does not respect tmux pane boundaries. See [tmux copy and paste](../tmux/README.md#copy-and-paste).
+
+Command navigation replaces WezTerm’s Cmd-H (hide), Cmd-K (clear scrollback), and Cmd-N (new native window); the Ctrl-Shift alternatives above remain available. Cmd-Shift-[/] still switches native WezTerm tabs. Ctrl-H/J/K/L and Option-J/K now reach applications without triggering pane or session navigation.
+
+WezTerm sends Ctrl-F1/F2/F3/F4 for Command pane navigation, Ctrl-F5/F6 for windows, and Ctrl-F7/F8 for sessions. These terminal keys are reserved by the paired tmux and Neovim configuration, including over SSH; other terminal emulators must send the same keys to use this navigation. On Linux, `SUPER` is the Super/Windows modifier rather than Command. Window and session shortcuts require tmux.
 
 Option-key composition settings are for macOS. On Linux, use Alt for Meta shortcuts and Ctrl-Shift-C/V for clipboard actions.
 
