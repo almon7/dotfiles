@@ -117,6 +117,10 @@ config.keys = {
   { key = 'p', mods = 'SUPER', action = act.SendKey { key = 'F6', mods = 'CTRL' } },
   { key = ']', mods = 'SUPER', action = act.SendKey { key = 'F7', mods = 'CTRL' } },
   { key = '[', mods = 'SUPER', action = act.SendKey { key = 'F8', mods = 'CTRL' } },
+  { key = 'UpArrow', mods = 'SUPER', action = act.SendKey { key = 'F9', mods = 'CTRL' } },
+  { key = 'DownArrow', mods = 'SUPER', action = act.SendKey { key = 'F10', mods = 'CTRL' } },
+  { key = 'u', mods = 'SUPER', action = act.SendKey { key = 'F11', mods = 'CTRL' } },
+  { key = 'd', mods = 'SUPER', action = act.SendKey { key = 'F12', mods = 'CTRL' } },
   {
     key = 'c',
     mods = 'SUPER',

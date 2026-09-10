@@ -11,6 +11,8 @@ WezTerm provides the terminal, fonts, system clipboard, and OS shortcuts. tmux o
 | Option-Left / Option-Right | Sends Alt-b / Alt-f for shell word movement |
 | Option-3 | Types `#` for the British Mac keyboard layout |
 | Cmd-H/J/K/L | Moves left/down/up/right through tmux panes and Neovim splits |
+| Cmd-Up / Cmd-Down | Scrolls the active tmux pane or Neovim window up / down one line |
+| Cmd-U / Cmd-D | Scrolls up / down by one third of the active tmux pane height or Neovim window height (Normal mode) |
 | Cmd-N / Cmd-P | Next / previous tmux window in the session, wrapping at the ends |
 | Cmd-] / Cmd-[ | Next / previous tmux session in name order, stopping at the ends |
 | Ctrl-Shift-H / Ctrl-Shift-K / Ctrl-Shift-N | Hides WezTerm / clears WezTerm scrollback / creates a native WezTerm window |
@@ -29,7 +31,7 @@ Neovim/Vim receives ordinary clicks and drags when it requests mouse input, incl
 
 Command navigation replaces WezTerm’s Cmd-H (hide), Cmd-K (clear scrollback), and Cmd-N (new native window); the Ctrl-Shift alternatives above remain available. Cmd-Shift-[/] still switches native WezTerm tabs. Ctrl-H/J/K/L and Option-J/K now reach applications without triggering pane or session navigation.
 
-WezTerm sends Ctrl-F1/F2/F3/F4 for Command pane navigation, Ctrl-F5/F6 for windows, and Ctrl-F7/F8 for sessions. These terminal keys are reserved by the paired tmux and Neovim configuration, including over SSH; other terminal emulators must send the same keys to use this navigation. On Linux, `SUPER` is the Super/Windows modifier rather than Command. Window and session shortcuts require tmux.
+WezTerm sends Ctrl-F1/F2/F3/F4 for Command pane navigation, Ctrl-F5/F6 for windows, Ctrl-F7/F8 for sessions, Ctrl-F9/F10 for one-line scrolling, and Ctrl-F11/F12 for one-third scrolling. These terminal keys are reserved by the paired tmux and Neovim configuration, including over SSH; other terminal emulators must send the same keys to use this navigation. On Linux, `SUPER` is the Super/Windows modifier rather than Command. Window and session shortcuts require tmux.
 
 Option-key composition settings are for macOS. On Linux, use Alt for Meta shortcuts and Ctrl-Shift-C/V for clipboard actions.
 

@@ -99,7 +99,9 @@ brew install tree-sitter-cli
 
 Drag a vertical window separator left or right, or a horizontal window separator up or down, to resize Neovim splits. Ordinary clicks position the editing cursor; dragging text creates a Neovim selection, double-clicking selects a word, and triple-clicking selects a line. The paired tmux config forwards these gestures to Neovim when mouse support is enabled. After updating tmux's mouse bindings, reload with `C-a r`; existing Neovim sessions receive the change without restarting. Copy a Neovim selection with `Space y`; terminal `Cmd-C` / `Ctrl-Shift-C` copies terminal selections only.
 
-Ctrl-d/u scrolls down/up by one third of the current window height and centers the cursor. The distance adapts to resized windows; a numeric prefix overrides the distance in lines (for example, `5 Ctrl-d` moves down five lines).
+Cmd-Up / Cmd-Down in WezTerm scrolls the current Neovim window up / down one line, directly or through tmux. Normal and Visual mode use native Ctrl-y/e scrolling; Insert mode returns to editing after scrolling. In a terminal buffer, the shortcut enters Terminal-Normal mode to browse output; press `i` to resume terminal input. WezTerm sends Ctrl-F9/F10; the mappings also accept the F33/F34 names decoded through tmux.
+
+Ctrl-d/u and Cmd-D/U in WezTerm scroll down/up by one third of the current window height and center the cursor in Normal mode. The distance adapts to resized windows; a numeric prefix overrides the distance in lines (for example, `5 Ctrl-d` or `5 Cmd-D` moves down five lines). WezTerm sends Ctrl-F11/F12 for Cmd-U/D; the mappings also accept the F35/F36 names decoded through tmux.
 
 Cmd-h/j/k/l in WezTerm moves left/down/up/right through Neovim splits and adjacent tmux panes, stopping at the outer edges. It works in Normal mode, plain `:terminal` buffers, and Snacks terminals, including the first navigation keypress before the plugin has loaded. Ctrl-h/j/k/l no longer triggers split or pane navigation; native editing and picker bindings receive those keys. Ordinary Insert-mode editing shortcuts are preserved. Ctrl-\ returns to the previous Neovim window or tmux pane from Normal mode.
 

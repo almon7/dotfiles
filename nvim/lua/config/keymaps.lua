@@ -7,9 +7,32 @@ for _, key in ipairs({ "<C-h>", "<C-j>", "<C-k>", "<C-l>" }) do
   vim.keymap.del("n", key)
 end
 
+-- Cmd-Up/Down arrives as Ctrl-F9/F10, or F33/F34 through tmux terminfo.
+for _, mapping in ipairs({
+  { "<C-F9>", "<C-y>", "up" },
+  { "<F33>", "<C-y>", "up" },
+  { "<C-F10>", "<C-e>", "down" },
+  { "<F34>", "<C-e>", "down" },
+}) do
+  local key, scroll, direction = unpack(mapping)
+  local opts = { desc = "Scroll " .. direction .. " one line" }
+  vim.keymap.set({ "n", "x" }, key, scroll, opts)
+  vim.keymap.set("i", key, "<C-o>" .. scroll, opts)
+  vim.keymap.set("t", key, "<C-\\><C-n>" .. scroll, opts)
+end
+
 -- Recalculate one-third scrolling on each press so resized windows stay proportional.
-for _, key in ipairs({ "<C-d>", "<C-u>" }) do
-  vim.keymap.set("n", key, function()
+-- Cmd-U/D arrives as Ctrl-F11/F12, or F35/F36 through tmux terminfo.
+for _, mapping in ipairs({
+  { "<C-d>", "<C-d>" },
+  { "<C-u>", "<C-u>" },
+  { "<C-F11>", "<C-u>" },
+  { "<F35>", "<C-u>" },
+  { "<C-F12>", "<C-d>" },
+  { "<F36>", "<C-d>" },
+}) do
+  local shortcut, key = unpack(mapping)
+  vim.keymap.set("n", shortcut, function()
     if vim.v.count > 0 then
       return key .. "zz"
     end

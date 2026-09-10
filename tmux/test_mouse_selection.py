@@ -23,10 +23,12 @@ import unittest
 ROOT = Path(__file__).resolve().parent
 COPY = b'\x1b[99;13~'
 CANCEL = b'\x1b[99;14~'
-# xterm encodings sent by WezTerm for Command navigation (Ctrl-F1 through F8).
+# xterm encodings sent by WezTerm for Command navigation (Ctrl-F1 through F12).
 LEFT, DOWN, UP, RIGHT = (b'\x1b[1;5P', b'\x1b[1;5Q', b'\x1b[1;5R', b'\x1b[1;5S')
 NEXT_WINDOW, PREV_WINDOW = b'\x1b[15;5~', b'\x1b[17;5~'
 NEXT_SESSION, PREV_SESSION = b'\x1b[18;5~', b'\x1b[19;5~'
+SCROLL_UP, SCROLL_DOWN = b'\x1b[20;5~', b'\x1b[21;5~'
+THIRD_UP, THIRD_DOWN = b'\x1b[23;5~', b'\x1b[24;5~'
 
 
 def fixture(log_path, name, mouse):
@@ -225,6 +227,16 @@ class MouseSelectionTests(unittest.TestCase):
         )
         return json.loads(result.stdout)
 
+    def load_nvim_keymaps(self):
+        # Supply the LazyVim defaults that keymaps.lua deliberately removes.
+        setup = """
+          for _, key in ipairs({ '<C-h>', '<C-j>', '<C-k>', '<C-l>' }) do
+            vim.keymap.set('n', key, '<Nop>')
+          end
+          dofile(%s)
+        """ % json.dumps(str(ROOT.parent / 'nvim/lua/config/keymaps.lua'))
+        self.nvim_expr('luaeval(' + json.dumps('(function() ' + setup + ' end)()') + ')')
+
     def nvim_mouse(self, button, column, row, release=False):
         left, top = map(int, self.value(self.right, '#{pane_left} #{pane_top}').split())
         self.mouse(button, left + column, top + row, release=release)
@@ -269,6 +281,110 @@ class MouseSelectionTests(unittest.TestCase):
         self.drain(.3)
         self.send(LEFT)
         self.assertEqual(self.value(self.left, '#{pane_active}'), '1')
+
+    def test_command_scroll_history(self):
+        self.print_history()
+        for mode in ('emacs', 'vi'):
+            with self.subTest(mode=mode):
+                self.tmux('set-option', '-w', 'mode-keys', mode)
+                before = self.left_log.read_bytes()
+                self.send(SCROLL_DOWN)
+                self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                self.send(SCROLL_UP)
+                self.assertEqual(self.scroll_position(), 1)
+                self.send(SCROLL_UP)
+                self.assertEqual(self.scroll_position(), 2)
+                self.drag(row=4)
+                self.send(SCROLL_DOWN)
+                self.assertFalse(self.selected(self.left))
+                self.assertEqual(self.scroll_position(), 1)
+                self.send(SCROLL_DOWN)
+                self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                self.assertEqual(self.left_log.read_bytes(), before)
+                self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
+                self.assertEqual(self.value(self.left, '#{pane_active}'), '1')
+
+    def test_nvim_command_scroll(self):
+        self.start_nvim()
+        self.load_nvim_keymaps()
+        self.tmux('select-pane', '-t', self.right)
+        for mode_key, mode in ((b'', 'n'), (b'v', 'v'), (b'i', 'i')):
+            with self.subTest(mode=mode):
+                self.send(b'\x1b')
+                self.nvim_expr('execute("normal! 40Gzz")')
+                self.send(mode_key)
+                position = self.nvim_expr('winsaveview().topline')
+                self.send(SCROLL_UP)
+                topline, current_mode = self.nvim_expr('[winsaveview().topline, mode()]')
+                self.assertEqual(topline, position - 1)
+                self.assertEqual(current_mode, mode)
+                self.send(SCROLL_DOWN)
+                topline, current_mode = self.nvim_expr('[winsaveview().topline, mode()]')
+                self.assertEqual(topline, position)
+                self.assertEqual(current_mode, mode)
+                self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
+
+    def test_command_third_scroll_history(self):
+        self.send(THIRD_UP)
+        self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+        self.print_history()
+        for height in (29, 17, 2, 1):
+            self.tmux('resize-window', '-t', self.left, '-y', str(height + 1))
+            self.assertEqual(int(self.value(self.left, '#{pane_height}')), height)
+            distance = max(1, height // 3)
+            for mode in ('emacs', 'vi'):
+                with self.subTest(height=height, mode=mode):
+                    self.tmux('set-option', '-w', 'mode-keys', mode)
+                    before = self.left_log.read_bytes()
+                    self.send(THIRD_DOWN)
+                    self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                    self.send(THIRD_UP)
+                    self.assertEqual(self.scroll_position(), distance)
+                    self.send(THIRD_UP)
+                    self.assertEqual(self.scroll_position(), 2 * distance)
+                    if height > 6:
+                        self.drag(row=4)
+                    self.send(THIRD_DOWN)
+                    self.assertFalse(self.selected(self.left))
+                    self.assertEqual(self.scroll_position(), distance)
+                    self.send(THIRD_DOWN)
+                    self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                    self.assertEqual(self.left_log.read_bytes(), before)
+                    self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
+                    self.assertEqual(self.value(self.left, '#{pane_active}'), '1')
+        # Scroll beyond both ends; going down must leave copy mode even when
+        # fewer than a full step remains before live output.
+        self.tmux('resize-window', '-t', self.left, '-y', '30')
+        self.send(THIRD_UP * 30)
+        top = self.scroll_position()
+        self.send(THIRD_UP)
+        self.assertEqual(self.scroll_position(), top)
+        self.send(THIRD_DOWN * 30)
+        self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+
+    def test_nvim_command_third_scroll(self):
+        self.start_nvim()
+        self.load_nvim_keymaps()
+        self.tmux('select-pane', '-t', self.right)
+        for height in (29, 17):
+            self.tmux('resize-window', '-t', self.right, '-y', str(height + 1))
+            self.drain()
+            distance = self.nvim_expr('winheight(0)') // 3
+            for mouse in ('a', ''):
+                self.nvim_expr('execute(' + json.dumps('set mouse=' + mouse) + ')')
+                for up, down in ((THIRD_UP, THIRD_DOWN), (b'\x15', b'\x04')):
+                    with self.subTest(height=height, mouse=mouse, up=up):
+                        self.nvim_expr('execute("normal! 40Gzz")')
+                        position = self.nvim_expr('winsaveview().topline')
+                        self.send(up)
+                        line, topline = self.nvim_expr('[line("."), winsaveview().topline]')
+                        self.assertEqual(line, 40 - distance)
+                        self.assertEqual(topline, position - distance)
+                        self.send(down)
+                        self.assertEqual(self.nvim_expr('line(".")'), 40)
+                        self.send(b'5' + down)
+                        self.assertEqual(self.nvim_expr('line(".")'), 45)
+                        self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
 
     def test_nvim_divider_resize(self):
         self.start_nvim()
@@ -646,6 +762,35 @@ class MouseSelectionTests(unittest.TestCase):
                 self.assertEqual(self.scroll_position(), position)
                 self.send(CANCEL)
 
+    def test_history_click_away_preserves_scroll_position(self):
+        self.print_history()
+        for mode in ('emacs', 'vi'):
+            for select_text in (False, True):
+                with self.subTest(mode=mode, select_text=select_text):
+                    self.tmux('set-option', '-w', 'mode-keys', mode)
+                    self.wheel(count=5)
+                    position = self.scroll_position()
+                    viewport = self.history_viewport()
+                    if select_text:
+                        self.drag(row=2)
+                    else:
+                        self.mouse(0, 10, 3)
+                        self.mouse(0, 10, 3, release=True)
+                    self.mouse(0, self.rx+5, 4)
+                    self.mouse(0, self.rx+5, 4, release=True)
+                    self.assertEqual(self.value(self.right, '#{pane_active}'), '1')
+                    self.assertEqual(self.scroll_position(), position)
+                    self.assertEqual(self.history_viewport(), viewport)
+                    self.assertFalse(self.selected(self.left))
+                    self.assertEqual(self.flag(), b'0')
+                    self.mouse(0, 10, 3)
+                    self.mouse(0, 10, 3, release=True)
+                    self.assertEqual(self.value(self.left, '#{pane_active}'), '1')
+                    self.assertEqual(self.scroll_position(), position)
+                    self.assertEqual(self.history_viewport(), viewport)
+                    self.assertEqual(self.flag(), b'1')
+                    self.send(CANCEL)
+
     def test_history_inactive_panes_and_mouse_forwarding(self):
         self.print_history()
         for mode in ('emacs', 'vi'):
@@ -680,7 +825,9 @@ class MouseSelectionTests(unittest.TestCase):
                     self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
                     self.assertIn(f'\x1b[<{64 if up else 65};'.encode(), self.right_log.read_bytes()[len(before):])
                     self.tmux('select-pane', '-t', self.left)
-                    self.wheel()
+                    self.drain()
+                    self.assertEqual(self.scroll_position(), 3)
+                    self.assertEqual(self.flag(), b'1')
                 self.send(CANCEL)
 
     def test_history_input_output_and_navigation(self):
@@ -712,6 +859,14 @@ class MouseSelectionTests(unittest.TestCase):
                 self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
                 self.assertEqual(self.flag(), b'0')
                 self.send(LEFT)
+                self.wheel(count=3)
+                self.send(b'\x01h')
+                self.assertEqual(self.scroll_position(), 9)
+                self.send(b'\x01l')
+                self.assertEqual(self.value(self.right, '#{pane_active}'), '1')
+                self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                self.assertEqual(self.flag(), b'0')
+                self.send(b'\x01h')
 
     def test_history_reload_window_change_and_detach(self):
         self.print_history()
