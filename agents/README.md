@@ -120,6 +120,8 @@ window of every request, so it holds the fast path and defers the rest to a file
 under [`references/`](skills/find-docs/references) that is read only when that
 branch is taken.
 
+Documentation, skill, and MCP discovery stay scoped to tooling used by the project or chosen for the task: a shadcn/ui collapsible section calls for shadcn resources, not a generic search for collapsible-section skills. Broader searches are reserved for exploratory research or tooling comparisons.
+
 - **[Context7](skills/find-docs/references/context7.md) serves documentation.**
   It resolves a library name to a Context7 ID and pulls current, version-pinned
   snippets for it, through the `ctx7` command the
