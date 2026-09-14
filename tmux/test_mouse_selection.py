@@ -31,11 +31,9 @@ SCROLL_UP, SCROLL_DOWN = b'\x1b[20;5~', b'\x1b[21;5~'
 THIRD_UP, THIRD_DOWN = b'\x1b[23;5~', b'\x1b[24;5~'
 
 
-def fixture(log_path, name, mouse):
+def fixture(log_path, name):
     tty.setraw(0)
     os.write(1, b'\x1b[?2004h')
-    if mouse:
-        os.write(1, b'\x1b[?1003h\x1b[?1006h')
     for number in range(1, 9):
         os.write(1, f'{name}{number:02} alpha bravo charlie delta\r\n'.encode())
     with open(log_path, 'ab', buffering=0) as log:
@@ -88,12 +86,12 @@ class MouseSelectionTests(unittest.TestCase):
         self.tmux('set-option', '-s', 'terminal-features[102]', 'xterm*:clipboard')
         self.left_log = Path(self.temp.name) / 'left.log'
         self.right_log = Path(self.temp.name) / 'right.log'
-        def command(log, name, mouse):
-            return shlex.join([sys.executable, str(Path(__file__).resolve()), '--fixture', str(log), name, mouse])
+        def command(log, name):
+            return shlex.join([sys.executable, str(Path(__file__).resolve()), '--fixture', str(log), name])
         self.left = self.tmux('new-window', '-d', '-t', 'test', '-n', 'selection', '-P', '-F', '#{pane_id}',
-                              command(self.left_log, 'LEFT', 'plain'))
+                              command(self.left_log, 'LEFT'))
         self.right = self.tmux('split-window', '-h', '-t', self.left, '-P', '-F', '#{pane_id}',
-                               command(self.right_log, 'RIGHT', 'mouse'))
+                               command(self.right_log, 'RIGHT'))
         self.tmux('select-window', '-t', self.left)
         self.tmux('select-pane', '-t', self.left)
         self.master, slave = pty.openpty()
@@ -106,7 +104,7 @@ class MouseSelectionTests(unittest.TestCase):
         self.addCleanup(self.close_client)
         self.output = bytearray()
         self.drain(.3)
-        self.assertEqual(self.value(self.right, '#{mouse_any_flag}'), '1')
+        self.assertEqual(self.value(self.right, '#{mouse_any_flag}'), '0')
         self.rx = int(self.value(self.right, '#{pane_left}')) + 1
 
     def close_client(self):
@@ -143,6 +141,65 @@ class MouseSelectionTests(unittest.TestCase):
 
     def selected(self, pane):
         return self.value(pane, '#{selection_present}') == '1'
+
+    def enable_mouse(self, pane=None):
+        pane = pane or self.right
+        with open(self.value(pane, '#{pane_tty}'), 'wb', buffering=0) as terminal:
+            terminal.write(b'\x1b[?1003h\x1b[?1006h')
+        self.drain()
+        self.assertEqual(self.value(pane, '#{mouse_any_flag}'), '1')
+
+    def select_in_copy_mode(self, pane):
+        self.tmux('select-pane', '-t', pane)
+        self.tmux('copy-mode', '-t', pane)
+        self.tmux('send-keys', '-t', pane, '-X', 'begin-selection')
+        self.tmux('send-keys', '-t', pane, '-X', 'cursor-right')
+        self.assertTrue(self.selected(pane))
+
+    def test_application_click_drag_and_release(self):
+        # A mouse-reporting process need not be named vim, nvim, or hunk.
+        self.enable_mouse()
+        self.drag(self.left)
+        before = self.right_log.read_bytes()
+        self.mouse(0, self.rx + 4, 3)
+        self.mouse(32, self.rx + 9, 5)
+        self.mouse(0, self.rx + 9, 5, release=True)
+        self.assertEqual(self.right_log.read_bytes()[len(before):],
+                         b'\x1b[<0;5;3M\x1b[<32;10;5M\x1b[<0;10;5m')
+        self.assertEqual(self.value(self.right, '#{pane_active}'), '1')
+        self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
+        self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+        self.assertEqual(self.flag(), b'0')
+
+    def test_application_multiple_clicks(self):
+        self.enable_mouse()
+        for count in (2, 3):
+            with self.subTest(count=count):
+                self.drain(.6)
+                before = self.right_log.read_bytes()
+                down = f'\x1b[<0;{self.rx + 4};3M'.encode()
+                up = f'\x1b[<0;{self.rx + 4};3m'.encode()
+                self.send((down + up) * count)
+                self.drain(.4)
+                self.assertEqual(self.right_log.read_bytes()[len(before):],
+                                 b'\x1b[<0;5;3M\x1b[<0;5;3m' * count)
+                self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
+
+    def test_application_click_clears_copy_mode_after_reload(self):
+        self.enable_mouse()
+        for mode in ('emacs', 'vi'):
+            with self.subTest(mode=mode):
+                self.tmux('set-option', '-w', 'mode-keys', mode)
+                self.select_in_copy_mode(self.right)
+                self.tmux('source-file', str(self.config))
+                self.drain()
+                before = self.right_log.read_bytes()
+                self.mouse(0, self.rx + 4, 3)
+                self.mouse(0, self.rx + 4, 3, release=True)
+                self.assertEqual(self.right_log.read_bytes()[len(before):],
+                                 b'\x1b[<0;5;3M\x1b[<0;5;3m')
+                self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
+                self.assertEqual(self.flag(), b'0')
 
     def print_history(self, start=1, count=100):
         # Writing to the fixture's terminal models output without injecting input.
@@ -450,11 +507,7 @@ class MouseSelectionTests(unittest.TestCase):
         for mode in ('emacs', 'vi'):
             with self.subTest(mode=mode):
                 self.tmux('set-option', '-w', 'mode-keys', mode)
-                self.tmux('select-pane', '-t', self.right)
-                self.tmux('copy-mode', '-t', self.right)
-                self.tmux('send-keys', '-t', self.right, '-X', 'begin-selection')
-                self.tmux('send-keys', '-t', self.right, '-X', 'cursor-right')
-                self.assertTrue(self.selected(self.right))
+                self.select_in_copy_mode(self.right)
                 self.tmux('source-file', str(self.config))
                 self.drain()
                 self.assertEqual(self.flag(), b'1')
@@ -546,6 +599,7 @@ class MouseSelectionTests(unittest.TestCase):
         self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
         self.assertEqual(self.flag(), b'0')
         self.drag(self.right)
+        self.enable_mouse()
         before = self.right_log.read_bytes()
         self.mouse(64, self.rx+3, 3)
         self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
@@ -792,6 +846,7 @@ class MouseSelectionTests(unittest.TestCase):
                     self.send(CANCEL)
 
     def test_history_inactive_panes_and_mouse_forwarding(self):
+        self.enable_mouse()
         self.print_history()
         for mode in ('emacs', 'vi'):
             with self.subTest(mode=mode):
@@ -819,7 +874,7 @@ class MouseSelectionTests(unittest.TestCase):
                     self.assertIn(f'\x1b[<{64 if up else 65};'.encode(), self.right_log.read_bytes()[len(before):])
                     self.assertEqual(self.value(self.left, '#{pane_active}'), '1')
                     self.assertEqual(self.scroll_position(), 3)
-                    self.drag(self.right)
+                    self.select_in_copy_mode(self.right)
                     before = self.right_log.read_bytes()
                     self.wheel(up=up, pane=self.right)
                     self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
@@ -935,6 +990,6 @@ class MouseSelectionTests(unittest.TestCase):
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '--fixture':
-        fixture(sys.argv[2], sys.argv[3], sys.argv[4] == 'mouse')
+        fixture(sys.argv[2], sys.argv[3])
     else:
         unittest.main()
