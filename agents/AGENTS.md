@@ -7,34 +7,77 @@ Before making changes in a repository, bring the checkout up to date:
 - Check the state first with `git status`
 - Fast-forward the branch with `git pull --ff-only`
 - If the pull is refused, stop and say so rather than reaching for `--rebase`, `--force`, `stash`, or `reset`: deciding what happens to diverged branches is the user's call.
-- If there is no upstream or no network, say that and carry on with the local state
 
-## Understand the request
+## Understand the request, think before coding
 
 Before answering or acting:
 
 - Identify the user's intended outcome, constraints, and what success means.
+- **Don't assume. Don't hide confusion. Surface tradeoffs.**
 - Enrich your understanding using relevant conversation context and available project information and resources. Preserve the user's scope; do not invent requirements.
 - Check assumptions and flag mistaken premises that would affect the result.
-- Resolve gaps from available context first. Ask a focused question only when the missing information would materially change the answer or action; otherwise proceed with a reasonable assumption, stating it when relevant.
-- Keep this step lightweight for simple requests. Share only the interpretation or assumptions the user needs to assess the result.
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
 
 ## Plan, implement, and verify
 
-- Prefer a brief planning phase before implementation; keep trivial changes lightweight.
 - Use skills when explicitly requested, needed to handle a specific tool, or useful for a concrete task need. Use `find-docs` when missing documentation or a relevant skill would help complete the task. Check MCP capabilities only when the task needs an integration. Do not make general skill discovery a routine prerequisite, including for requests to commit existing changes.
 - After code changes settle and before committing, run `ce-simplify-code`, then `ce-code-review`; address findings and run relevant checks.
-- Before removing a worktree, tear down its running stack and clean up all resources created specifically for that worktree, including background processes, containers, networks, volumes, and temporary files. Run the project’s teardown commands while the worktree still exists, and verify cleanup succeeded before removing the worktree. Preserve resources shared with other worktrees.
+- Before removing a worktree, evaluate whether to tear down its running stack and clean up all resources created specifically for that worktree, including background processes, containers, networks, volumes, and temporary files. Run the project’s teardown commands while the worktree still exists, and verify cleanup succeeded before removing the worktree. Preserve resources shared with other worktrees.
+
+### 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+### 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+### 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
 ## Communication Style
 
-- I don't know the whole repo by heart: don't make me look up information or, as much as possible, code;
-- I don't have infinite time: be succinct but complete. Unless I am asking a question or similar, focus on the so-what, action points, decisions I should make
-
-### Say what you mean, concretely
-
-Everything you write is read without the context you had while writing it — a commit message, a code comment, a README line, a review finding, a chat reply. Each of these has to stand on its own.
-
+- I don't know the whole repo by heart: don't make me look up information or code
+- I don't have infinite time: be succinct but complete. Unless I am specifically asking for an explanation or similar, focus on the so-what, action points, decisions I should make
 - Name the thing; never point at it. `this`, `these two`, `that one`, `the operator`, `the group`, `the heading`, `the filter` refer to nothing unless the noun is in the same sentence. Write the noun: "`link_config` and `brew_install`", not "these two"; "the `--all` path in `install.sh`", not "this one".
 - Never coin a term and then use it as if it were defined. "A contiguous group", "a filter over one heading" are not concepts a reader can look up; if a phrase like that is doing real work, define it where it first appears or replace it with the literal thing it describes.
 - Prefer the literal identifier over a paraphrase of it: file paths, function names, flags, keys, line numbers. `agents/install.sh --refresh-skills` beats "the refresh command".
