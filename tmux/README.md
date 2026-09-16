@@ -124,6 +124,8 @@ Cmd-U / Cmd-D scrolls up / down by one third of the active pane height, with a m
 
 ## Config notes
 
+**Status bar.** The session name and windows are centred on a black bar. The active window has bold lavender text on a soft purple background, with one space of padding on each side; the `*` flag remains.
+
 **Colors.** The config sets `default-terminal` and truecolor overrides because the Catppuccin/Tokyonight setup uses `transparent = true`. Without them tmux advertises a lesser color capability and the colorscheme renders wrong.
 
 **Autosave.** `focus-events on` is required: [`autosave.lua`](../nvim/lua/config/autosave.lua) writes the buffer on `FocusLost` and reloads externally-changed files on `FocusGained`. tmux swallows both events by default, so without it neither fires inside tmux.
