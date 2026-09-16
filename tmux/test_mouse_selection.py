@@ -585,6 +585,141 @@ class MouseSelectionTests(unittest.TestCase):
         self.send(COPY + CANCEL)
         self.assertEqual(self.left_log.read_bytes(), before)
 
+    def search_history(self, direction, term):
+        # Wait for tmux to open the prompt before sending its input.
+        self.send(direction)
+        self.send(term + b'\r')
+
+    def test_keyboard_search_and_navigation(self):
+        self.print_history()
+        for mode in ('emacs', 'vi'):
+            with self.subTest(mode=mode):
+                self.tmux('set-option', '-w', 'mode-keys', mode)
+                before = self.left_log.read_bytes()
+                self.send(b'\x01[')
+                self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '1')
+                self.search_history(b'?', b'HISTORY050')
+                self.assertTrue(self.value(self.left, '#{copy_cursor_line}').startswith('HISTORY050'))
+                self.search_history(b'/', b'alpha')
+                self.assertTrue(self.value(self.left, '#{copy_cursor_line}').startswith('HISTORY050'))
+                self.assertEqual(self.value(self.left, '#{pane_search_string}'), 'alpha')
+                self.send(b'n')
+                self.assertTrue(self.value(self.left, '#{copy_cursor_line}').startswith('HISTORY051'))
+                self.send(b'N')
+                if mode == 'emacs':
+                    # Emacs searches end after the match; the first reverse finds its start.
+                    self.assertEqual(self.value(self.left, '#{copy_cursor_x}'), '11')
+                    self.send(b'N')
+                self.assertTrue(self.value(self.left, '#{copy_cursor_line}').startswith('HISTORY050'))
+                self.search_history(b'/', b'missing-search-term')
+                self.assertEqual(self.value(self.left, '#{pane_search_string}'), 'missing-search-term')
+                self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '1')
+                self.assertTrue(self.value(self.left, '#{copy_cursor_line}').startswith('HISTORY050'))
+                self.search_history(b'?', b'HISTORY050')
+                for key, line, column in ((b'j', 'HISTORY051', 0), (b'k', 'HISTORY050', 0),
+                                          (b'l', 'HISTORY050', 1), (b'h', 'HISTORY050', 0),
+                                          (b'\x1b[B', 'HISTORY051', 0), (b'\x1b[A', 'HISTORY050', 0),
+                                          (b'\x1b[C', 'HISTORY050', 1), (b'\x1b[D', 'HISTORY050', 0),
+                                          (b'w', 'HISTORY050', 11), (b'e', 'HISTORY050', 16 if mode == 'emacs' else 15),
+                                          (b'b', 'HISTORY050', 11), (b'$', 'HISTORY050', 36 if mode == 'emacs' else 35),
+                                          (b'0', 'HISTORY050', 0), (b'^', 'HISTORY050', 0)):
+                    self.send(key)
+                    self.assertTrue(self.value(self.left, '#{copy_cursor_line}').startswith(line))
+                    self.assertEqual(int(self.value(self.left, '#{copy_cursor_x}')), column)
+                for up, down in ((b'\x15', b'\x04'), (b'\x02', b'\x06'),
+                                 (b'\x1b[5~', b'\x1b[6~')):
+                    position = self.scroll_position()
+                    self.send(up)
+                    self.assertGreater(self.scroll_position(), position)
+                    self.send(down)
+                    self.assertEqual(self.scroll_position(), position)
+                self.send(b'g')
+                self.assertEqual(self.scroll_position(), int(self.value(self.left, '#{history_size}')))
+                self.send(b'G')
+                self.assertEqual(self.scroll_position(), 0)
+                self.send(b'yvZ')  # No keyboard copying or application input in explicit copy mode.
+                self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '1')
+                self.assertEqual(self.left_log.read_bytes(), before)
+                self.send(b'q')
+                self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                self.send(b'\x01[')
+                self.send(b'\x1b')
+                self.drain(.6)
+                self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                self.assertEqual(self.left_log.read_bytes(), before)
+
+    def test_keyboard_search_then_mouse_selection(self):
+        self.print_history()
+        for mode in ('emacs', 'vi'):
+            self.tmux('set-option', '-w', 'mode-keys', mode)
+            for key in (b'/', b'?', b'n', b'N', b'h', b'j', b'k', b'l', b'w', b'b', b'e',
+                        b'0', b'^', b'$', b'g', b'G', b'q', b'\x1b'):
+                with self.subTest(mode=mode, key=key):
+                    self.send(b'\x01[')
+                    self.search_history(b'?', b'HISTORY050')
+                    self.drag(row=3)
+                    before = self.left_log.read_bytes()
+                    self.send(key)
+                    if key == b'\x1b':
+                        self.drain(.6)
+                    self.assertFalse(self.selected(self.left))
+                    self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                    self.assertEqual(self.left_log.read_bytes()[len(before):], key)
+            self.send(b'\x01[')
+            self.search_history(b'?', b'HISTORY050')
+            self.tmux('set-buffer', 'clipboard-sentinel')
+            position = self.scroll_position()
+            self.assert_copy_ignored()
+            self.drag(row=3)
+            self.assertEqual(self.tmux('show-buffer'), 'clipboard-sentinel')
+            self.assertIn('HISTORY', self.copied_text())
+            self.assertFalse(self.selected(self.left))
+            self.assertEqual(self.scroll_position(), position)
+            before = self.left_log.read_bytes()
+            self.send(b'n')
+            self.assertEqual(self.left_log.read_bytes()[len(before):], b'n')
+            self.send(b'\x01[')
+            self.search_history(b'?', b'HISTORY050')
+            self.drag(row=3)
+            self.mouse(0, 20, 5)
+            self.mouse(0, 20, 5, release=True)
+            self.assertFalse(self.selected(self.left))
+            self.assertEqual(self.scroll_position(), position)
+            before = self.left_log.read_bytes()
+            paste = b'\x1b[200~search result\x1b[201~'
+            self.send(CANCEL + paste)
+            self.assertEqual(self.left_log.read_bytes()[len(before):], paste)
+
+    def test_keyboard_search_state_resets(self):
+        self.print_history()
+        for mode in ('emacs', 'vi'):
+            self.tmux('set-option', '-w', 'mode-keys', mode)
+            for action in ('exit', 'wheel', 'click', 'focus', 'reload'):
+                with self.subTest(mode=mode, action=action):
+                    self.send(b'\x01[')
+                    self.search_history(b'?', b'HISTORY050')
+                    if action == 'exit':
+                        self.send(b'q')
+                        self.wheel()
+                    elif action == 'wheel':
+                        self.wheel()
+                    elif action == 'click':
+                        self.mouse(0, 20, 5)
+                        self.mouse(0, 20, 5, release=True)
+                    elif action == 'focus':
+                        self.mouse(0, self.rx + 5, 4)
+                        self.mouse(0, self.rx + 5, 4, release=True)
+                        before = self.right_log.read_bytes()
+                        self.send(b'n')
+                        self.assertEqual(self.right_log.read_bytes()[len(before):], b'n')
+                        self.tmux('select-pane', '-t', self.left)
+                    else:
+                        self.tmux('source-file', str(self.config))
+                    before = self.left_log.read_bytes()
+                    self.send(b'/')
+                    self.assertEqual(self.value(self.left, '#{pane_in_mode}'), '0')
+                    self.assertEqual(self.left_log.read_bytes()[len(before):], b'/')
+
     def test_navigation_click_away_and_wheel(self):
         self.drag()
         self.send(RIGHT)

@@ -40,6 +40,7 @@ it rather than for the program in the pane. It is remapped from the default
 | `C-a C-a` | Send `C-a` to the program in the pane |
 | `C-a H/J/K/L` | Move the current pane by swapping it left/down/up/right |
 | `C-a z` | Zoom current pane fullscreen (toggle) |
+| `C-a [` | Enter keyboard scrollback search and navigation |
 | `C-a r` | Reload this config after editing it |
 | `C-a C-s` / `C-a C-r` | Save / restore all tmux sessions |
 | `C-a ?` | List every binding |
@@ -72,6 +73,21 @@ are relaunched where supported; nothing is kept alive through the restart.
 - After rebooting, just start `tmux`. If Continuum does not restore on its own,
   press `C-a C-r`.
 
+## Keyboard search and navigation
+
+Press Ctrl-a, release it, then press `[` to enter keyboard scrollback mode. `/` searches forward and `?` searches backward through retained output; type the search and press Enter. `n` repeats the search and `N` reverses its direction. Press `q` or Escape to return to the application.
+
+| Keys | Movement |
+| --- | --- |
+| `h/j/k/l` or arrow keys | Left / down / up / right |
+| `w/b/e` | Next word / previous word / end of word |
+| `0/^/$` | Line start / first nonblank character / line end |
+| `g/G` | Oldest / newest retained output |
+| Ctrl-u / Ctrl-d | Half a page up / down |
+| Ctrl-b / Ctrl-f or PageUp / PageDown | One page up / down |
+
+Search and movement keys apply only after `C-a [`, regardless of tmux's `mode-keys` setting. Other unbound keys do nothing in keyboard scrollback mode; `v` and `y` do not select or copy. Mouse clicks, selection and wheel scrolling return to ordinary mouse behavior. After dragging to select a search result, Cmd-C copies and clears the highlight while retaining the scroll position; clicking away deselects; typing any key, including `/`, `n` or `h`, deselects and delivers that key to the application. Paste returns to application input as usual. Leaving copy mode, changing pane focus or reloading the configuration also ends keyboard navigation.
+
 ## Copy and paste
 
 Two clipboards are in play — your local machine's, and whatever tmux or Neovim
@@ -90,13 +106,13 @@ deliberately simple:
 
 tmux selects terminal text continuously from the starting character to the ending character across lines, confined to the pane where the drag starts. No zooming or selection modifier is needed, including over Codex. Double-click selects a word; triple-click selects a line within the pane. Hunk and other applications that request mouse input handle their own clicks and drags. Neovim/Vim handles its own selection and window resizing when mouse support is enabled; copy Neovim selections with `Space y`. Shift-click and Shift-drag do nothing and preserve any existing selection and clipboard.
 
-tmux uses copy mode internally to hold the highlight and the pane's displayed contents while selecting or browsing history. Typing returns to live output and delivers the original key, including `h`, `j`, `k`, `l`, and `y`; no Escape or `q` is required. Clipboard paste also returns to live input. Cmd-C / Ctrl-Shift-C copies highlighted text and clears the highlight while keeping the scroll position; copying without a selection leaves the clipboard unchanged.
+tmux uses copy mode internally to hold the highlight and the pane's displayed contents. When mouse selection, wheel scrolling or Command scrolling shortcuts enter copy mode, typing returns to live output and delivers the original key, including `h`, `j`, `k`, `l`, and `y`; no Escape or `q` is required. Clipboard paste also returns to live input. Cmd-C / Ctrl-Shift-C copies highlighted text and clears the highlight while keeping the scroll position; copying without a selection leaves the clipboard unchanged.
 
 The wheel moves through terminal history three lines at a time in the pane under the pointer without changing keyboard focus. Scrolling clears highlighted text and continues from the current history position. Reaching the bottom returns to live output; clicking and dragging older output preserves the position so you can select and copy it. Clicking another pane clears the highlight while preserving the history position in the pane you leave; clicking back resumes at the same position. Keyboard pane navigation, Cmd-]/[, switching windows, and creating panes or windows return the pane you leave to live output. History contains up to 50,000 retained lines and can include shell output preceding Codex.
 
 In panes only one or two rows high, tmux's native edge-drag scrolling can continue after release. Use a pane at least three rows high when selecting at the top or bottom edge.
 
-History entry shortcuts (`C-a [` and `C-a PageUp`), scrollbar actions, and pane context menus remain disabled. Applications that request mouse input retain their own wheel scrolling, including after a terminal selection is cleared. Alt-drag explicitly selects in WezTerm and can cross pane boundaries. See [WezTerm mouse bindings](../wezterm/README.md#keys-and-mouse).
+`C-a PageUp`, scrollbar actions, and pane context menus remain disabled. Applications that request mouse input retain their own wheel scrolling, including after a terminal selection is cleared. Alt-drag explicitly selects in WezTerm and can cross pane boundaries. See [WezTerm mouse bindings](../wezterm/README.md#keys-and-mouse).
 
 Cmd-Up / Cmd-Down in WezTerm scrolls the active pane up / down one line. Cmd-Up enters retained terminal history; Cmd-Down returns to live output at the bottom and does nothing when already there. Scrolling clears a terminal selection. In Neovim, tmux forwards the shortcuts to scroll the editor window.
 
