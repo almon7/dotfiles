@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Run Claude Code against DeepSeek without changing the surrounding shell.
+set -euo pipefail
+
+KEY_FILE="$HOME/.config/claude/deepseek-api-key"
+
+if ! { exec 3<"$KEY_FILE"; } 2>/dev/null; then
+	printf 'DeepSeek API key not found at %s.\n' "$KEY_FILE" >&2
+	printf 'See ~/dotfiles/claude/README.md for setup instructions.\n' >&2
+	exit 1
+fi
+
+IFS= read -r api_key <&3 || true # a final newline is optional
+exec 3<&-
+if [ -z "$api_key" ]; then
+	printf 'DeepSeek API key file is empty: %s\n' "$KEY_FILE" >&2
+	exit 1
+fi
+
+unset ANTHROPIC_API_KEY
+export ANTHROPIC_BASE_URL='https://api.deepseek.com/anthropic'
+export ANTHROPIC_AUTH_TOKEN="$api_key"
+export ANTHROPIC_MODEL='deepseek-flash[1m]'
+export ANTHROPIC_DEFAULT_OPUS_MODEL='deepseek-flash[1m]'
+export ANTHROPIC_DEFAULT_SONNET_MODEL='deepseek-flash[1m]'
+export ANTHROPIC_DEFAULT_HAIKU_MODEL='deepseek-flash'
+export CLAUDE_CODE_SUBAGENT_MODEL='deepseek-flash'
+export CLAUDE_CODE_EFFORT_LEVEL='max'
+export CLAUDE_CODE_AUTO_COMPACT_WINDOW='786432'
+
+exec claude "$@"
