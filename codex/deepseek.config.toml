@@ -1,0 +1,20 @@
+# The settings `codex --profile deepseek` layers over ~/.codex/config.toml, so
+# the DeepSeek launcher leaves the config Codex reads by default alone. Linked
+# to ~/.codex/deepseek.config.toml by ./install.sh.
+#
+# This file is only ever read. Codex writes its settings to the user config,
+# never to a profile, which is why config.toml is not linked and this is.
+model = "deepseek-flash"
+model_provider = "deepseek"
+forced_login_method = "api"
+model_reasoning_effort = "high"
+web_search = "disabled"
+model_catalog_json = "~/.codex/deepseek-models.json"
+
+# The API key is never written here: env_key names the variable codex-ds
+# exports from the key file it reads.
+[model_providers.deepseek]
+name = "deepseek"
+base_url = "https://api.deepseek.com/"
+wire_api = "responses"
+env_key = "DEEPSEEK_API_KEY"

@@ -21,7 +21,7 @@ all_components=(agents claude codex context7 git hunk lazysql nvim tmux wezterm)
 descriptions=(    # one line per component above, in the same order
   'Shared agent instructions and skills'
   'Claude Code DeepSeek launcher and status line'
-  'Codex settings check (does not install Codex)'
+  'Codex settings check and DeepSeek launcher'
   'Context7 CLI for the find-docs skill'
   'Git and its default editor'
   'Hunk terminal diff viewer'

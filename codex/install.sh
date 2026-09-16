@@ -1,13 +1,25 @@
 #!/usr/bin/env bash
-# Check Codex's own settings against the ones this repository tracks. Codex is
-# installed elsewhere; this only reads ~/.codex/config.toml and, where a setting
-# is missing from it, adds that one line.
+# Check Codex's own settings against the ones this repository tracks, and link
+# the DeepSeek launcher. Codex is installed elsewhere; the settings check only
+# reads ~/.codex/config.toml and, where a setting is missing from it, adds that
+# one line.
 set -euo pipefail    # abort on an error, an unset variable, or a failing pipeline stage
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"    # absolute path of this script's directory
 LABEL=codex    # the tag log() puts in front of every message
 source "$DIR/../install-lib.sh"    # pull in log, has, require_no_args, ...
 require_no_args "$@"    # reject anything but an empty argument list or --help
+
+# The launcher and the profile it selects are ours; config.toml below is not.
+# link_config never checks that its source exists, and a link to a missing
+# source reads as already correct on every later run, so check the sources here.
+for file in codex-ds deepseek.config.toml deepseek-models.json; do
+  [ -f "$DIR/$file" ] || { log "$DIR/$file is missing; this checkout is incomplete"; exit 1; }
+done
+
+link_config "$DIR/codex-ds" "$HOME/.local/bin/codex-ds"
+link_config "$DIR/deepseek.config.toml" "$HOME/.codex/deepseek.config.toml"
+link_config "$DIR/deepseek-models.json" "$HOME/.codex/deepseek-models.json"
 
 DESIRED="$DIR/config.toml"    # the settings this repository tracks
 ACTUAL="$HOME/.codex/config.toml"    # the file Codex actually reads
@@ -87,3 +99,7 @@ rm -f "$TEMP"    # so the file keeps its permissions and an unchanged run leaves
 # Nothing above installs Codex, and the settings are worth checking before it
 # arrives as much as after, so this is a note rather than a failure.
 has codex || log 'Codex itself is not installed here; its config is checked either way.'
+case ":$PATH:" in
+*":$HOME/.local/bin:"*) ;;
+*) log "$HOME/.local/bin is not on PATH; add it before using codex-ds." ;;
+esac
