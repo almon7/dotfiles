@@ -124,7 +124,7 @@ Cmd-U / Cmd-D scrolls up / down by one third of the active pane height, with a m
 
 ## Config notes
 
-**Status bar.** The session name and windows are centred on a black bar. The active window has bold lavender text on a soft purple background, with one space of padding on each side; the `*` flag remains.
+**Status bar.** The session name and windows are centred on a black bar. The active window has bold lavender text on a soft purple background, with one space of padding on each side. The highlight replaces the active-window `*` marker; other window flags remain visible.
 
 **Colors.** The config sets `default-terminal` and truecolor overrides because the Catppuccin/Tokyonight setup uses `transparent = true`. Without them tmux advertises a lesser color capability and the colorscheme renders wrong.
 
