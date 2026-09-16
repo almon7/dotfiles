@@ -20,6 +20,7 @@ setup on a Mac or a Debian/Ubuntu VPS. There is no build or CI. The scripts *are
 ./nvim/install.sh            # a single component, standalone; takes no options
 bash -n install.sh install-lib.sh */install.sh   # syntax check after editing
 python3 agents/test_skill_updates.py            # offline skill-updater tests
+python3 claude/test_claude.py                   # Claude profile and settings tests
 python3 tmux/test_mouse_selection.py            # isolated tmux input/selection tests
 luajit wezterm/test_selection.lua               # clipboard routing without GUI access
 ```
@@ -101,6 +102,8 @@ The links are:
 | --- | --- |
 | `agents/AGENTS.md` | `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md` |
 | `agents/skills/` | `~/.claude/skills`, `~/.agents/skills` |
+| `claude/claude-ds` | `~/.local/bin/claude-ds` |
+| `claude/statusline.sh` | `~/.claude/statusline.sh` |
 | `nvim/` | `~/.config/nvim` |
 | `git/gitconfig` | `~/.gitconfig` |
 | `tmux/tmux.conf` | `~/.tmux.conf` |
@@ -132,6 +135,7 @@ Consequences to keep in mind while working here:
   when it is absent), and reports — never rewrites — a key whose value differs,
   since a deliberate local change is not ours to undo. Every key in the file is
   one the machine is meant to have; there is no opt-out marker.
+- **`claude/settings.json` is not linked**, because Claude Code also writes its own settings. `claude/install.sh` adds the tracked `statusLine` only when the live file lacks that key, and reports a different existing value without replacing it. The DeepSeek API key remains untracked at `~/.config/claude/deepseek-api-key`.
 - Skills are preferred over MCP servers for the same reason `find-docs` is: an
   MCP server's tool definitions occupy the context window of every request,
   while a skill costs one line until it activates.
