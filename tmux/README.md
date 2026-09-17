@@ -129,6 +129,8 @@ Cmd-U / Cmd-D scrolls up / down by one third of the active pane height, with a m
 
 **Status bar.** The session name and windows are centred on a black bar, with a single `|` and two spaces on each side separating the session name from the windows. The window separator adds two spaces between entries. A middle dot separates each window's number and name; the number, dot, and session separator use muted gray (`#6c7086`) in both active and inactive windows. The active window name has bold lavender text on a soft purple background. When zoom hides other panes, a muted amber `+N` immediately follows the window name and flags: `2·claude+2` means two panes are hidden. The count stays on the black bar outside the purple highlight, appears on active and inactive windows, and disappears when unzoomed. The highlight replaces the active-window `*` marker, and the hidden-pane count replaces `Z`; other window flags remain visible.
 
+**Pane borders.** Double borders mark splits, with the active pane's border in pink. Single-pane windows and zoomed panes have no border row; splitting or unzooming restores the borders. Closing the last split removes the border row and returns that row to the remaining pane. Reloading with `C-a r` applies the rule to all existing windows.
+
 **Colors.** The config sets `default-terminal` and truecolor overrides because the Catppuccin/Tokyonight setup uses `transparent = true`. Without them tmux advertises a lesser color capability and the colorscheme renders wrong.
 
 **Autosave.** `focus-events on` is required: [`autosave.lua`](../nvim/lua/config/autosave.lua) writes the buffer on `FocusLost` and reloads externally-changed files on `FocusGained`. tmux swallows both events by default, so without it neither fires inside tmux.
