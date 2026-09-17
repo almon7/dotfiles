@@ -64,6 +64,12 @@ class ClaudeProfileTests(unittest.TestCase):
             SHELL="/bin/bash",
             BREW_LOG=str(home / "brew.log"),
         )
+        # Keep git's repository discovery inside the mocked home: an inherited GIT_DIR
+        # answers for a different repository, and a TMPDIR inside a checkout gives
+        # directories under the temp root a branch they do not have.
+        for name in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE"):
+            environment.pop(name, None)
+        environment["GIT_CEILING_DIRECTORIES"] = str(home.parent)
         return home, environment
 
     def run_installer(self, environment, *, check=True):
@@ -117,21 +123,78 @@ class ClaudeProfileTests(unittest.TestCase):
         self.assertEqual(empty.returncode, 1)
         self.assertIn("API key file is empty", empty.stderr)
 
-    def test_status_line_displays_model_and_context(self):
-        status_input = json.dumps(
-            {
-                "model": {"display_name": "deepseek-flash[1m]"},
-                "context_window": {"used_percentage": 12.9},
-            }
-        )
-        result = subprocess.run(
+    def run_status_line(self, payload, environment):
+        return subprocess.run(
             [DIR / "statusline.sh"],
-            input=status_input,
+            input=json.dumps(payload),
             text=True,
             capture_output=True,
             check=True,
+            env=environment,
         )
-        self.assertEqual(result.stdout, "[deepseek-flash[1m]] 12% context\n")
+
+    def test_status_line_shows_model_effort_directory_branch_and_context(self):
+        home, environment = self.make_home()
+        repo = home / "projects/repo"
+        repo.mkdir(parents=True)
+        subprocess.run(["git", "init", "-q", str(repo)], check=True, env=environment)
+        self.assertTrue((repo / ".git").is_dir(), "git init did not create a repository here")
+        subprocess.run(
+            ["git", "-C", str(repo), "symbolic-ref", "HEAD", "refs/heads/topic-branch"], check=True, env=environment
+        )
+
+        result = self.run_status_line(
+            {
+                "model": {"display_name": "deepseek-flash[1m]"},
+                "workspace": {"current_dir": str(repo)},
+                "effort": {"level": "max"},
+                "context_window": {"used_percentage": 12.9},
+            },
+            environment,
+        )
+
+        self.assertEqual(result.stdout, "[deepseek-flash[1m]] · max · ~/projects/repo · topic-branch · 12% context\n")
+
+    def test_status_line_omits_effort_and_branch_when_the_session_reports_neither(self):
+        home, environment = self.make_home()
+        plain = home / "plain"
+        plain.mkdir()
+
+        result = self.run_status_line(
+            {
+                "model": {"id": "claude-3-5-haiku-20241022"},
+                "workspace": {"current_dir": str(plain)},
+                "context_window": {"used_percentage": 4.2},
+            },
+            environment,
+        )
+
+        self.assertEqual(result.stdout, "[claude-3-5-haiku-20241022] · ~/plain · 4% context\n")
+
+    def test_status_line_shortens_home_but_not_a_directory_sharing_its_prefix(self):
+        home, environment = self.make_home()
+        payload = {"model": {"display_name": "Opus 5"}}
+
+        under_home = self.run_status_line({**payload, "workspace": {"current_dir": str(home)}}, environment)
+        sibling = self.run_status_line(
+            {**payload, "workspace": {"current_dir": f"{home}-sibling/repo"}}, environment
+        )
+
+        self.assertEqual(under_home.stdout, "[Opus 5] · ~ · 0% context\n")
+        self.assertEqual(sibling.stdout, f"[Opus 5] · {home}-sibling/repo · 0% context\n")
+
+    def test_status_line_renders_the_directory_from_workspace_or_cwd(self):
+        home, environment = self.make_home()
+
+        bare = self.run_status_line(
+            {"model": {"display_name": "Opus 5"}, "context_window": {"used_percentage": 11.4}}, environment
+        )
+        cwd_only = self.run_status_line(
+            {"model": {"display_name": "Opus 5"}, "cwd": f"{home}/cwd-only"}, environment
+        )
+
+        self.assertEqual(bare.stdout, "[Opus 5] · 11% context\n")
+        self.assertEqual(cwd_only.stdout, "[Opus 5] · ~/cwd-only · 0% context\n")
 
     def test_installer_merges_settings_and_is_idempotent(self):
         home, environment = self.make_home()

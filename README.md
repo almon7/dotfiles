@@ -82,7 +82,7 @@ on both macOS and Linux wherever a formula exists.
   tracked file and one tracked folder are linked to both.
   [One instructions file for every agent](agents/README.md#one-set-of-instructions-for-every-agent),
   [one skills folder for every agent](agents/README.md#one-set-of-skills-for-every-agent)
-- **`claude`** — a `claude-ds` launcher that routes one Claude Code session through DeepSeek, plus a status line showing the active model and used context. It keeps the API key outside Git and does not install Claude Code itself. [Claude Code profiles and API-key setup](claude/README.md)
+- **`claude`** — a `claude-ds` launcher that routes one Claude Code session through DeepSeek, plus a status line showing the active model, reasoning effort, working directory, git branch and used context. It keeps the API key outside Git and does not install Claude Code itself. [Claude Code profiles and API-key setup](claude/README.md)
 - **`codex`** — a settings check plus a `codex-ds` launcher that routes one
   Codex session through DeepSeek. It reads Codex's own `~/.codex/config.toml`,
   adds any setting from [`codex/config.toml`](codex/config.toml) that is
