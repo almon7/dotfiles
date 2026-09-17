@@ -124,7 +124,7 @@ Cmd-U / Cmd-D scrolls up / down by one third of the active pane height, with a m
 
 ## Config notes
 
-**Status bar.** The session name and windows are centred on a black bar. The active window has bold lavender text on a soft purple background, with one space of padding on each side. The highlight replaces the active-window `*` marker; other window flags remain visible.
+**Status bar.** The session name and windows are centred on a black bar. A middle dot separates each window's number and name. The active window name has bold lavender text on a soft purple background. When zoom hides other panes, an amber `[+N]` immediately follows the window name and flags: `2·claude[+2]` means two panes are hidden. The count stays on the black bar outside the purple highlight, appears on active and inactive windows, and disappears when unzoomed. The highlight replaces the active-window `*` marker, and the hidden-pane count replaces `Z`; other window flags remain visible.
 
 **Colors.** The config sets `default-terminal` and truecolor overrides because the Catppuccin/Tokyonight setup uses `transparent = true`. Without them tmux advertises a lesser color capability and the colorscheme renders wrong.
 
