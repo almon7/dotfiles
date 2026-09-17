@@ -3,7 +3,7 @@
 # used context from Claude Code's status-line JSON, which arrives on stdin.
 set -euo pipefail
 
-input=$(</dev/stdin)
+input=$(cat)
 dir=$(jq -r '.workspace.current_dir // .cwd // ""' <<<"$input")
 
 # The status-line JSON carries no branch, so ask git about the directory it reports.
@@ -16,16 +16,18 @@ fi
 
 # Shorten the home directory and the paths under it. A sibling that merely shares
 # the prefix, such as /home/ubuntu2, is not under home and keeps its full path.
-case "$dir" in
-"$HOME") display_dir="~" ;;
-"$HOME"/*) display_dir="~${dir#"$HOME"}" ;;
-*) display_dir="$dir" ;;
-esac
+display_dir="$dir"
+if [ -n "${HOME:-}" ]; then
+	case "$dir" in
+	"$HOME") display_dir="~" ;;
+	"$HOME"/*) display_dir="~${dir#"$HOME"}" ;;
+	esac
+fi
 
 jq -r --arg dir "$display_dir" --arg branch "$branch" '
-    "[\(.model.display_name // .model.id // "unknown model")]"
-    + (if .effort.level then " · \(.effort.level)" else "" end)
+    "[\(.model.display_name? // .model.id? // "unknown model")]"
+    + (if (.effort.level? // null) then " · \(.effort.level)" else "" end)
     + (if $dir == "" then "" else " · \($dir)" end)
     + (if $branch == "" then "" else " · \($branch)" end)
-    + " · \((.context_window.used_percentage // 0) | floor)% context"
+    + " · \((.context_window.used_percentage? // 0) | floor)% context"
 ' <<<"$input"
