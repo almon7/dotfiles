@@ -12,7 +12,7 @@ require_no_args "$@"    # reject anything but an empty argument list or --help
 # Install Neovim plus the command-line tools used by this configuration.
 case "$(uname -s)" in    # branch on the kernel name
   Darwin)
-    brew_install neovim ripgrep fd node python lazygit    # the editor and the tools it shells out to
+    brew_install neovim ripgrep fd node python lazygit gh    # the editor and the tools it shells out to
     # The Nerd Font supplies the extra glyphs used by the configuration's icons.
     brew_install --cask font-jetbrains-mono-nerd-font    # fonts ship as casks, not formulas
     # Treesitter parsers need Apple's compiler toolchain.
@@ -20,14 +20,14 @@ case "$(uname -s)" in    # branch on the kernel name
     xcode-select -p >/dev/null 2>&1 || xcode-select --install    # succeeds quietly once they are present
     ;;
   Linux)
-    brew_install neovim ripgrep fd node python lazygit    # no font or toolchain step needed here
+    brew_install neovim ripgrep fd node python lazygit gh    # no font or toolchain step needed here
     ;;
   *) log 'Only macOS and Linux are supported.'; exit 1 ;;    # anything else is unsupported
 esac
 
 # The tools above are only kept current where Homebrew owns them; a copy
 # installed another way keeps running its own version.
-for command_name in nvim rg fd node lazygit; do    # the commands worth checking
+for command_name in nvim rg fd node lazygit gh; do    # the commands worth checking
   warn_if_shadowed "$command_name"    # report one that resolves outside Homebrew
 done
 

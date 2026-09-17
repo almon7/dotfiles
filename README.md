@@ -102,7 +102,7 @@ on both macOS and Linux wherever a formula exists.
 - **`nvim`** — Neovim and this config, plus what it shells out to: ripgrep and
   fd for the file and grep pickers, Node and a C compiler for plugins and
   Treesitter, Python for the Mason-installed language server, lazygit for
-  `<leader>gg`, and a Nerd Font on macOS.
+  `<leader>gg`, GitHub CLI for PR reviews, and a Nerd Font on macOS.
   [Neovim config and first launch](nvim/README.md)
 - **`tmux`** — tmux, its config, and its plugins. Work runs inside a tmux
   session so a dropped SSH connection leaves it running server-side instead of
