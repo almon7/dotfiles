@@ -9,7 +9,7 @@ link for any agent that hard-codes a different one.
 
 A cold-start dev environment: POSIX-ish bash installers plus the config files
 they link into place, so one `git clone` and one `./install.sh` reproduce the
-setup on a Mac or a Debian/Ubuntu VPS. There is no build or CI. The scripts *are* the product. The skill updater and terminal selection have small regression suites; the remaining installers are checked by reading and running them.
+setup on a Mac or a Debian/Ubuntu VPS. There is no build or CI. The scripts *are* the product. The skill updater, the two agent-profile components and terminal selection have small regression suites; the remaining installers are checked by reading and running them.
 
 ## Commands
 
@@ -21,6 +21,7 @@ setup on a Mac or a Debian/Ubuntu VPS. There is no build or CI. The scripts *are
 bash -n install.sh install-lib.sh */install.sh   # syntax check after editing
 python3 agents/test_skill_updates.py            # offline skill-updater tests
 python3 claude/test_claude.py                   # Claude profile and settings tests
+python3 codex/test_codex.py                     # Codex settings check and launcher tests
 python3 tmux/test_mouse_selection.py            # isolated tmux input/selection tests
 luajit wezterm/test_selection.lua               # clipboard routing without GUI access
 ```
@@ -95,8 +96,8 @@ lockfile. Vendored agent skills are checked during setup and refreshed only with
 `agents/` holds what both agents share — the instructions file and the skills
 folder — and its installer links each to the paths Claude Code and Codex
 hard-code, since neither reads a plain `~/AGENTS.md`. `codex/` is a different
-kind of component: it installs nothing and only checks Codex's own settings.
-The links are:
+kind of component: it installs no tool, checking Codex's own settings and
+linking a DeepSeek launcher instead. The links are:
 
 | Repo path | Linked to |
 | --- | --- |
@@ -104,6 +105,9 @@ The links are:
 | `agents/skills/` | `~/.claude/skills`, `~/.agents/skills` |
 | `claude/claude-ds` | `~/.local/bin/claude-ds` |
 | `claude/statusline.sh` | `~/.claude/statusline.sh` |
+| `codex/codex-ds` | `~/.local/bin/codex-ds` |
+| `codex/deepseek.config.toml` | `~/.codex/deepseek.config.toml` |
+| `codex/deepseek-models.json` | `~/.codex/deepseek-models.json` |
 | `nvim/` | `~/.config/nvim` |
 | `git/gitconfig` | `~/.gitconfig` |
 | `tmux/tmux.conf` | `~/.tmux.conf` |
@@ -135,6 +139,17 @@ Consequences to keep in mind while working here:
   when it is absent), and reports — never rewrites — a key whose value differs,
   since a deliberate local change is not ours to undo. Every key in the file is
   one the machine is meant to have; there is no opt-out marker.
+- **`codex/deepseek.config.toml` and `codex/deepseek-models.json` are linked**,
+  unlike the file beside them, because Codex only ever reads them: it writes to
+  the user config, never to a profile, and never to a `model_catalog_json`
+  file. `codex-ds` selects them with `--profile deepseek`, which layers them
+  over the user config rather than replacing it, so the default Codex setup is
+  untouched and the DeepSeek API key stays out of every config file. The key
+  itself is untracked at `~/.config/codex/deepseek-api-key`, as the Claude key
+  is at `~/.config/claude/deepseek-api-key`. Codex treats a
+  missing profile as an empty layer rather than an error, so `codex-ds` checks
+  for the file itself instead of letting the session quietly run the default
+  config on OpenAI.
 - **`claude/settings.json` is not linked**, because Claude Code also writes its own settings. `claude/install.sh` adds the tracked `statusLine` only when the live file lacks that key, and reports a different existing value without replacing it. The DeepSeek API key remains untracked at `~/.config/claude/deepseek-api-key`.
 - Skills are preferred over MCP servers for the same reason `find-docs` is: an
   MCP server's tool definitions occupy the context window of every request,

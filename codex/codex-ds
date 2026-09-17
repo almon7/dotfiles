@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Run Codex against DeepSeek without changing the surrounding shell.
+set -euo pipefail
+
+KEY_FILE="$HOME/.config/codex/deepseek-api-key"
+PROFILE="$HOME/.codex/deepseek.config.toml"
+
+if ! { exec 3<"$KEY_FILE"; } 2>/dev/null; then
+	printf 'DeepSeek API key not found at %s.\n' "$KEY_FILE" >&2
+	printf 'See ~/dotfiles/codex/README.md for setup instructions.\n' >&2
+	exit 1
+fi
+
+IFS= read -r api_key <&3 || true # a final newline is optional
+exec 3<&-
+if [ -z "$api_key" ]; then
+	printf 'DeepSeek API key file is empty: %s\n' "$KEY_FILE" >&2
+	exit 1
+fi
+
+# Codex resolves the profile against CODEX_HOME, but the profile's catalog path
+# is a literal that cannot follow it, so a different CODEX_HOME would fail in a
+# way that reads as a bug in this component. Refuse instead of letting the
+# session run the default config.
+if [ -n "${CODEX_HOME:-}" ] && [ "${CODEX_HOME%/}" != "$HOME/.codex" ]; then
+	printf 'codex-ds does not support CODEX_HOME (set to %s).\n' "$CODEX_HOME" >&2
+	printf 'Unset it, or see ~/dotfiles/codex/README.md.\n' >&2
+	exit 1
+fi
+
+# Codex treats a missing profile as an empty layer rather than an error, so
+# without this the session would quietly run the default config on OpenAI.
+if [ ! -f "$PROFILE" ]; then
+	printf 'DeepSeek profile not found at %s.\n' "$PROFILE" >&2
+	printf 'Run ./install.sh codex to link it, or see ~/dotfiles/codex/README.md.\n' >&2
+	exit 1
+fi
+
+export DEEPSEEK_API_KEY="$api_key"
+exec codex --profile deepseek "$@"

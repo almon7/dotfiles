@@ -1,6 +1,6 @@
 # Claude Code profiles
 
-This component adds a DeepSeek launcher and a model/context status line to an existing Claude Code installation. It does not install Claude Code itself.
+This component adds a DeepSeek launcher and a status line showing the active model, reasoning effort, working directory, git branch and used context to an existing Claude Code installation. It does not install Claude Code itself.
 
 Install the configuration with:
 
@@ -27,12 +27,14 @@ Do not add the DeepSeek variables to `.bashrc` or `.zshrc`: global exports also 
 
 ## Status line
 
-The status line reads the JSON Claude Code provides and displays the active model and used context, for example:
+The status line reads the JSON Claude Code provides and displays the active model, reasoning effort, working directory, git branch and used context, for example:
 
 ```text
-[Opus 4.1] 37% context
-[deepseek-flash[1m]] 12% context
+[Opus 5] · xhigh · ~/dotfiles · main · 37% context
+[deepseek-flash[1m]] · max · ~/dotfiles · main · 12% context
 ```
+
+The effort level is the session's own, so `/effort`, a `modelSettings` entry and `CLAUDE_CODE_EFFORT_LEVEL` all move it, and `claude-ds` pins it to `max`. A model that does not take the effort parameter leaves that segment out. The branch is read with `git branch --show-current` in the reported directory, so it is absent outside a repository, and the directory is shortened to `~` only under your home directory.
 
 The installer adds `statusLine` when `~/.claude/settings.json` does not already contain it. A different existing `statusLine` remains untouched and is reported, matching the repository's local-settings-win policy.
 

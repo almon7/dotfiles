@@ -5,8 +5,8 @@ folder of skills, and each hard-codes its own path for both. This component
 points every one of those paths at a single tracked file and a single tracked
 folder, so the two agents cannot drift apart.
 
-Install both with `./install.sh agents`. The separate `codex` component is not
-an installer at all: it checks the settings of Codex itself, and is described in
+Install both with `./install.sh agents`. The separate `codex` component checks
+the settings of Codex itself and adds a DeepSeek launcher, described in
 [Codex settings](#codex-settings) below.
 
 ## One set of instructions for every agent
@@ -210,6 +210,11 @@ compares it against the live file a key at a time:
   and a table that is not in the file yet is appended whole.
 - **Everything else is printed back untouched** — other tables, comments, an
   `[[array]]` of tables.
-- **The component installs nothing.** Codex is not on Homebrew and arrives its
-  own way; the settings are worth checking before it lands as much as after, so
-  a missing Codex is reported rather than treated as a failure.
+- **The settings check installs nothing.** Codex is not on Homebrew and arrives
+  its own way; the settings are worth checking before it lands as much as after,
+  so a missing Codex is reported rather than treated as a failure.
+- **The DeepSeek launcher is the one thing this component does install.**
+  `codex-ds` is linked along with the profile and model catalog it selects, and
+  switching back is a matter of using plain `codex`. Kept out of this file's
+  way on purpose:
+  [Codex settings and the DeepSeek launcher](../codex/README.md).

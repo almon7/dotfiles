@@ -82,12 +82,12 @@ on both macOS and Linux wherever a formula exists.
   tracked file and one tracked folder are linked to both.
   [One instructions file for every agent](agents/README.md#one-set-of-instructions-for-every-agent),
   [one skills folder for every agent](agents/README.md#one-set-of-skills-for-every-agent)
-- **`claude`** — a `claude-ds` launcher that routes one Claude Code session through DeepSeek, plus a status line showing the active model and used context. It keeps the API key outside Git and does not install Claude Code itself. [Claude Code profiles and API-key setup](claude/README.md)
-- **`codex`** — a check, not an install. It reads Codex's own
-  `~/.codex/config.toml`, adds any setting from
-  [`codex/config.toml`](codex/config.toml) that is missing, and reports a key
-  that is already set to something else without touching it.
-  [Codex settings](agents/README.md#codex-settings)
+- **`claude`** — a `claude-ds` launcher that routes one Claude Code session through DeepSeek, plus a status line showing the active model, reasoning effort, working directory, git branch and used context. It keeps the API key outside Git and does not install Claude Code itself. [Claude Code profiles and API-key setup](claude/README.md)
+- **`codex`** — a settings check plus a `codex-ds` launcher that routes one
+  Codex session through DeepSeek. It reads Codex's own `~/.codex/config.toml`,
+  adds any setting from [`codex/config.toml`](codex/config.toml) that is
+  missing, and reports a key that is already set to something else without
+  touching it. [Codex settings and the DeepSeek launcher](codex/README.md)
 - **`context7`** — the `ctx7` CLI that the `find-docs` skill calls to fetch
   current library documentation, plus Node to run it. The one component
   installed from npm rather than Homebrew, because that is where it ships.
@@ -111,7 +111,7 @@ on both macOS and Linux wherever a formula exists.
   on Linux install the terminal yourself; the config is linked either way.
   [WezTerm keys, mouse and terminal integration](wezterm/README.md)
 
-Claude Code and Codex themselves are not installed by these components. The `claude` component configures an existing Claude Code, and the `codex` component only checks the settings of a Codex that is already there, or waiting to be.
+Claude Code and Codex themselves are not installed by these components. The `claude` and `codex` components configure an existing installation, each adding a DeepSeek launcher; Codex's settings are checked whether it is already there or still to come.
 
 ## Reruns and updates
 
