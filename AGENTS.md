@@ -9,7 +9,7 @@ link for any agent that hard-codes a different one.
 
 A cold-start dev environment: POSIX-ish bash installers plus the config files
 they link into place, so one `git clone` and one `./install.sh` reproduce the
-setup on a Mac or a Debian/Ubuntu VPS. There is no build or CI. The scripts *are* the product. The skill updater, the two agent-profile components, terminal selection, and Neovim PR review and file-location helpers have small regression suites; the remaining installers are checked by reading and running them.
+setup on a Mac or a Debian/Ubuntu VPS. There is no build or CI. The scripts *are* the product. The skill updater, the two agent-profile components, terminal selection, and Neovim PR review, file-location and status-bar helpers have small regression suites; the remaining installers are checked by reading and running them.
 
 ## Commands
 
@@ -26,6 +26,7 @@ python3 tmux/test_mouse_selection.py            # isolated tmux input/selection 
 luajit wezterm/test_selection.lua               # clipboard routing without GUI access
 nvim --headless -u NONE -i NONE -l nvim/test_diffview.lua # offline Git/PR review tests
 nvim --headless -u NONE -i NONE -l nvim/test_file_location.lua # offline file-location clipboard tests
+nvim --headless -u NONE -i NONE -l nvim/test_statusline.lua # offline directory/Git status-bar tests
 ```
 
 With no TTY (`./install.sh < /dev/null`, CI) the picker is skipped and

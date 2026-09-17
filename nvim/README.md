@@ -84,6 +84,8 @@ brew install tree-sitter-cli
 
 ## Notes
 
+- **Bottom status bar:** shows Neovim's working directory, shortened with `~`, and that directory's Git branch: `~/work/api  ·  feature/login *  ↑2 ↓1`. The directory follows `:cd`, `:tcd`, `:lcd` and window switches, rather than the active file's repository. `*` means staged, unstaged or untracked changes anywhere in the repository; ignored files do not count. `↑` and `↓` show nonzero commit counts ahead of or behind the configured upstream, using the last fetched state without fetching automatically. Detached HEAD shows a short commit hash. Outside Git, or if Git fails, only the directory appears. Git updates run asynchronously, at most once every two seconds while staying in a directory. Restart Neovim to load the bar. Run its offline checks with `nvim --headless -u NONE -i NONE -l nvim/test_statusline.lua`.
+
 - **Date line:** in Normal mode, press `Space i d` to insert today's local date on a new line below the cursor, for example `04 Sept 2026, Fri`. Month and weekday names are always English. Restart Neovim after updating, or run `:luafile ~/.config/nvim/lua/config/keymaps.lua` in an existing session.
 
 - **Markdown rendering:** disabled by default. Toggle it with `Space u m` or `:RenderMarkdown toggle`.
