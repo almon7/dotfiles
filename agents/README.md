@@ -54,6 +54,14 @@ something in the conversation calls for them, rather than carrying always.
   sit in the context window of every request whether the subject comes up or
   not; a skill costs one line until something activates it.
 
+## Uploading Hunk comments to a GitHub PR
+
+[`hunk-pr-comments`](skills/hunk-pr-comments/SKILL.md) copies your notes from an open Hunk session into one pending GitHub PR review. For example, ask your agent: “Upload my Hunk comments to a pending review on PR #123.” The agent loads Hunk's bundled instructions through `hunk skill path`, checks each comment against the PR diff, uploads your text unchanged, and returns a link. You inspect and submit the review on GitHub yourself.
+
+The skill requires Hunk, an open review session, and an authenticated GitHub CLI (`gh`). It includes only your notes by default and leaves the Hunk session intact. If any comment cannot be matched to the PR, or your account already has a pending review, the agent stops without uploading. Keep Hunk open until the transfer succeeds: Hunk 0.21.1 does not save live notes across restarts.
+
+The existing shared skills links make the skill available to both agents; no Hunk extension or additional installer step is needed. After adding the skill, start a new agent session if the skill is not yet listed.
+
 ## Checking and refreshing the EveryInc skills
 
 `ce-simplify-code` and `ce-code-review` are vendored from
