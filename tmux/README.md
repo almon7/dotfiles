@@ -40,11 +40,13 @@ it rather than for the program in the pane. It is remapped from the default
 | `C-a a` | Return to the last window |
 | `C-a C-a` | Send `C-a` to the program in the pane |
 | `C-a H/J/K/L` | Move the current pane by swapping it left/down/up/right |
-| `C-a z` | Zoom current pane fullscreen (toggle) |
+| `C-a z`, or `Cmd-z` in WezTerm | Zoom current pane fullscreen (toggle), preserving copy mode |
 | `C-a [` | Enter keyboard scrollback search and navigation |
 | `C-a r` | Reload this config after editing it |
 | `C-a C-s` / `C-a C-r` | Save / restore all tmux sessions |
 | `C-a ?` | List every binding |
+
+WezTerm sends `ESC [99;15~` for Cmd-z. tmux recognizes the sequence as `User92` and toggles zoom directly, independently of the prefix, during normal input and in both copy-mode key tables.
 
 Click to focus a pane and drag to select terminal text within that pane, including over Codex and shells. Applications that request mouse input receive ordinary clicks and drags: Hunk handles file and menu navigation, while Neovim/Vim handles cursor placement, text selection, and editor-divider resizing. Drag tmux borders to resize tmux panes. The wheel scrolls applications that request mouse input; over Codex, shells, and other applications without mouse reporting, it scrolls the pane's retained terminal output. Ctrl-click opens detected links in the OS browser.
 

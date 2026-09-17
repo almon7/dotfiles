@@ -121,6 +121,7 @@ config.keys = {
   { key = 'DownArrow', mods = 'SUPER', action = act.SendKey { key = 'F10', mods = 'CTRL' } },
   { key = 'u', mods = 'SUPER', action = act.SendKey { key = 'F11', mods = 'CTRL' } },
   { key = 'd', mods = 'SUPER', action = act.SendKey { key = 'F12', mods = 'CTRL' } },
+  { key = 'z', mods = 'SUPER', action = act.SendString '\x1b[99;15~' },
   {
     key = 'c',
     mods = 'SUPER',
