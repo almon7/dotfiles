@@ -89,6 +89,7 @@ brew install tree-sitter-cli
 - **Markdown rendering:** disabled by default. Toggle it with `Space u m` or `:RenderMarkdown toggle`.
 - **Markdown diagnostics:** disabled by default. Enable them for the current buffer with `:lua vim.diagnostic.enable(true, { bufnr = 0 })`.
 - **System clipboard:** regular `y`/`p` stay inside Neovim. Use `Space y` after selecting with `v` or dragging text with the mouse, `Space Y` for the current line, and `Space p` to paste from the system clipboard locally. Over SSH, clipboard yanks use OSC 52; paste with your terminal's `Cmd-V` (macOS) or `Ctrl-Shift-V` (Linux). `Space p` shows that reminder because the SSH provider is copy-only.
+- **Copy file location:** in Normal mode, `Space f y` copies a reference such as `dotfiles/agents/AGENTS.md:42:7` to the system clipboard. Paths start with the repository or worktree folder name (`pr-42/src/example.lua` in a worktree named `pr-42`); files outside Git use absolute paths. Config aliases such as `~/.config/nvim` resolve to the repository when needed. Line and byte-column numbers start at 1 and refer to the displayed buffer, including unsaved edits. The shortcut copies no source text and does not save the file. Unnamed buffers, terminals, and file panels leave the clipboard unchanged. Restart Neovim to load the mapping. Run its offline checks with `nvim --headless -u NONE -i NONE -l nvim/test_file_location.lua`.
 - **Markdown linting** uses `markdownlint-cli2`. The `MD013` (line-length) rule
   is disabled via `.markdownlint-cli2.jsonc`, which `lua/plugins/lint.lua` passes
   to the linter with `--config`. Both files live here, so it works automatically
@@ -128,6 +129,8 @@ The paired [tmux bindings](../tmux/README.md#keys) work locally and when SSH con
 | `Space g v w` | Pick a PR to open its worktree and diff in a new tmux window |
 
 Inside Diffview, `Tab` / `Shift-Tab` opens the next / previous changed file, `gf` opens the actual file in a normal editing tab, `Space e` focuses the file panel, and `g?` shows the available keys. Existing Git shortcuts, including `Space g g` for LazyGit, remain available.
+
+`Space f y` copies the active Diffview pane's underlying source path, never its virtual `diffview://` name or Git metadata path. Historical panes append `(git commit <full SHA>)`; staged panes append `(git index)`, or `(git index stage 1: base)`, `(git index stage 2: ours)`, or `(git index stage 3: theirs)` during conflicts. Working-tree panes have no suffix. Coordinates belong to the displayed revision and are not translated to the current file; renamed or deleted historical files keep the historical path. Index references describe the current index, not an immutable snapshot. Empty and binary placeholders and the file panel cannot supply a source location.
 
 The branch shortcut suggests the current branch's PR target when GitHub is available, otherwise `origin`'s default branch when known. Enter another ref for stacked PRs or a different base. Selecting a remote branch fetches that branch before comparing its merge base with the current working files, including uncommitted edits.
 

@@ -48,6 +48,71 @@ vim.keymap.set("n", "N", "Nzzzv") -- Center and reveal the previous search match
 -- system clipboard boundary.
 vim.keymap.set({ "n", "x" }, "<leader>y", '"+y', { desc = "Copy to system clipboard" })
 vim.keymap.set("n", "<leader>Y", '"+yy', { desc = "Copy line to system clipboard" })
+vim.keymap.set("n", "<leader>fy", function()
+  local function unavailable()
+    vim.notify("No source file location in this buffer.", vim.log.levels.WARN)
+  end
+
+  local path = vim.api.nvim_buf_get_name(0)
+  local root, file
+  local suffix = ""
+  local diffview = package.loaded["diffview.lib"]
+  local view = diffview and diffview.get_current_view()
+  if view and view.cur_layout then
+    for _, win in ipairs(view.cur_layout.windows) do
+      if win.id == vim.api.nvim_get_current_win() and win.file and win.file.bufnr == vim.api.nvim_get_current_buf() then
+        file = win.file
+        break
+      end
+    end
+  end
+
+  if file then
+    if file.nulled or file.binary then
+      return unavailable()
+    end
+    path, root = file.absolute_path, file.adapter.ctx.toplevel
+    local rev = file.rev
+    local types = require("diffview.vcs.rev").RevType
+    if rev.type == types.COMMIT then
+      suffix = " (git commit " .. rev.commit .. ")"
+    elseif rev.type == types.STAGE then
+      local stages = { "base", "ours", "theirs" }
+      suffix = rev.stage == 0 and " (git index)" or (" (git index stage %d: %s)"):format(rev.stage, stages[rev.stage])
+    elseif rev.type ~= types.LOCAL then
+      return unavailable()
+    end
+  elseif vim.bo.buftype ~= "" or path == "" or path:match("^%a[%w+.-]*://") then
+    return unavailable()
+  else
+    root = vim.fs.root(path, ".git")
+    if not root then
+      -- Config files can be opened through aliases such as ~/.config/nvim.
+      path = vim.fn.resolve(path)
+      root = vim.fs.root(path, ".git")
+    end
+  end
+
+  if root then
+    path = vim.fs.relpath(vim.fs.dirname(root), path)
+  end
+  if not path or path == "" or path:match("^%a[%w+.-]*://") then
+    return unavailable()
+  end
+
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local location = ("%s:%d:%d%s"):format(path, cursor[1], cursor[2] + 1, suffix)
+  if vim.fn.has("clipboard") == 0 then
+    vim.notify("No system clipboard provider available.", vim.log.levels.ERROR)
+    return
+  end
+  local ok, result = pcall(vim.fn.setreg, "+", location, "v")
+  if not ok or result ~= 0 then
+    vim.notify("Could not copy file location.", vim.log.levels.ERROR)
+    return
+  end
+  vim.notify("Copied " .. location)
+end, { desc = "Copy file location" })
 if vim.env.SSH_TTY or vim.env.SSH_CONNECTION then
   vim.keymap.set({ "n", "x" }, "<leader>p", function()
     vim.notify("Over SSH, paste with your terminal: Cmd-V on macOS or Ctrl-Shift-V on Linux.", vim.log.levels.INFO)
