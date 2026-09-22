@@ -113,3 +113,6 @@ Commit messages follow Conventional Commits 1.0.0, whose requirement words carry
 - A breaking change MUST be flagged, either with `!` before the colon or with a `BREAKING CHANGE: <description>` footer. That token stays uppercase; the rest of the message is case-insensitive.
 - Types and scopes SHOULD be lowercase and the subject SHOULD fit in about 72 columns, so `git log --oneline` stays readable.
 
+- Do NOT add yourself (the LLM) as a collaborator in commits
+- Do NOT name branches after yourself (eg codex/...)
+
