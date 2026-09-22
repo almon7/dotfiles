@@ -9,7 +9,7 @@ link for any agent that hard-codes a different one.
 
 A cold-start dev environment: POSIX-ish bash installers plus the config files
 they link into place, so one `git clone` and one `./install.sh` reproduce the
-setup on a Mac or a Debian/Ubuntu VPS. There is no build or CI. The scripts *are* the product. The skill updater, the two agent-profile components, terminal selection, and Neovim PR review, file-location and status-bar helpers have small regression suites; the remaining installers are checked by reading and running them.
+setup on a Mac or a Debian/Ubuntu VPS. There is no build or CI. The scripts *are* the product. The skill updater, the two agent-profile components, the Starship prompt, terminal selection, and Neovim PR review, file-location and status-bar helpers have small regression suites; the remaining installers are checked by reading and running them.
 
 ## Commands
 
@@ -22,6 +22,7 @@ bash -n install.sh install-lib.sh */install.sh   # syntax check after editing
 python3 agents/test_skill_updates.py            # offline skill-updater tests
 python3 claude/test_claude.py                   # Claude profile and settings tests
 python3 codex/test_codex.py                     # Codex settings check and launcher tests
+python3 starship/test_starship.py               # prompt and Bash startup regressions
 python3 tmux/test_mouse_selection.py            # isolated tmux input/selection tests
 luajit wezterm/test_selection.lua               # clipboard routing without GUI access
 nvim --headless -u NONE -i NONE -l nvim/test_diffview.lua # offline Git/PR review tests
@@ -77,6 +78,7 @@ rejects arguments (`require_no_args "$@"`, or its own `case` in
   exists to retire earlier unmanaged blocks; add a call to it when you change
   the shape of a block a previous version already wrote to real machines.
 - `log` / `has` / `persist_brew_shellenv` (runs once per `install.sh` run).
+  On macOS with Bash, `persist_brew_shellenv` uses the first existing `.bash_profile`, `.bash_login`, or `.profile`, creating `.bash_profile` only when none exists so existing login settings keep loading.
 
 Never append to an rc file, `ln -s`, or shell out to `brew install` directly
 inside a component — the helper is where the backup, idempotence, and upgrade
@@ -113,6 +115,8 @@ linking a DeepSeek launcher instead. The links are:
 | `codex/deepseek-models.json` | `~/.codex/deepseek-models.json` |
 | `nvim/` | `~/.config/nvim` |
 | `git/gitconfig` | `~/.gitconfig` |
+| `starship/starship.toml` | `~/.config/starship.toml` |
+| `starship/init.bash` | `~/.config/starship/init.bash` (Bash only) |
 | `tmux/tmux.conf` | `~/.tmux.conf` |
 | `tmux/selection-state.sh` | `~/.tmux/selection-state.sh` |
 | `wezterm/.wezterm.lua` | `~/.wezterm.lua` |
@@ -170,6 +174,7 @@ whichever of these owns it:
 | `git/README.md` | identity vs authentication, the SSH-key bootstrap, extra profiles |
 | `tmux/README.md` | prefix and key bindings, resurrect/continuum, copy and paste |
 | `nvim/README.md` | the manual Windows path, first launch, linting and clipboard notes |
+| `starship/README.md` | prompt layout, symbols, shell initialization, and configuration |
 | `docs/vps.md` | server setup and operations: sshd hardening, ufw, swap, tunnels, Docker |
 | `AGENTS.md` | this file — architecture and contracts, what an agent reads first |
 

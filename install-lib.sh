@@ -79,7 +79,7 @@ write_managed_block() {
 # even when a fresh login shell would not find it.
 BREW_SHELLENV_HANDLED=${BREW_SHELLENV_HANDLED:-0}    # survives being sourced more than once
 persist_brew_shellenv() {
-  local brew_path profile    # where brew lives, and the start-up file to edit
+  local brew_path profile candidate    # where brew lives, and the start-up file to edit
 
   # Several components install packages, and the answer cannot change during one
   # run; check the start-up file once instead of once per package list.
@@ -94,7 +94,16 @@ persist_brew_shellenv() {
     */zsh) profile="$HOME/.zprofile" ;;    # zsh reads this one for login shells
     */bash)
       case "$(uname -s)" in
-        Darwin) profile="$HOME/.bash_profile" ;;    # Terminal.app opens login shells
+        Darwin)
+          # Creating .bash_profile would hide an existing .bash_login or .profile.
+          profile="$HOME/.bash_profile"
+          for candidate in "$HOME/.bash_profile" "$HOME/.bash_login" "$HOME/.profile"; do
+            if [ -f "$candidate" ]; then
+              profile=$candidate
+              break
+            fi
+          done
+          ;;
         *) profile="$HOME/.bashrc" ;;    # elsewhere the interactive file is the reliable one
       esac
       ;;

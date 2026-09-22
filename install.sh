@@ -11,13 +11,13 @@ INSTALL_ALL=false    # set by --all to skip the picker
 case "${1:-}" in    # inspect only the first argument
   --all) INSTALL_ALL=true; shift ;;    # drop it so "$@" holds component names alone
   -h|--help)
-    echo 'Usage: ./install.sh [--all] [agents claude codex context7 git hunk lazysql nvim tmux wezterm]'
+    echo 'Usage: ./install.sh [--all] [agents claude codex context7 git hunk lazysql nvim starship tmux wezterm]'
     exit
     ;;
 esac
 
 components=("$@")    # component names given on the command line, possibly none
-all_components=(agents claude codex context7 git hunk lazysql nvim tmux wezterm)    # every installable component
+all_components=(agents claude codex context7 git hunk lazysql nvim starship tmux wezterm)    # every installable component
 descriptions=(    # one line per component above, in the same order
   'Shared agent instructions and skills'
   'Claude Code DeepSeek launcher and status line'
@@ -27,6 +27,7 @@ descriptions=(    # one line per component above, in the same order
   'Hunk terminal diff viewer'
   'LazySQL terminal database client'
   'Neovim and command-line dependencies'
+  'Starship prompt for Zsh and Bash'
   'tmux and ~/.tmux.conf'
   'WezTerm and ~/.wezterm.lua'
 )
@@ -111,7 +112,7 @@ fi
 # Validate every name before using it as part of an executable path.
 for component in "${components[@]}"; do
   case "$component" in
-    agents|claude|codex|context7|git|hunk|lazysql|nvim|tmux|wezterm) ;;    # a known name: nothing to do
+    agents|claude|codex|context7|git|hunk|lazysql|nvim|starship|tmux|wezterm) ;;    # a known name: nothing to do
     *) echo "Unknown component: $component" >&2; exit 2 ;;    # refuse to build a path from it
   esac
 

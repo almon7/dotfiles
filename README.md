@@ -104,6 +104,7 @@ on both macOS and Linux wherever a formula exists.
   Treesitter, Python for the Mason-installed language server, lazygit for
   `<leader>gg`, GitHub CLI for PR reviews, and a Nerd Font on macOS.
   [Neovim config and first launch](nvim/README.md)
+- **`starship`** — a shared two-line Zsh and Bash prompt with the full home-relative directory, Git status, SSH identity, and slow-command duration. [Prompt configuration](starship/README.md)
 - **`tmux`** — tmux, its config, and its plugins. Work runs inside a tmux
   session so a dropped SSH connection leaves it running server-side instead of
   killing it. [tmux keys, sessions and clipboard](tmux/README.md)
