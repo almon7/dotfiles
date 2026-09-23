@@ -76,6 +76,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## Communication Style
 
+- Use British English.
 - I don't know the whole repo by heart: don't make me look up information or code
 - I don't have infinite time: be succinct but complete. Unless I am specifically asking for an explanation or similar, focus on the so-what, action points, decisions I should make
 - Name the thing; never point at it. `this`, `these two`, `that one`, `the operator`, `the group`, `the heading`, `the filter` refer to nothing unless the noun is in the same sentence. Write the noun: "`link_config` and `brew_install`", not "these two"; "the `--all` path in `install.sh`", not "this one".
