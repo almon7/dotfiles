@@ -1,7 +1,7 @@
 local M = {}
 
 local function notify(message, level)
-  vim.notify(message, level or vim.log.levels.INFO, { title = "Diffview" })
+  vim.notify(message, level or vim.log.levels.INFO, { title = "Git view" })
 end
 
 -- Suspend only this operation while Git/GitHub run; resume on Neovim's main loop.
@@ -46,6 +46,18 @@ local function input(opts)
   return coroutine.yield()
 end
 
+local function choose(items, opts)
+  local thread = coroutine.running()
+  vim.ui.select(
+    items,
+    opts,
+    vim.schedule_wrap(function(choice)
+      coroutine.resume(thread, choice)
+    end)
+  )
+  return coroutine.yield()
+end
+
 local function select_pr(repo)
   local json = run(repo, {
     "gh",
@@ -66,29 +78,21 @@ local function select_pr(repo)
   end
   local manual = { title = "Enter PR number or URL…" }
   prs[#prs + 1] = manual
-  local thread = coroutine.running()
-  vim.ui.select(
-    prs,
-    {
-      prompt = "GitHub PRs (newest 50 open): ",
-      format_item = function(pr)
-        if pr == manual then
-          return pr.title
-        end
-        return string.format(
-          "#%d %s — @%s%s",
-          pr.number,
-          pr.title,
-          type(pr.author) == "table" and pr.author.login or "unknown",
-          pr.isDraft and " [draft]" or ""
-        )
-      end,
-    },
-    vim.schedule_wrap(function(choice)
-      coroutine.resume(thread, choice)
-    end)
-  )
-  local choice = coroutine.yield()
+  local choice = choose(prs, {
+    prompt = "GitHub PRs (newest 50 open): ",
+    format_item = function(pr)
+      if pr == manual then
+        return pr.title
+      end
+      return string.format(
+        "#%d %s — @%s%s",
+        pr.number,
+        pr.title,
+        type(pr.author) == "table" and pr.author.login or "unknown",
+        pr.isDraft and " [draft]" or ""
+      )
+    end,
+  })
   if choice == manual then
     return input({ prompt = "GitHub PR number or URL (blank: current branch): " })
   end
@@ -348,9 +352,37 @@ function M.pr(in_worktree)
     then
       error("Enter a PR number or a full GitHub PR URL.", 0)
     end
-    local session = in_worktree and run(repo, { "tmux", "display-message", "-p", "-t", pane, "#{session_id}" })
+    local hunk, destination
+    if not in_worktree then
+      local viewer = choose({ "Diffview", "Hunk" }, { prompt = "PR viewer: " })
+      if not viewer then
+        return
+      end
+      if viewer == "Hunk" then
+        hunk = vim.fn.exepath("hunk")
+        if hunk == "" then
+          error("Hunk is missing. Install it with ./install.sh hunk.", 0)
+        end
+        if not vim.env.TMUX or not pane or vim.fn.executable("tmux") ~= 1 then
+          error("Run Neovim inside tmux to open a PR in Hunk.", 0)
+        end
+        destination = choose({ "Right-hand tmux pane", "New tmux window" }, { prompt = "Open Hunk in: " })
+        if not destination then
+          return
+        end
+      end
+    end
+    local session = (in_worktree or hunk)
+      and run(repo, { "tmux", "display-message", "-p", "-t", pane, "#{session_id}" })
     local pr = pr_metadata(repo, target)
     local revision = fetch_pr(repo, pr)
+    if hunk then
+      local args = destination == "Right-hand tmux pane" and { "tmux", "split-window", "-h", "-l", "50%", "-t", pane }
+        or { "tmux", "new-window", "-t", session .. ":", "-n", pr.name .. "/pr-" .. pr.number .. " — Hunk" }
+      vim.list_extend(args, { "-c", repo, "--", hunk, "diff", revision })
+      run(repo, args)
+      return
+    end
     if not in_worktree then
       open_diff(repo, revision)
       return

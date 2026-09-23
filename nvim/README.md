@@ -117,7 +117,7 @@ The paired [tmux bindings](../tmux/README.md#keys) work locally and when SSH con
 
 ## Git and PR reviews
 
-[Diffview.nvim](https://github.com/sindrets/diffview.nvim) provides side-by-side diffs and file history. In Normal mode, press `Space g v` to see the Diffview menu in Which-key:
+[Diffview.nvim](https://github.com/sindrets/diffview.nvim) provides side-by-side diffs and file history; [Hunk](https://www.hunk.dev/) offers a terminal viewer for published PR diffs. In Normal mode, press `Space g v` to see the **Git view** menu in Which-key:
 
 | Shortcut | Action |
 | --- | --- |
@@ -127,7 +127,7 @@ The paired [tmux bindings](../tmux/README.md#keys) work locally and when SSH con
 | `Space g v f` | Show the current file's history |
 | `Space g v h` | Show repository history |
 | `Space g v q` | Close the current Diffview |
-| `Space g v p` | Pick a GitHub PR to view its published diff |
+| `Space g v p` | Pick a GitHub PR, then choose Diffview or Hunk |
 | `Space g v w` | Pick a PR to open its worktree and diff in a new tmux window |
 
 Inside Diffview, `Tab` / `Shift-Tab` opens the next / previous changed file, `gf` opens the actual file in a normal editing tab, `Space e` focuses the file panel, and `g?` shows the available keys. Existing Git shortcuts, including `Space g g` for LazyGit, remain available.
@@ -138,7 +138,9 @@ The branch shortcut suggests the current branch's PR target when GitHub is avail
 
 Authenticate GitHub CLI once with `gh auth login`. Both PR shortcuts load the repository's 50 newest open PRs, including drafts, newest created first. The searchable picker shows each PR's number, title, author, and draft status; type to filter the loaded list and press Enter to select a PR. Choose `Enter PR number or URL…` to enter a number, `#123`, or a full PR URL, or submit an empty manual prompt for the current branch's PR. Press Escape to cancel. If there are no open PRs, the picker still offers manual entry. The PR repository must match a configured HTTPS or SSH remote in the current checkout. PRs from forks work through the base repository's pull-request refs. Listing and fetches run asynchronously and use the PR's actual target branch, including targets other than `main`.
 
-`Space g v p` compares fetched commits without switching branches or including local edits. Its `gf` action opens the current checkout's file, which can differ from the published PR; use `Space g v w` when you need to navigate or run the PR's code. Fetched refs are retained under `refs/diffview/` so open comparisons remain available locally.
+`Space g v p` asks for a viewer after selecting a PR: **Diffview** opens inside Neovim; **Hunk** asks for a **Right-hand tmux pane** or a **New tmux window**. The right-hand pane takes half the invoking pane's width; the new window opens in the invoking session, named `<repo>/pr-<number> — Hunk`. Hunk receives focus and uses its existing display settings and normal quit behaviour. Both Hunk destinations require Neovim to be running inside tmux and Hunk to be installed with `./install.sh hunk`. Choices are asked each time; Escape cancels any prompt before fetching.
+
+Both viewers compare fetched commits without switching branches or including local edits, and neither creates a worktree. Diffview's `gf` action opens the current checkout's file, which can differ from the published PR; use `Space g v w` when you need to navigate or run the PR's code. Fetched refs are retained under `refs/diffview/` so open comparisons remain available locally.
 
 `Space g v w` requires Neovim to be running inside tmux. It creates `~/reviews/<host>/<owner>/<repo>/pr-<number>` on the local branch `review/pr-<number>`, then opens a new tmux window named `<repo>/pr-<number>` with Neovim rooted in that worktree and the PR's merge base compared against the working files. An existing matching worktree is reused; updates require a clean worktree and fast-forwardable history. Local edits, local commits, and unrelated directories are never replaced. Worktrees are retained after closing Neovim. Before removing a review worktree, stop its processes and clean up its dedicated resources, then use `git worktree remove <path>` from the repository.
 

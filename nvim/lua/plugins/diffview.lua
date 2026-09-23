@@ -45,7 +45,7 @@ return {
         function()
           require("config.diffview").pr()
         end,
-        desc = "Pick GitHub PR to view",
+        desc = "Pick GitHub PR and viewer",
       },
       {
         "<leader>gvw",
@@ -60,7 +60,7 @@ return {
     "folke/which-key.nvim",
     opts = function(_, opts)
       opts.spec = opts.spec or {}
-      table.insert(opts.spec, { "<leader>gv", group = "Diffview" })
+      table.insert(opts.spec, { "<leader>gv", group = "Git view" })
     end,
   },
 }

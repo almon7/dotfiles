@@ -9,10 +9,14 @@ vim.env.NVIM_LOG_FILE = temp .. "/nvim.log"
 local system = vim.system
 local expand = vim.fn.expand
 local executable = vim.fn.executable
+local exepath = vim.fn.exepath
 local env = { GIT_CONFIG_GLOBAL = "/dev/null", GIT_CONFIG_SYSTEM = "/dev/null", GIT_TERMINAL_PROMPT = "0" }
-local metadata, reply, gh_error, redirect, missing_gh
+local metadata, reply, gh_error, redirect, missing_gh, missing_hunk, missing_tmux, tmux_error, redirect_pane
 local opened, histories, messages, launches, calls, prompts = {}, {}, {}, {}, {}, {}
 local listed_prs, selections, selection = {}, {}, "manual"
+local viewer, destination = "Diffview", "Right-hand tmux pane"
+local choices = {}
+local hunk_path = "/tools with spaces/hunk"
 local ui_pending = 0
 local worktrees = {}
 local passed = 0
@@ -88,12 +92,18 @@ vim.fn.executable = function(value)
     return missing_gh and 0 or 1
   end
   if value == "tmux" then
-    return 1
+    return missing_tmux and 0 or 1
   end
   return executable(value)
 end
+vim.fn.exepath = function(value)
+  if value == "hunk" then
+    return missing_hunk and "" or hunk_path
+  end
+  return exepath(value)
+end
 vim.notify = function(message, level, opts)
-  if opts and opts.title == "Diffview" then
+  if opts and opts.title == "Git view" then
     messages[#messages + 1] = { text = message, level = level }
   end
 end
@@ -109,6 +119,15 @@ vim.ui.input = function(opts, callback)
   respond(callback, reply)
 end
 vim.ui.select = function(items, opts, callback)
+  choices[#choices + 1] = { items = items, opts = opts }
+  if opts.prompt == "PR viewer: " then
+    respond(callback, viewer)
+    return
+  end
+  if opts.prompt == "Open Hunk in: " then
+    respond(callback, destination)
+    return
+  end
   selections[#selections + 1] = { items = items, opts = opts }
   respond(callback, selection == "manual" and items[#items] or items[selection])
 end
@@ -133,13 +152,20 @@ vim.system = function(args, opts, callback)
     elseif args[2] == "display-message" then
       result.stdout = "$9"
     end
+    if args[1] == "tmux" and tmux_error and tmux_error.command == args[2] then
+      result.code, result.stderr = 1, tmux_error.message
+    end
     vim.schedule(function()
       if redirect then
         vim.cmd.cd(redirect)
         redirect = nil
       end
+      if redirect_pane then
+        vim.env.TMUX_PANE = redirect_pane
+        redirect_pane = nil
+      end
       callback(result)
-      if args[1] == "tmux" and args[2] == "new-window" then
+      if args[1] == "tmux" and result.code == 0 and (args[2] == "new-window" or args[2] == "split-window") then
         -- run() schedules its continuation; record completion after that continuation.
         vim.schedule(function()
           launches[#launches + 1] = args
@@ -233,6 +259,7 @@ local ok, err = xpcall(function()
     )
     assert(calls[before + 2].args[3] == "view" and calls[before + 2].args[4] == a.pr.url)
     assert(#prompts == before_prompts)
+    assert(vim.deep_equal(choices[#choices].items, { "Diffview", "Hunk" }))
     assert(opened[#opened][2] == a.base .. ".." .. a.head)
     selection = "manual"
   end)
@@ -367,15 +394,95 @@ local ok, err = xpcall(function()
     invoke(review.pr, "remote ref")
     git(a.bare, "update-ref", "refs/pull/42/head", a.head)
   end)
+  test("Diffview remains available without Hunk or tmux", function()
+    vim.env.TMUX, vim.env.TMUX_PANE = nil, nil
+    missing_hunk, missing_tmux = true, true
+    local before = #choices
+    invoke(review.pr)
+    assert(#choices == before + 2, "Diffview should only ask for the PR and viewer")
+    assert(opened[#opened][2] == a.base .. ".." .. a.head)
+    missing_hunk, missing_tmux = false, false
+  end)
+  test("Hunk opens exact published revisions in the original tmux pane or session", function()
+    viewer = "Hunk"
+    local status = git(a.repo, "status", "--porcelain")
+    local head = git(a.repo, "rev-parse", "HEAD")
+    local trees = git(a.repo, "worktree", "list", "--porcelain")
+    for _, place in ipairs({ "Right-hand tmux pane", "New tmux window" }) do
+      destination = place
+      vim.env.TMUX, vim.env.TMUX_PANE = "/tmp/test-tmux,123,0", "%1"
+      redirect, redirect_pane = b.repo, "%999"
+      local before, before_opened = #calls, #opened
+      invoke(review.pr)
+      assert(#opened == before_opened, "Hunk must not open Diffview")
+      assert(vim.deep_equal(choices[#choices].items, { "Right-hand tmux pane", "New tmux window" }))
+      local expected = place == "Right-hand tmux pane" and { "tmux", "split-window", "-h", "-l", "50%", "-t", "%1" }
+        or { "tmux", "new-window", "-t", "$9:", "-n", "api/pr-42 — Hunk" }
+      vim.list_extend(expected, { "-c", a.repo, "--", hunk_path, "diff", a.base .. ".." .. a.head })
+      assert(vim.deep_equal(launches[#launches], expected))
+      for index = before + 1, #calls do
+        assert(calls[index].cwd == a.repo)
+        if calls[index].args[2] == "display-message" then
+          assert(calls[index].args[5] == "%1")
+        end
+      end
+      assert(git(a.repo, "status", "--porcelain") == status)
+      assert(git(a.repo, "rev-parse", "HEAD") == head)
+      assert(git(a.repo, "symbolic-ref", "--short", "HEAD") == "develop")
+      assert(git(a.repo, "worktree", "list", "--porcelain") == trees)
+      vim.cmd.cd(a.repo)
+    end
+    viewer, destination = "Diffview", "Right-hand tmux pane"
+  end)
+  test("viewer and Hunk destination cancellation do not fetch or launch", function()
+    for _, cancel_destination in ipairs({ false, true }) do
+      viewer, destination = cancel_destination and "Hunk" or nil, nil
+      local before, before_choices = #calls, #choices
+      local before_opened, before_launches, before_messages = #opened, #launches, #messages
+      review.pr()
+      local expected_choices = cancel_destination and 3 or 2
+      assert(vim.wait(1000, function()
+        return #choices == before_choices + expected_choices and ui_pending == 0
+      end, 5))
+      assert(#calls == before + 1 and calls[#calls].args[3] == "list")
+      assert(#opened == before_opened and #launches == before_launches and #messages == before_messages)
+    end
+    viewer, destination = "Diffview", "Right-hand tmux pane"
+  end)
+  test("Hunk prerequisites fail before fetching", function()
+    viewer = "Hunk"
+    for _, missing in ipairs({ "hunk", "tmux", "session", "pane" }) do
+      vim.env.TMUX = missing ~= "session" and "/tmp/test-tmux,123,0" or nil
+      vim.env.TMUX_PANE = missing ~= "pane" and "%1" or nil
+      missing_hunk, missing_tmux = missing == "hunk", missing == "tmux"
+      local before = #calls
+      invoke(review.pr, missing == "hunk" and "./install.sh hunk" or "inside tmux")
+      assert(#calls == before + 1, "Missing prerequisites must stop before fetching or calling tmux")
+    end
+    missing_hunk, missing_tmux = false, false
+    viewer = "Diffview"
+  end)
+  test("tmux targeting and launch failures are reported", function()
+    viewer = "Hunk"
+    vim.env.TMUX, vim.env.TMUX_PANE = "/tmp/test-tmux,123,0", "%1"
+    for _, command_name in ipairs({ "display-message", "split-window", "new-window" }) do
+      destination = command_name == "new-window" and "New tmux window" or "Right-hand tmux pane"
+      tmux_error = { command = command_name, message = "tmux test failure: " .. command_name }
+      invoke(review.pr, tmux_error.message)
+    end
+    tmux_error = nil
+    viewer, destination = "Diffview", "Right-hand tmux pane"
+  end)
   local path = temp .. "/reviews/github.com/acme/api/pr-42"
   test("worktree and tmux launch open the exact PR revision", function()
     vim.env.TMUX, vim.env.TMUX_PANE = "/tmp/test-tmux,123,0", "%1"
     selection = 2
-    local before_prompts = #prompts
+    local before_prompts, before_choices = #prompts, #choices
     invoke(function()
       review.pr(true)
     end)
     assert(#prompts == before_prompts)
+    assert(#choices == before_choices + 1, "Worktree reviews must skip viewer and destination choices")
     selection = "manual"
     worktrees[#worktrees + 1] = { repo = a.repo, path = path }
     assert(git(path, "rev-parse", "HEAD") == a.head)
