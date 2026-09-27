@@ -5,8 +5,8 @@
 Before making changes in a repository, bring the checkout up to date:
 
 - Check the state first with `git status`
-- Fast-forward the branch with `git pull --ff-only`
-- If the pull is refused, stop and say so rather than reaching for `--rebase`, `--force`, `stash`, or `reset`: deciding what happens to diverged branches is the user's call.
+- If there is a remote branch, fast-forward the branch with `git pull --ff-only`
+- If there is a remote branch and the pull is refused, stop and say so rather than reaching for `--rebase`, `--force`, `stash`, or `reset`
 
 ## Understand the request, think before coding
 
