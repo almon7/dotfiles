@@ -108,6 +108,8 @@ end)
 
 -- Clipboard, shell editing, and Command navigation shortcuts.
 config.keys = {
+  { key = 'w', mods = 'SUPER', action = act.CloseCurrentTab { confirm = false } },
+  { key = 'w', mods = 'CTRL|SHIFT', action = act.CloseCurrentTab { confirm = false } },
   -- Dedicated terminal keys keep Ctrl-h/j/k/l and Option-j/k available to apps. tmux and Neovim share this mapping, including through SSH.
   { key = 'h', mods = 'SUPER', action = act.SendKey { key = 'F1', mods = 'CTRL' } },
   { key = 'j', mods = 'SUPER', action = act.SendKey { key = 'F2', mods = 'CTRL' } },

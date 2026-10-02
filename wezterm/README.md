@@ -12,6 +12,7 @@ WezTerm provides the terminal, fonts, system clipboard, and OS shortcuts. tmux o
 | Option-3 | Types `#` for the British Mac keyboard layout |
 | Cmd-H/J/K/L | Moves left/down/up/right through tmux panes and Neovim splits |
 | Cmd-Z | Toggles zoom of the active tmux pane, preserving copy mode |
+| Cmd-W / Ctrl-Shift-W | Closes the current WezTerm tab without confirmation; closing the last tab closes the window |
 | Cmd-Up / Cmd-Down | Scrolls the active tmux pane or Neovim window up / down one line |
 | Cmd-U / Cmd-D | Scrolls up / down by one third of the active tmux pane height or Neovim window height (Normal mode) |
 | Cmd-N / Cmd-P | Next / previous tmux window in the session, wrapping at the ends |
