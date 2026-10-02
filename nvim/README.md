@@ -2,7 +2,7 @@
 
 My Neovim config, built on [LazyVim](https://www.lazyvim.org/): **Catppuccin**
 colorscheme (Tokyonight is also installed — switch live with `<leader>uC`),
-**Claude Code**, and language support for Python, JSON, Markdown and TOML.
+**Claude Code**, and language support for Python, JavaScript/TypeScript, JSON, Markdown and TOML.
 
 > On macOS and Linux, `./install.sh nvim` does everything in steps 1–3 — see
 > the repo [quick start](../README.md#quick-start). The manual walkthrough below
@@ -100,6 +100,8 @@ brew install tree-sitter-cli
   never `$HOME`.)
 
 ## Navigation
+
+`Space c s` toggles the file outline. JavaScript and TypeScript (including JSX/TSX) use the `vtsls` language server supplied by the [LazyVim TypeScript extra](https://www.lazyvim.org/extras/lang/typescript). Restart Neovim after enabling the extra and let Mason finish installing `vtsls`. If the outline says `No supported provider...`, check `:LspInfo` for an attached server and `:Mason` for installation errors.
 
 Drag a vertical window separator left or right, or a horizontal window separator up or down, to resize Neovim splits. Ordinary clicks position the editing cursor; dragging text creates a Neovim selection, double-clicking selects a word, and triple-clicking selects a line. The paired tmux config forwards these gestures to Neovim when mouse support is enabled. After updating tmux's mouse bindings, reload with `C-a r`; existing Neovim sessions receive the change without restarting. Copy a Neovim selection with `Space y`; terminal `Cmd-C` / `Ctrl-Shift-C` copies terminal selections only.
 
