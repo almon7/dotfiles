@@ -103,6 +103,8 @@ brew install tree-sitter-cli
 
 ## Navigation
 
+`j`/`k` centre the cursor using Neovim's native `zz` command in Normal and Visual mode. Without a count they move through wrapped screen lines; a count such as `5j` moves five file lines. Press `Space u j` in Normal mode to toggle **j/k cursor centring** for all editing windows in the current Neovim process. Centring starts enabled in each new session; switching it on takes effect on the next `j`/`k` press. Switching it off restores ordinary movement. Native centring is limited near the start of a file and with long wrapped lines. Restart Neovim to load the mappings.
+
 `Space c s` toggles the file outline. JavaScript and TypeScript (including JSX/TSX) use the `vtsls` language server supplied by the [LazyVim TypeScript extra](https://www.lazyvim.org/extras/lang/typescript). Restart Neovim after enabling the extra and let Mason finish installing `vtsls`. If the outline says `No supported provider...`, check `:LspInfo` for an attached server and `:Mason` for installation errors.
 
 Drag a vertical window separator left or right, or a horizontal window separator up or down, to resize Neovim splits. Ordinary clicks position the editing cursor; dragging text creates a Neovim selection, double-clicking selects a word, and triple-clicking selects a line. The paired tmux config forwards these gestures to Neovim when mouse support is enabled. After updating tmux's mouse bindings, reload with `C-a r`; existing Neovim sessions receive the change without restarting. Copy a Neovim selection with `Space y`; terminal `Cmd-C` / `Ctrl-Shift-C` copies terminal selections only.

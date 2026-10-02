@@ -36,6 +36,11 @@ vim.opt.hidden = true
 for _, key in ipairs({ "<C-h>", "<C-j>", "<C-k>", "<C-l>" }) do
   vim.keymap.set("n", key, "<Nop>")
 end
+Snacks = {
+  toggle = function()
+    return { map = function() end }
+  end,
+}
 dofile(config .. "/lua/config/keymaps.lua")
 assert(vim.fn.maparg("<Space>fy", "n", false, true).desc == "Copy file location")
 assert(vim.fn.maparg("<Space>fy", "x") == "")

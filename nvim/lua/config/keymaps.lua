@@ -7,6 +7,25 @@ for _, key in ipairs({ "<C-h>", "<C-j>", "<C-k>", "<C-l>" }) do
   vim.keymap.del("n", key)
 end
 
+local centre_jk = true
+for _, key in ipairs({ "j", "k" }) do
+  vim.keymap.set({ "n", "x" }, key, function()
+    local motion = vim.v.count == 0 and "g" .. key or key
+    -- <Cmd> preserves Visual mode and avoids inserting "zz" after an Insert-mode Ctrl-o motion.
+    return motion .. (centre_jk and "<Cmd>normal! zz<CR>" or "")
+  end, { expr = true, silent = true, desc = key == "j" and "Down" or "Up" })
+end
+
+Snacks.toggle({
+  name = "j/k cursor centring",
+  get = function()
+    return centre_jk
+  end,
+  set = function(state)
+    centre_jk = state
+  end,
+}):map("<leader>uj")
+
 -- Cmd-Up/Down arrives as Ctrl-F9/F10, or F33/F34 through tmux terminfo.
 for _, mapping in ipairs({
   { "<C-F9>", "<C-y>", "up" },
