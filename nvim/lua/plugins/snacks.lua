@@ -220,7 +220,10 @@ local spec = {
         explorer = {
           hidden = true,
           ignored = true,
-          icons = { git = { ignored = "" } },
+          icons = {
+            git = { ignored = "" },
+            tree = { vertical = "  ", middle = "  ", last = "  " },
+          },
           actions = {
             toggle_ignored_icons = function(picker)
               local icons = picker.opts.icons.git
