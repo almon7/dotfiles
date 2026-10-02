@@ -168,7 +168,8 @@ class CodexProfileTests(unittest.TestCase):
         installed = settings.read_text()
 
         self.assertIn('model = "something-else"', installed)  # a local change is not ours to undo
-        self.assertIn("model_auto_compact_token_limit = 900000", installed)  # absent, so inserted
+        self.assertNotIn("model_context_window", installed)
+        self.assertNotIn("model_auto_compact_token_limit", installed)
         self.assertIn("model is \"something-else\" here", result.stderr)  # reported on stderr, not stdout
 
     def test_installer_notes_a_missing_codex_without_failing(self):

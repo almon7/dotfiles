@@ -2,8 +2,6 @@
 # any that are missing and leaves a key already set to something else alone,
 # so every key here is one this machine is meant to have.
 model = "gpt-5.6-sol"
-model_context_window = 1000000
-model_auto_compact_token_limit = 900000
 
 # Vim mode
 [tui]

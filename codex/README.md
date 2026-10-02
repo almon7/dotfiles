@@ -48,6 +48,5 @@ To refresh it, download that script and take the body of the heredoc. The catalo
 - `codex-ds` refuses to run when `CODEX_HOME` is set to anything but `~/.codex`. Codex would resolve the profile there while the profile's catalog path cannot follow it, so the launcher stops rather than layering nothing.
 - The profile also disables `web_search` and pins `model_reasoning_effort = "high"`, both stricter than a plain `codex` session. `claude-ds` pins `max` for the same model pair, so the two launchers do not agree.
 - The profile sets `forced_login_method = "api"`, so surfaces that depend on the ChatGPT login refuse under `codex-ds`. This is what keeps a DeepSeek session from borrowing the stored account.
-- `~/.codex/config.toml` sets `model_context_window` and `model_auto_compact_token_limit`, and layering puts them under the profile, so they apply to DeepSeek sessions too and override the catalog's 1,048,576-token window. They are compatible values, so this is left alone rather than pinned twice.
 
 Run the offline regression tests with `python3 codex/test_codex.py`.
