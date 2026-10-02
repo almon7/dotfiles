@@ -33,7 +33,8 @@ it rather than for the program in the pane. It is remapped from the default
 | `C-a ,` | Rename the current window |
 | `C-a w` | Pick a window from a list |
 | `C-a &` | Close the current window |
-| `C-a \|` / `C-a -` | Split vertically / horizontally |
+| `C-a %` / `C-a \|` | Split into side-by-side panes in the active pane's current directory |
+| `C-a "` / `C-a -` | Split into stacked panes in the active pane's current directory |
 | `C-a h/j/k/l` | Move between panes, stopping at the outer edges |
 | `Cmd-h/j/k/l` (WezTerm) | Move between panes **and** Neovim splits, stopping at the outer edges |
 | `Cmd-]` / `Cmd-[` (WezTerm) | Next / previous session in name order, stopping at either end |
@@ -52,7 +53,7 @@ Click to focus a pane and drag to select terminal text within that pane, includi
 
 Neovim navigation works in Normal mode, plain `:terminal` buffers, Snacks terminals, and pickers. Ordinary editing buffers keep their Insert-mode shortcuts. In pickers, Cmd-h/l moves between panels; Cmd-j/k moves to tmux panes above/below, while j/k or Ctrl-n/p moves through results. See the [Neovim navigation notes](../nvim/README.md#navigation).
 
-New windows and splits start in the session's directory (set with `tmux new -s dev -c /path/to/project`), even after a shell changes directory.
+New splits start in the active pane's current directory, including after a shell changes directory. New windows (`C-a c`) start in the session's directory (set with `tmux new -s dev -c /path/to/project`).
 
 A typical layout: window 1 for `nvim`, window 2 for `claude`, window 3 for git
 and test runs. Give Claude a task, `C-a 1` back to the editor while it works.

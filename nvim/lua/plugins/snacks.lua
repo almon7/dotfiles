@@ -142,6 +142,7 @@ local picker_navigation = {
 local spec = {
   "folke/snacks.nvim",
   opts = {
+    indent = { enabled = false },
     terminal = {
       win = {
         -- LazyVim's defaults use wincmd directly and stop at the outermost
@@ -219,11 +220,25 @@ local spec = {
         explorer = {
           hidden = true,
           ignored = true,
+          icons = {
+            git = { ignored = "" },
+            tree = { vertical = "  ", middle = "  ", last = "  " },
+          },
+          actions = {
+            toggle_ignored_icons = function(picker)
+              local icons = picker.opts.icons.git
+              icons.ignored = icons.ignored == "" and Snacks.picker.config.get().icons.git.ignored or ""
+              picker.list:update({ force = true })
+            end,
+          },
           win = {
             list = {
+              keys = {
+                ["gi"] = { "toggle_ignored_icons", desc = "Toggle ignored-file icons" },
+              },
               wo = {
-                number = true,
-                relativenumber = true,
+                number = false,
+                relativenumber = false,
               },
             },
           },
