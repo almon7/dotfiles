@@ -142,6 +142,7 @@ local picker_navigation = {
 local spec = {
   "folke/snacks.nvim",
   opts = {
+    indent = { enabled = false },
     terminal = {
       win = {
         -- LazyVim's defaults use wincmd directly and stop at the outermost
@@ -233,8 +234,8 @@ local spec = {
                 ["gi"] = { "toggle_ignored_icons", desc = "Toggle ignored-file icons" },
               },
               wo = {
-                number = true,
-                relativenumber = true,
+                number = false,
+                relativenumber = false,
               },
             },
           },
