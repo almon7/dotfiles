@@ -111,6 +111,8 @@ Cmd-h/j/k/l in WezTerm moves left/down/up/right through Neovim splits and adjace
 
 Snacks pickers treat the search input and results as one panel: Cmd-h/l moves between panels (and the editor beside the explorer), then into tmux when there is no panel in that direction. Cmd-j/k moves directly to tmux panes below/above; j/k in Normal mode and Ctrl-n/p move through results. Outside tmux, movement stops when there is no eligible Neovim window.
 
+The file explorer hides crossed-out-eye icons for Git-ignored files by default. Press `gi` in the explorer to show or hide those icons for that explorer instance; the files remain visible and other Git status icons are unchanged. Restart Neovim to load the setting and shortcut.
+
 WezTerm sends Ctrl-F1/F2/F3/F4 for Cmd-h/j/k/l, and Neovim maps those terminal keys to navigation. Neovim also accepts the F25/F26/F27/F28 names produced by tmux’s terminfo encoding. Other terminal emulators must send the same keys. Cmd-n/p changes tmux windows; Cmd-]/[ changes tmux sessions.
 
 The paired [tmux bindings](../tmux/README.md#keys) work locally and when SSH connects directly to remote tmux/Neovim. Existing Neovim sessions retain their loaded Lua configuration; open a fresh session after updating these mappings.

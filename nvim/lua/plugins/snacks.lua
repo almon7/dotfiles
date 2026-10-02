@@ -219,8 +219,19 @@ local spec = {
         explorer = {
           hidden = true,
           ignored = true,
+          icons = { git = { ignored = "" } },
+          actions = {
+            toggle_ignored_icons = function(picker)
+              local icons = picker.opts.icons.git
+              icons.ignored = icons.ignored == "" and Snacks.picker.config.get().icons.git.ignored or ""
+              picker.list:update({ force = true })
+            end,
+          },
           win = {
             list = {
+              keys = {
+                ["gi"] = { "toggle_ignored_icons", desc = "Toggle ignored-file icons" },
+              },
               wo = {
                 number = true,
                 relativenumber = true,
