@@ -26,6 +26,27 @@ Snacks.toggle({
   end,
 }):map("<leader>uj")
 
+-- The terminal owns fonts; OSC user variables also travel through SSH and tmux.
+vim.keymap.set("n", "<leader>ut", function()
+  vim.ui.select({ "JetBrains Mono", "Intel One Mono", "Atkinson Hyperlegible Mono" }, {
+    prompt = "Typeface (WezTerm window)",
+  }, function(choice)
+    if not choice then
+      return
+    end
+    local sequence = "\027]1337;SetUserVar=NVIM_TYPEFACE=" .. vim.base64.encode(choice) .. "\007"
+    if vim.env.TMUX then
+      sequence = "\027Ptmux;" .. sequence:gsub("\027", "\027\027") .. "\027\\"
+    end
+    if vim.api.nvim_ui_send then
+      vim.api.nvim_ui_send(sequence)
+    else
+      -- Neovim 0.11 uses the stderr channel for terminal escape sequences.
+      vim.api.nvim_chan_send(vim.v.stderr, sequence)
+    end
+  end)
+end, { desc = "Typeface (WezTerm)" })
+
 -- Cmd-Up/Down arrives as Ctrl-F9/F10, or F33/F34 through tmux terminfo.
 for _, mapping in ipairs({
   { "<C-F9>", "<C-y>", "up" },

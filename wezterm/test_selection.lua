@@ -16,6 +16,7 @@ package.loaded.wezterm = {
   default_hyperlink_rules = function() return {} end,
   action_callback = function(callback) return callback end,
   font = function(name) return name end,
+  on = function() end,
 }
 local config = dofile(arg[1] or 'wezterm/.wezterm.lua')
 local function key_action(key, mods)

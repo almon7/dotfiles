@@ -1,6 +1,6 @@
 # WezTerm
 
-WezTerm provides the terminal, fonts, system clipboard, and OS shortcuts. tmux owns sessions and pane navigation; Neovim owns editing and its internal windows. The config uses JetBrainsMono Nerd Font and hides the tab bar when only one WezTerm tab is open.
+WezTerm provides the terminal, fonts, system clipboard, and OS shortcuts. tmux owns sessions and pane navigation; Neovim owns editing and its internal windows. The config defaults to JetBrainsMono Nerd Font and hides the tab bar when only one WezTerm tab is open.
 
 ## Keys and mouse
 
@@ -38,6 +38,10 @@ WezTerm sends Ctrl-F1/F2/F3/F4 for Command pane navigation, Ctrl-F5/F6 for windo
 Cmd-Z sends the reserved sequence `ESC [99;15~`, which tmux maps to `User92` for pane zoom. The shortcut works independently of the tmux prefix, including over SSH when the remote tmux configuration has the same binding.
 
 Option-key composition settings are for macOS. On Linux, use Alt for Meta shortcuts and Ctrl-Shift-C/V for clipboard actions.
+
+## Typeface picker
+
+Neovim's `Space u t` picker switches the current WezTerm window between JetBrains Mono, Intel One Mono and Atkinson Hyperlegible Mono. The installed font families are `JetBrainsMono Nerd Font`, `IntoneMono Nerd Font` and `AtkynsonMono Nerd Font`. All tabs and panes in that window share the selection; new windows use JetBrains Mono. Font size and other window overrides remain unchanged. See the [Neovim typeface notes](../nvim/README.md#notes) for installation and reload instructions.
 
 ## Integration and reloads
 

@@ -13,8 +13,8 @@ require_no_args "$@"    # reject anything but an empty argument list or --help
 case "$(uname -s)" in    # branch on the kernel name
   Darwin)
     brew_install neovim ripgrep fd node python lazygit gh    # the editor and the tools it shells out to
-    # The Nerd Font supplies the extra glyphs used by the configuration's icons.
-    brew_install --cask font-jetbrains-mono-nerd-font    # fonts ship as casks, not formulas
+    # All three typefaces retain the extra glyphs used by the configuration's icons.
+    brew_install --cask font-jetbrains-mono-nerd-font font-intone-mono-nerd-font font-atkynson-mono-nerd-font
     # Treesitter parsers need Apple's compiler toolchain.
     # If it is absent, macOS opens the Command Line Tools installer.
     xcode-select -p >/dev/null 2>&1 || xcode-select --install    # succeeds quietly once they are present

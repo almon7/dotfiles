@@ -178,5 +178,18 @@ config.keys = {
 -- Use nerdfont
 config.font = wezterm.font 'JetBrainsMono Nerd Font'
 
+-- Neovim's typeface picker changes only this window, preserving other overrides.
+local typefaces = {
+  ['JetBrains Mono'] = 'JetBrainsMono Nerd Font',
+  ['Intel One Mono'] = 'IntoneMono Nerd Font',
+  ['Atkinson Hyperlegible Mono'] = 'AtkynsonMono Nerd Font',
+}
+wezterm.on('user-var-changed', function(window, _, name, value)
+  if name ~= 'NVIM_TYPEFACE' or not typefaces[value] then return end
+  local overrides = window:get_config_overrides() or {}
+  overrides.font = wezterm.font(typefaces[value])
+  window:set_config_overrides(overrides)
+end)
+
 -- Finally, return the configuration to wezterm:
 return config
