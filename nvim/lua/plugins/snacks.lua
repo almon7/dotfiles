@@ -220,8 +220,22 @@ local spec = {
         explorer = {
           hidden = true,
           ignored = true,
+          format = function(item, picker)
+            return require("config.explorer_icons").format(item, picker)
+          end,
+          formatters = { file = { filename_only = true, git_status_hl = false } },
           icons = {
-            git = { ignored = "" },
+            files = { enabled = false }, -- config.explorer_icons supplies the file/folder icons.
+            git = {
+              staged = "+",
+              added = "+",
+              deleted = "x",
+              ignored = "",
+              modified = "!",
+              renamed = "~",
+              unmerged = "=",
+              untracked = "?",
+            },
             tree = { vertical = "  ", middle = "  ", last = "  " },
           },
           actions = {
