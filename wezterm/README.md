@@ -25,7 +25,7 @@ WezTerm provides the terminal, fonts, system clipboard, and OS shortcuts. tmux o
 | Left click | Focuses the tmux pane and goes to applications requesting mouse input; otherwise, clears the terminal selection |
 | Double-click / triple-click | Goes to applications requesting mouse input; otherwise, selects a word / line in the tmux pane's terminal text |
 | Shift-click / Shift-drag | Does nothing, including with other modifiers; preserves the selection and clipboard |
-| Ctrl-click | Opens a detected hyperlink, including inside tmux |
+| Ctrl-click | Opens a detected hyperlink, including inside tmux; surrounding parentheses are excluded from the URL |
 
 tmux handles terminal selection when the application does not request mouse input so dragging across lines excludes neighboring panes without zooming. The terminal highlight survives release; copying clears the highlight and keeps the scroll position. Copying without a selection leaves the clipboard unchanged. Typing clears the terminal selection and sends the first key to the application; paste and scrolling also release the terminal selection. tmux temporarily holds the pane's displayed contents while highlighting text or browsing history. Typing and paste return to live input; clicking and dragging older output lets you select it without jumping to the bottom.
 
@@ -52,3 +52,5 @@ The supported remote route is WezTerm → SSH → remote tmux/Neovim. Clipboard 
 ## Selection checks
 
 `luajit wezterm/test_selection.lua` (from the repository root) checks copy/paste routing and mouse ownership without opening a GUI or changing the clipboard. WezTerm's `show-keys` command validates the real configuration. The [tmux integration checks](../tmux/README.md#selection-integration) exercise pane boundaries and input delivery.
+
+`python3 wezterm/test_hyperlinks.py` loads the configuration with the installed WezTerm and checks bracketed links, Markdown links, and preserved URL contents using Python's regex engine. The check does not open a browser or test GUI clicks.

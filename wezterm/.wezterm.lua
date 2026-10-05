@@ -20,6 +20,17 @@ config.send_composed_key_when_right_alt_is_pressed = true
 config.enable_kitty_keyboard = true
 config.hide_tab_bar_if_only_one_tab = true
 
+-- The bare-URL rule can outmatch (URL) by including its closing parenthesis.
+-- Leave complete parenthesised URLs to the built-in rule that strips the wrapper.
+-- A balanced pair inside the URL belongs to the path, not the wrapper.
+local hyperlink_rules = wezterm.default_hyperlink_rules()
+for _, rule in ipairs(hyperlink_rules) do
+  if rule.format == '$0' then
+    rule.regex = [[(?!(?<=\()\w+://(?:[^\s()]|\([^\s()]*\))+\))]] .. rule.regex
+  end
+end
+config.hyperlink_rules = hyperlink_rules
+
 -- tmux receives ordinary mouse input and confines selection to its own panes.
 -- Alt bypasses reporting; Shift must remain visible to the no-op bindings.
 config.bypass_mouse_reporting_modifiers = 'ALT'

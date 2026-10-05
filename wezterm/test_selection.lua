@@ -13,6 +13,7 @@ local action = setmetatable({
 package.loaded.wezterm = {
   action = action,
   config_builder = function() return {} end,
+  default_hyperlink_rules = function() return {} end,
   action_callback = function(callback) return callback end,
   font = function(name) return name end,
 }
