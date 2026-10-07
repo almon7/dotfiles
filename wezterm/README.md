@@ -2,6 +2,8 @@
 
 WezTerm provides the terminal, fonts, system clipboard, and OS shortcuts. tmux owns sessions and pane navigation; Neovim owns editing and its internal windows. The config defaults to JetBrainsMono Nerd Font and hides the tab bar when only one WezTerm tab is open.
 
+On macOS, Ctrl-Cmd-F and Option-Return toggle native full screen in a separate Space. Menu-bar visibility follows the macOS setting; on macOS 15, choose System Settings → Control Centre → Automatically hide and show the menu bar → Never to keep it visible.
+
 ## Keys and mouse
 
 | Input | Behavior |

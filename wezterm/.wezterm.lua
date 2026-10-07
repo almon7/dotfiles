@@ -19,6 +19,7 @@ config.send_composed_key_when_left_alt_is_pressed = false
 config.send_composed_key_when_right_alt_is_pressed = true
 config.enable_kitty_keyboard = true
 config.hide_tab_bar_if_only_one_tab = true
+config.native_macos_fullscreen_mode = true
 
 -- The bare-URL rule can outmatch (URL) by including its closing parenthesis.
 -- Leave complete parenthesised URLs to the built-in rule that strips the wrapper.
@@ -119,6 +120,7 @@ end)
 
 -- Clipboard, shell editing, and Command navigation shortcuts.
 config.keys = {
+  { key = 'f', mods = 'CTRL|SUPER', action = act.ToggleFullScreen },
   { key = 'w', mods = 'SUPER', action = act.CloseCurrentTab { confirm = false } },
   { key = 'w', mods = 'CTRL|SHIFT', action = act.CloseCurrentTab { confirm = false } },
   -- Dedicated terminal keys keep Ctrl-h/j/k/l and Option-j/k available to apps. tmux and Neovim share this mapping, including through SSH.
