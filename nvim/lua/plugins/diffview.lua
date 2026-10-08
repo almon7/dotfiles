@@ -2,7 +2,41 @@ return {
   {
     "sindrets/diffview.nvim",
     cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewFileHistory", "DiffviewToggleFiles", "DiffviewFocusFiles" },
-    opts = {},
+    opts = {
+      hooks = {
+        diff_buf_win_enter = function(_, _, ctx)
+          vim.opt_local.fillchars:append({ diff = " " })
+          local highlights = { DiffDelete = "DiffviewMutedDelete" }
+          if ctx.layout_name:match("^diff2_") then
+            local side = ctx.symbol == "a" and "DiffviewMutedDelete" or "DiffviewMutedAdd"
+            highlights.DiffAdd = side
+            highlights.DiffChange = side
+            highlights.DiffText = side .. "Text"
+            highlights.DiffTextAdd = side .. "Text"
+          end
+          vim.opt_local.winhighlight:append(highlights)
+        end,
+      },
+    },
+    config = function(_, opts)
+      local function set_highlights()
+        for name, background in pairs({
+          DiffviewMutedDelete = "#35272D",
+          DiffviewMutedAdd = "#27372E",
+          DiffviewMutedDeleteText = "#49323A",
+          DiffviewMutedAddText = "#344B3C",
+        }) do
+          vim.api.nvim_set_hl(0, name, { bg = background })
+        end
+      end
+
+      vim.api.nvim_create_autocmd("ColorScheme", {
+        group = vim.api.nvim_create_augroup("DiffviewMutedColours", { clear = true }),
+        callback = set_highlights,
+      })
+      set_highlights()
+      require("diffview").setup(opts)
+    end,
     keys = {
       {
         "<leader>gvd",

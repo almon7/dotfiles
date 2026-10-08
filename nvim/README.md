@@ -146,6 +146,8 @@ The paired [tmux bindings](../tmux/README.md#keys) work locally and when SSH con
 
 Inside Diffview, `Tab` / `Shift-Tab` opens the next / previous changed file, `gf` opens the actual file in a normal editing tab, `Space e` focuses the file panel, and `g?` shows the available keys. Existing Git shortcuts, including `Space g g` for LazyGit, remain available.
 
+Two-pane Diffview reviews use muted dark red for old code and dark green for new code, with slightly stronger shading on changed words and the existing syntax colours. Empty alignment rows use a dark-red background without diagonal marks. The appearance stays in place when switching colour schemes and applies only to Diffview; merge layouts keep their existing code colours. Restart Neovim to load the configuration.
+
 LazyGit fills the whole Neovim area without an outer floating-window border. Press `q` to return to the editor. Inside tmux, LazyGit fills the pane containing Neovim. Restart Neovim to load the setting.
 
 `Space f y` copies the active Diffview pane's underlying source path, never its virtual `diffview://` name or Git metadata path. Historical panes append `(git commit <full SHA>)`; staged panes append `(git index)`, or `(git index stage 1: base)`, `(git index stage 2: ours)`, or `(git index stage 3: theirs)` during conflicts. Working-tree panes have no suffix. Coordinates belong to the displayed revision and are not translated to the current file; renamed or deleted historical files keep the historical path. Index references describe the current index, not an immutable snapshot. Empty and binary placeholders and the file panel cannot supply a source location.
