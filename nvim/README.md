@@ -144,6 +144,8 @@ The paired [tmux bindings](../tmux/README.md#keys) work locally and when SSH con
 
 Inside Diffview, `Tab` / `Shift-Tab` opens the next / previous changed file, `gf` opens the actual file in a normal editing tab, `Space e` focuses the file panel, and `g?` shows the available keys. Existing Git shortcuts, including `Space g g` for LazyGit, remain available.
 
+LazyGit fills the whole Neovim area without an outer floating-window border. Press `q` to return to the editor. Inside tmux, LazyGit fills the pane containing Neovim. Restart Neovim to load the setting.
+
 `Space f y` copies the active Diffview pane's underlying source path, never its virtual `diffview://` name or Git metadata path. Historical panes append `(git commit <full SHA>)`; staged panes append `(git index)`, or `(git index stage 1: base)`, `(git index stage 2: ours)`, or `(git index stage 3: theirs)` during conflicts. Working-tree panes have no suffix. Coordinates belong to the displayed revision and are not translated to the current file; renamed or deleted historical files keep the historical path. Index references describe the current index, not an immutable snapshot. Empty and binary placeholders and the file panel cannot supply a source location.
 
 The branch shortcut suggests the current branch's PR target when GitHub is available, otherwise `origin`'s default branch when known. Enter another ref for stacked PRs or a different base. Selecting a remote branch fetches that branch before comparing its merge base with the current working files, including uncommitted edits.

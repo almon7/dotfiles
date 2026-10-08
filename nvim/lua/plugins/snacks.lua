@@ -143,6 +143,9 @@ local spec = {
   "folke/snacks.nvim",
   opts = {
     indent = { enabled = false },
+    lazygit = {
+      win = { width = 0, height = 0, border = "none" },
+    },
     terminal = {
       win = {
         -- LazyVim's defaults use wincmd directly and stop at the outermost
