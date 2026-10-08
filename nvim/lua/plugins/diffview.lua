@@ -21,10 +21,10 @@ return {
     config = function(_, opts)
       local function set_highlights()
         for name, background in pairs({
-          DiffviewMutedDelete = "#35272D",
-          DiffviewMutedAdd = "#27372E",
-          DiffviewMutedDeleteText = "#49323A",
-          DiffviewMutedAddText = "#344B3C",
+          DiffviewMutedDelete = "#302329",
+          DiffviewMutedAdd = "#233229",
+          DiffviewMutedDeleteText = "#422D34",
+          DiffviewMutedAddText = "#2F4436",
         }) do
           vim.api.nvim_set_hl(0, name, { bg = background })
         end
