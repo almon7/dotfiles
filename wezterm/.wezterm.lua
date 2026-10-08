@@ -137,6 +137,16 @@ config.keys = {
   { key = 'u', mods = 'SUPER', action = act.SendKey { key = 'F11', mods = 'CTRL' } },
   { key = 'd', mods = 'SUPER', action = act.SendKey { key = 'F12', mods = 'CTRL' } },
   { key = 'z', mods = 'SUPER', action = act.SendString '\x1b[99;15~' },
+  -- Use tmux's existing Ctrl-a, number window shortcuts.
+  { key = '1', mods = 'SUPER', action = act.SendString '\x011' },
+  { key = '2', mods = 'SUPER', action = act.SendString '\x012' },
+  { key = '3', mods = 'SUPER', action = act.SendString '\x013' },
+  { key = '4', mods = 'SUPER', action = act.SendString '\x014' },
+  { key = '5', mods = 'SUPER', action = act.SendString '\x015' },
+  { key = '6', mods = 'SUPER', action = act.SendString '\x016' },
+  { key = '7', mods = 'SUPER', action = act.SendString '\x017' },
+  { key = '8', mods = 'SUPER', action = act.SendString '\x018' },
+  { key = '9', mods = 'SUPER', action = act.SendString '\x019' },
   {
     key = 'c',
     mods = 'SUPER',

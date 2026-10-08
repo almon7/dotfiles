@@ -27,7 +27,7 @@ it rather than for the program in the pane. It is remapped from the default
 | --- | --- |
 | `C-a d` | Detach — everything keeps running server-side |
 | `C-a c` | New window (a tab) |
-| `C-a 1`…`9` | Jump to window N |
+| `C-a 1`…`9`, or `Cmd-1`…`9` in WezTerm | Jump to window N in the current session |
 | `C-a n` / `C-a p`, or `Cmd-n` / `Cmd-p` in WezTerm | Next / previous window, wrapping at the ends |
 | `C-a P` / `C-a N` | Swap the current window with the previous / next window, keeping focus on the moved window and stopping at either end |
 | `C-a ,` | Rename the current window |

@@ -13,6 +13,9 @@ On macOS, Ctrl-Cmd-F and Option-Return toggle native full screen in a separate S
 | Option-Left / Option-Right | Sends Alt-b / Alt-f for shell word movement |
 | Option-3 | Types `#` for the British Mac keyboard layout |
 | Cmd-H/J/K/L | Moves left/down/up/right through tmux panes and Neovim splits |
+| Cmd-1…9 | Selects tmux window 1…9 in the current session using Ctrl-a, then the number |
+| Cmd-Shift-[ / Cmd-Shift-], or Ctrl-Shift-Tab / Ctrl-Tab | Previous / next WezTerm tab |
+| Ctrl-Shift-1…9 | Selects a WezTerm tab directly; 9 selects the last tab |
 | Cmd-Z | Toggles zoom of the active tmux pane, preserving copy mode |
 | Cmd-W / Ctrl-Shift-W | Closes the current WezTerm tab without confirmation; closing the last tab closes the window |
 | Cmd-Up / Cmd-Down | Scrolls the active tmux pane or Neovim window up / down one line |
@@ -33,7 +36,7 @@ tmux handles terminal selection when the application does not request mouse inpu
 
 Applications that request mouse input receive ordinary clicks and drags, including Hunk file and menu navigation and Neovim/Vim window-divider resizing. Copy a Neovim selection with `Space y`; `Cmd-C` / `Ctrl-Shift-C` copies terminal selections only. Shift-click and Shift-drag preserve the selection and clipboard. Ctrl-click opens links. The wheel scrolls applications that request mouse input; otherwise tmux scrolls the pane's retained terminal output, including Codex chats and shell output, without changing keyboard focus. Outside mouse-reporting applications, WezTerm handles normal text selection. Alt explicitly bypasses mouse reporting and therefore does not respect tmux pane boundaries. See [tmux copy and paste](../tmux/README.md#copy-and-paste).
 
-Command navigation replaces WezTerm’s Cmd-H (hide), Cmd-K (clear scrollback), and Cmd-N (new native window); the Ctrl-Shift alternatives above remain available. Cmd-Shift-[/] still switches native WezTerm tabs. Ctrl-H/J/K/L and Option-J/K now reach applications without triggering pane or session navigation.
+Command navigation replaces WezTerm’s Cmd-H (hide), Cmd-K (clear scrollback), Cmd-N (new native window), and Cmd-1 through Cmd-9 (numbered tab selection); the Ctrl-Shift alternatives above remain available. Cmd-Shift-[/] and Ctrl-Tab / Ctrl-Shift-Tab still switch native WezTerm tabs. Cmd-1 through Cmd-9 requires tmux's Ctrl-a prefix, including over SSH. Ctrl-H/J/K/L and Option-J/K now reach applications without triggering pane or session navigation.
 
 WezTerm sends Ctrl-F1/F2/F3/F4 for Command pane navigation, Ctrl-F5/F6 for windows, Ctrl-F7/F8 for sessions, Ctrl-F9/F10 for one-line scrolling, and Ctrl-F11/F12 for one-third scrolling. These terminal keys are reserved by the paired tmux and Neovim configuration, including over SSH; other terminal emulators must send the same keys to use this navigation. On Linux, `SUPER` is the Super/Windows modifier rather than Command. Window and session shortcuts require tmux.
 
