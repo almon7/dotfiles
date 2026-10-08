@@ -36,3 +36,26 @@ link_config "$DIR" "$HOME/.config/nvim"    # the whole component directory is th
 # lazy.nvim installs missing plugins on the next start and holds the rest at the
 # versions in lazy-lock.json, so upgrading them stays a deliberate step.
 log 'Run nvim to finish plugin setup; use :Lazy update to move the pinned versions.'
+
+case "${SHELL:-}" in
+  */zsh) rc_files=("$HOME/.zshrc") ;;
+  */bash)
+    rc_files=("$HOME/.bashrc")
+    # Login Bash reads the first existing profile instead of .bashrc.
+    profile="$HOME/.profile"
+    for candidate in "$HOME/.bash_profile" "$HOME/.bash_login" "$HOME/.profile"; do
+      if [ -f "$candidate" ]; then
+        profile=$candidate
+        break
+      fi
+    done
+    rc_files+=("$profile")
+    ;;
+  *) log "Default editor setup supports zsh and bash; skipping ${SHELL:-unknown shell}."; exit 0 ;;
+esac
+
+for rc_file in "${rc_files[@]}"; do
+  write_managed_block "$rc_file" 'Default editor' 'export EDITOR=nvim'
+done
+
+log 'Open a fresh shell to use nvim as the default editor.'

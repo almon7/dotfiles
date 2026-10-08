@@ -67,13 +67,23 @@ local function icon(path, extra)
   local result = icons.format(item, picker)
   local added = table.remove(result, 4)
   local expected = stock_format(item, picker)
+  expected[1][1] = item.parent and " " or ""
   expected[2].virt_text[1][2] = "DotfilesExplorerText"
   expected[4][2] = vim.fs.basename(path):sub(1, 1) == "." and "DotfilesExplorerHiddenText" or "DotfilesExplorerText"
-  assert(vim.deep_equal(result, expected), "Only file icons, names and Git marker colours should change")
+  assert(vim.deep_equal(result, expected), "Only indentation, file icons, names and Git marker colours should change")
   assert(added[2]:match("^DotfilesExplorerIcon"), "File-type icons must retain their separate tint")
   assert(added.virtual == true, "Icons must not enter searchable filename text")
   assert(Snacks.picker.format.file == stock_format, "Other pickers must retain the stock formatter")
   return added[1], added[2]
+end
+
+-- Last-child branches must use the same one-column spacing as their siblings.
+for _, last in ipairs({ false, true }) do
+  local item = { file = "/tmp/main.py", last = last }
+  for depth = 0, 8 do
+    assert(icons.format(item, picker)[1][1] == string.rep(" ", depth), "Expected one space per folder level")
+    item = { file = "/tmp/main.py", parent = item, last = last }
+  end
 end
 
 local function expect(path, codepoint, extra)

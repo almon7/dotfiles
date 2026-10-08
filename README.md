@@ -99,11 +99,7 @@ on both macOS and Linux wherever a formula exists.
   what an agent just wrote.
 - **`lazysql`** — a terminal UI for browsing a database, so a query is one
   keystroke away from the shell rather than a detour through a GUI client.
-- **`nvim`** — Neovim and this config, plus what it shells out to: ripgrep and
-  fd for the file and grep pickers, Node and a C compiler for plugins and
-  Treesitter, Python for the Mason-installed language server, lazygit for
-  `<leader>gg`, GitHub CLI for PR reviews, and a Nerd Font on macOS.
-  [Neovim config and first launch](nvim/README.md)
+- **`nvim`** — Neovim and this config, `nvim` as the shell's `$EDITOR`, plus what it shells out to: ripgrep and fd for the file and grep pickers, Node and a C compiler for plugins and Treesitter, Python for the Mason-installed language server, lazygit for `<leader>gg`, GitHub CLI for PR reviews, and a Nerd Font on macOS. [Neovim config and first launch](nvim/README.md)
 - **`starship`** — a shared two-line Zsh and Bash prompt with the full home-relative directory, Git status, SSH identity, and slow-command duration. [Prompt configuration](starship/README.md)
 - **`tmux`** — tmux, its config, and its plugins. Work runs inside a tmux
   session so a dropped SSH connection leaves it running server-side instead of

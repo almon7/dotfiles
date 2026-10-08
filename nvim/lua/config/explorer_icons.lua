@@ -55,10 +55,17 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 })
 
 function M.format(item, picker)
-  -- This source disables Snacks' file icons; its formatter still owns the tree,
-  -- Git/diagnostic indicators, filename text and symlink targets.
+  -- Keep Snacks' filename text, symlink targets and Git/diagnostic indicators.
+  -- This source supplies its own file icons and compacts the tree indentation.
   local result = Snacks.picker.format.file(item, picker)
   for _, part in ipairs(result) do
+    if part[2] == "SnacksPickerTree" then
+      local depth, parent = 0, item.parent
+      while parent do
+        depth, parent = depth + 1, parent.parent
+      end
+      part[1] = string.rep(" ", depth)
+    end
     for _, marker in ipairs(part.virt_text or {}) do
       if type(marker[2]) == "string" and marker[2]:match("^SnacksPickerGitStatus") then
         marker[2] = "DotfilesExplorerText"
