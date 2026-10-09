@@ -3,6 +3,13 @@
 # so every key here is one this machine is meant to have.
 model = "gpt-5.6-sol"
 
+# Shared background server features
+[features]
+api_key_model_discovery = true
+auth_elicitation = true
+code_mode_host = true
+mcp_oauth_refresh_coordination = false
+
 # Vim mode
 [tui]
 vim_mode_default = true

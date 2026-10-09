@@ -8,6 +8,8 @@ Install the configuration with:
 ./install.sh codex
 ```
 
+The tracked `[features]` settings match the shared background server requirements: `api_key_model_discovery`, `auth_elicitation` and `code_mode_host` are enabled, and `mcp_oauth_refresh_coordination` is disabled. After updating the checkout on `rilevps`, run `./install.sh codex` there. The installer adds missing settings and reports conflicting values without overwriting them. A running server must be restarted by the application or service that manages it before it uses the updated settings; the installer does not restart servers.
+
 Use `codex` normally, and `codex-ds` for DeepSeek. `codex-ds` exports the DeepSeek key only for the Codex process it starts, so exiting that session is all switching back requires. Arguments are forwarded unchanged, for example `codex-ds --continue` or `codex-ds resume`.
 
 ## DeepSeek API key
