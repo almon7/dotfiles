@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install WezTerm on macOS and link its configuration.
+# Install WezTerm and its fonts on macOS and link its configuration.
 # Stop immediately if an installation or linking step fails.
 set -euo pipefail    # abort on an error, an unset variable, or a failing pipeline stage
 
@@ -11,8 +11,11 @@ require_no_args "$@"    # reject anything but an empty argument list or --help
 
 # Homebrew's WezTerm cask is macOS-only. Linux still receives the config link below.
 case "$(uname -s)" in    # branch on the kernel name
-  Darwin) brew_install_app WezTerm wezterm ;;    # install the cask unless a manual copy is there
-  Linux) log 'The Homebrew WezTerm cask is macOS-only; install WezTerm manually on Linux.' ;;    # config still gets linked
+  Darwin)
+    brew_install_app WezTerm wezterm    # install the cask unless a manual copy is there
+    brew_install --cask font-jetbrains-mono-nerd-font font-intone-mono-nerd-font font-atkynson-mono-nerd-font
+    ;;
+  Linux) log 'The Homebrew WezTerm cask is macOS-only; install WezTerm and its fonts manually on Linux.' ;;    # config still gets linked
   *) log 'Only macOS and Linux are supported.'; exit 1 ;;    # anything else is unsupported
 esac
 

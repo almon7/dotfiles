@@ -118,9 +118,25 @@ local paste_clipboard = wezterm.action_callback(function(window, pane)
   window:perform_action(act.PasteFrom 'Clipboard', pane)
 end)
 
+local typeface_picker = act.InputSelector {
+  title = 'Typeface (WezTerm window)',
+  choices = {
+    { label = 'JetBrains Mono', id = 'JetBrainsMono Nerd Font' },
+    { label = 'Intel One Mono', id = 'IntoneMono Nerd Font' },
+    { label = 'Atkinson Hyperlegible Mono', id = 'AtkynsonMono Nerd Font' },
+  },
+  action = wezterm.action_callback(function(window, _, id)
+    if not id then return end
+    local overrides = window:get_config_overrides() or {}
+    overrides.font = wezterm.font(id)
+    window:set_config_overrides(overrides)
+  end),
+}
+
 -- Clipboard, shell editing, and Command navigation shortcuts.
 config.keys = {
   { key = 'f', mods = 'CTRL|SUPER', action = act.ToggleFullScreen },
+  { key = 'f', mods = 'SHIFT|SUPER', action = typeface_picker },
   { key = 'w', mods = 'SUPER', action = act.CloseCurrentTab { confirm = false } },
   { key = 'w', mods = 'CTRL|SHIFT', action = act.CloseCurrentTab { confirm = false } },
   -- Dedicated terminal keys keep Ctrl-h/j/k/l and Option-j/k available to apps. tmux and Neovim share this mapping, including through SSH.
@@ -189,19 +205,6 @@ config.keys = {
 
 -- Use nerdfont
 config.font = wezterm.font 'JetBrainsMono Nerd Font'
-
--- Neovim's typeface picker changes only this window, preserving other overrides.
-local typefaces = {
-  ['JetBrains Mono'] = 'JetBrainsMono Nerd Font',
-  ['Intel One Mono'] = 'IntoneMono Nerd Font',
-  ['Atkinson Hyperlegible Mono'] = 'AtkynsonMono Nerd Font',
-}
-wezterm.on('user-var-changed', function(window, _, name, value)
-  if name ~= 'NVIM_TYPEFACE' or not typefaces[value] then return end
-  local overrides = window:get_config_overrides() or {}
-  overrides.font = wezterm.font(typefaces[value])
-  window:set_config_overrides(overrides)
-end)
 
 -- Finally, return the configuration to wezterm:
 return config

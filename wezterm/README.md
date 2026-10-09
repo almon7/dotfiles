@@ -25,6 +25,7 @@ On macOS, Ctrl-Cmd-F and Option-Return toggle native full screen in a separate S
 | Ctrl-Shift-H / Ctrl-Shift-K / Ctrl-Shift-N | Hides WezTerm / clears WezTerm scrollback / creates a native WezTerm window |
 | Cmd-C / Ctrl-Shift-C | Copies the terminal or tmux selection, clears its highlight, and keeps the scroll position |
 | Cmd-V / Ctrl-Shift-V | Pastes the system clipboard, including over SSH |
+| Cmd-Shift-F / Super-Shift-F on Linux | Opens the typeface picker for the current WezTerm window |
 | Left drag | Goes to applications requesting mouse input, including Hunk and Neovim/Vim; otherwise, selects terminal text within the tmux pane without copying on release |
 | Alt-drag | Explicitly bypasses application mouse reporting and selects in WezTerm across the terminal |
 | Left click | Focuses the tmux pane and goes to applications requesting mouse input; otherwise, clears the terminal selection |
@@ -46,7 +47,11 @@ Option-key composition settings are for macOS. On Linux, use Alt for Meta shortc
 
 ## Typeface picker
 
-Neovim's `Space u t` picker switches the current WezTerm window between JetBrains Mono, Intel One Mono and Atkinson Hyperlegible Mono. The installed font families are `JetBrainsMono Nerd Font`, `IntoneMono Nerd Font` and `AtkynsonMono Nerd Font`. All tabs and panes in that window share the selection; new windows use JetBrains Mono. Font size and other window overrides remain unchanged. See the [Neovim typeface notes](../nvim/README.md#notes) for installation and reload instructions.
+Press `Cmd-Shift-F` (`Super-Shift-F` on Linux) to open WezTerm's typeface picker. Use the arrow keys and Enter to choose JetBrains Mono, Intel One Mono or Atkinson Hyperlegible Mono; Escape cancels without changing the font.
+
+The selection changes the current WezTerm window, including every tab and pane running a shell, tmux or Neovim, locally or over SSH. Font size and other window overrides remain unchanged. Other windows keep their fonts, and new windows start with JetBrains Mono.
+
+On macOS, `./install.sh wezterm` installs all three Nerd Font families: `JetBrainsMono Nerd Font`, `IntoneMono Nerd Font` and `AtkynsonMono Nerd Font`. On Linux, install those fonts manually on the machine running WezTerm. Nerd Font variants preserve the configuration's icons.
 
 ## Integration and reloads
 
@@ -58,7 +63,9 @@ WezTerm automatically reloads its config when it changes; use Cmd-R or Ctrl-Shif
 
 The supported remote route is WezTerm → SSH → remote tmux/Neovim. Clipboard copying uses OSC 52; paste stays with the local terminal. Local tmux wrapped around another remote tmux session needs its own forwarding policy.
 
-## Selection checks
+## Checks
+
+`luajit wezterm/test_typeface.lua` (from the repository root) checks the typeface picker, cancellation, window isolation and preservation of other window overrides without opening a GUI.
 
 `luajit wezterm/test_selection.lua` (from the repository root) checks copy/paste routing and mouse ownership without opening a GUI or changing the clipboard. WezTerm's `show-keys` command validates the real configuration. The [tmux integration checks](../tmux/README.md#selection-integration) exercise pane boundaries and input delivery.
 

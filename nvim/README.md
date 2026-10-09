@@ -84,7 +84,7 @@ brew install tree-sitter-cli
 
 ## Notes
 
-- **Typeface:** in Normal mode, `Space u t` opens a picker for JetBrains Mono, Intel One Mono and Atkinson Hyperlegible Mono. The selection changes the entire current WezTerm window, including its tabs and tmux panes; new windows still start with JetBrains Mono. All choices use Nerd Font variants to preserve icons. The macOS Neovim installer installs the fonts; on other platforms, install the fonts on the machine running WezTerm. Restart Neovim to load the mapping. WezTerm reloads its config automatically, or use `Cmd-R`. The picker also works over SSH with the paired remote Neovim/tmux config and `allow-passthrough on`; it requires WezTerm and does not configure other terminals. Run the offline integration checks with `nvim --headless -u NONE -i NONE -l nvim/test_typeface.lua`.
+- **Typeface:** `Cmd-Shift-F` (`Super-Shift-F` on Linux) opens the [WezTerm typeface picker](../wezterm/README.md#typeface-picker), including while Neovim is running. Restart Neovim after updating to remove the old `Space u t` mapping.
 
 - **Display defaults:** indent guides and line numbers are disabled by default in editing windows and the file explorer. The explorer uses one space per nested folder level. Toggle editor indent guides with `Space u g`, line numbers with `Space u l`, and relative line numbers with `Space u L`. The column-120 guide remains visible. Restart Neovim to load the defaults.
 

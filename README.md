@@ -104,9 +104,7 @@ on both macOS and Linux wherever a formula exists.
 - **`tmux`** — tmux, its config, and its plugins. Work runs inside a tmux
   session so a dropped SSH connection leaves it running server-side instead of
   killing it. [tmux keys, sessions and clipboard](tmux/README.md)
-- **`wezterm`** — WezTerm and its config. The Homebrew cask is macOS-only, so
-  on Linux install the terminal yourself; the config is linked either way.
-  [WezTerm keys, mouse and terminal integration](wezterm/README.md)
+- **`wezterm`** — WezTerm, its config and three Nerd Fonts for the typeface picker. Installation through Homebrew is macOS-only; on Linux install the terminal and fonts yourself. The config is linked either way. [WezTerm keys, mouse and terminal integration](wezterm/README.md)
 
 Claude Code and Codex themselves are not installed by these components. The `claude` and `codex` components configure an existing installation, each adding a DeepSeek launcher; Codex's settings are checked whether it is already there or still to come.
 
