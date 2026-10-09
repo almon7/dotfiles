@@ -1,10 +1,40 @@
 #!/usr/bin/env bash
-# Check or refresh vendored skills from one consistent upstream snapshot.
+# Check or refresh vendored skills from one snapshot per upstream repository.
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE=https://github.com/EveryInc/compound-engineering-plugin.git
-PATHS=(skills/ce-simplify-code skills/ce-code-review)
+# Repository | upstream directory | local skill name. New upstream skills are not added automatically.
+SKILLS=(
+  'EveryInc/compound-engineering-plugin|skills/ce-simplify-code|ce-simplify-code'
+  'EveryInc/compound-engineering-plugin|skills/ce-code-review|ce-code-review'
+  'mattpocock/skills|skills/engineering/ask-matt|ask-matt'
+  'mattpocock/skills|skills/engineering/diagnosing-bugs|diagnosing-bugs'
+  'mattpocock/skills|skills/engineering/grill-with-docs|grill-with-docs'
+  'mattpocock/skills|skills/engineering/triage|triage'
+  'mattpocock/skills|skills/engineering/improve-codebase-architecture|improve-codebase-architecture'
+  'mattpocock/skills|skills/engineering/setup-matt-pocock-skills|setup-matt-pocock-skills'
+  'mattpocock/skills|skills/engineering/tdd|tdd'
+  'mattpocock/skills|skills/engineering/to-spec|to-spec'
+  'mattpocock/skills|skills/engineering/to-tickets|to-tickets'
+  'mattpocock/skills|skills/engineering/wayfinder|wayfinder'
+  'mattpocock/skills|skills/engineering/implement|implement'
+  'mattpocock/skills|skills/engineering/implement-spec|implement-spec'
+  'mattpocock/skills|skills/engineering/prototype|prototype'
+  'mattpocock/skills|skills/engineering/research|research'
+  'mattpocock/skills|skills/engineering/domain-modeling|domain-modeling'
+  'mattpocock/skills|skills/engineering/codebase-design|codebase-design'
+  'mattpocock/skills|skills/engineering/code-review|code-review'
+  'mattpocock/skills|skills/engineering/pr|pr'
+  'mattpocock/skills|skills/engineering/retro|retro'
+  'mattpocock/skills|skills/engineering/wizard|wizard'
+  'mattpocock/skills|skills/productivity/grill-me|grill-me'
+  'mattpocock/skills|skills/productivity/grilling|grilling'
+  'mattpocock/skills|skills/productivity/handoff|handoff'
+  'mattpocock/skills|skills/productivity/teach|teach'
+  'mattpocock/skills|skills/productivity/to-questionnaire|to-questionnaire'
+  'mattpocock/skills|skills/productivity/wait-what|wait-what'
+  'mattpocock/skills|skills/productivity/writing-for-agents|writing-for-agents'
+)
 export GIT_TERMINAL_PROMPT=0
 
 fail() {
@@ -27,12 +57,18 @@ refresh=false
 (( $# <= 1 )) || fail 'expected no arguments, --refresh, or --help'
 case "${1:-}" in
   -h|--help)
-    printf 'Usage: bash %s [--refresh]\nChecks the two EveryInc skills; --refresh replaces clean copies with upstream.\n' "$0"
+    printf 'Usage: bash %s [--refresh]\nChecks the vendored EveryInc and Matt Pocock skills; --refresh replaces clean copies with upstream.\n' "$0"
     exit 0 ;;
   '') ;;
   --refresh) refresh=true ;;
   *) fail "unexpected argument: $1" ;;
 esac
+
+PATHS=()
+for mapping in "${SKILLS[@]}"; do
+  IFS='|' read -r repository upstream_path skill <<< "$mapping"
+  PATHS+=("skills/$skill")
+done
 
 if "$refresh"; then
   command -v rsync > /dev/null || fail 'refresh requires rsync'
@@ -44,44 +80,62 @@ trap 'rm -rf -- "$scratch"' EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-# Download only the selected folders; never run anything from upstream.
-git -c http.lowSpeedLimit=1 -c http.lowSpeedTime=60 \
-  clone --quiet --depth 1 --filter=blob:none --sparse --branch main \
-  "$SOURCE" "$scratch/upstream" || fail 'could not fetch upstream'
-git -c http.lowSpeedLimit=1 -c http.lowSpeedTime=60 \
-  -C "$scratch/upstream" sparse-checkout set "${PATHS[@]}" \
-  || fail 'could not download skill files'
-revision=$(git -C "$scratch/upstream" rev-parse --short HEAD)
-printf '[agents] Checking EveryInc skills against main at %s\n' "$revision"
+# Fetch every repository before any local skill can be replaced. Never run downloaded code.
+for mapping in "${SKILLS[@]}"; do
+  IFS='|' read -r repository upstream_path skill <<< "$mapping"
+  upstream="$scratch/$repository"
+  [[ -d "$upstream" ]] && continue
+  source_paths=()
+  for candidate in "${SKILLS[@]}"; do
+    IFS='|' read -r source_repository source_path source_skill <<< "$candidate"
+    if [[ "$source_repository" == "$repository" ]]; then
+      source_paths+=("$source_path")
+    fi
+  done
+  mkdir -p "${upstream%/*}"
+  git -c http.lowSpeedLimit=1 -c http.lowSpeedTime=60 \
+    clone --quiet --depth 1 --filter=blob:none --sparse --branch main \
+    "https://github.com/$repository.git" "$upstream" || fail "$repository: could not fetch upstream"
+  git -c http.lowSpeedLimit=1 -c http.lowSpeedTime=60 \
+    -C "$upstream" sparse-checkout set "${source_paths[@]}" \
+    || fail "$repository: could not download skill files"
+  revision=$(git -C "$upstream" rev-parse --short HEAD)
+  printf '%s\n' "$revision" > "$upstream.revision"
+  printf '[agents] Checking %s skills against main at %s\n' "$repository" "$revision"
+done
 
-# Validate both folders before a refresh can replace either one.
-for path in "${PATHS[@]}"; do
-  [[ -f "$DIR/$path/SKILL.md" && -f "$scratch/upstream/$path/SKILL.md" ]] \
-    || fail "$path: missing local or upstream skill; check its source path"
+# Validate all mapped folders, including later repositories, before refreshing any skill.
+for mapping in "${SKILLS[@]}"; do
+  IFS='|' read -r repository upstream_path skill <<< "$mapping"
+  [[ -f "$DIR/skills/$skill/SKILL.md" && -f "$scratch/$repository/$upstream_path/SKILL.md" ]] \
+    || fail "$skill: missing local or upstream skill; check its source path"
 done
 
 if "$refresh"; then
   require_clean_skills "${PATHS[@]}"
 fi
 
-for path in "${PATHS[@]}"; do
-  skill=${path##*/}
+for mapping in "${SKILLS[@]}"; do
+  IFS='|' read -r repository upstream_path skill <<< "$mapping"
+  path="skills/$skill"
+  upstream="$scratch/$repository/$upstream_path"
+  revision=$(< "$scratch/$repository.revision")
   result=0
-  diff -qr "$DIR/$path" "$scratch/upstream/$path" > /dev/null || result=$?
+  diff -qr "$DIR/$path" "$upstream" > /dev/null || result=$?
   case "$result" in
     0) printf '[agents] %s: up to date\n' "$skill" ;;
     1)
       if "$refresh"; then
         require_clean_skills "$path"
-        rsync -a --checksum --delete "$scratch/upstream/$path/" "$DIR/$path/" \
+        rsync -a --checksum --delete "$upstream/" "$DIR/$path/" \
           || fail "$skill: refresh incomplete; inspect the Git diff before retrying"
-        diff -qr "$DIR/$path" "$scratch/upstream/$path" > /dev/null \
+        diff -qr "$DIR/$path" "$upstream" > /dev/null \
           || fail "$skill: verification failed; inspect the Git diff before retrying"
         printf '[agents] %s: refreshed; review and commit the Git diff\n' "$skill"
       else
         printf '[agents] %s: differs from upstream (update available or local edits).\n' "$skill"
       fi
-      printf '  https://github.com/EveryInc/compound-engineering-plugin/tree/%s/skills/%s\n' "$revision" "$skill"
+      printf '  https://github.com/%s/tree/%s/%s\n' "$repository" "$revision" "$upstream_path"
       ;;
     *) fail "$skill: comparison failed" ;;
   esac

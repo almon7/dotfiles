@@ -13,7 +13,7 @@ usage() {
   printf 'Usage: %s [--check-updates|--refresh-skills]\n' "$0"    # how the script is invoked
   printf 'Links AGENTS.md and skills/ to the paths Claude Code and Codex read.\n'    # what it does
   printf 'Also checks vendored skills for upstream changes; --check-updates only checks.\n'
-  printf -- '--refresh-skills replaces the two clean vendored skill folders with upstream.\n'
+  printf -- '--refresh-skills replaces clean EveryInc and Matt Pocock skill folders with upstream.\n'
 }
 
 if (( $# > 1 )); then
@@ -35,8 +35,8 @@ link_config "$FILE" "$HOME/.claude/CLAUDE.md"    # where Claude Code reads it
 link_config "$FILE" "$HOME/.codex/AGENTS.md"    # where Codex reads it
 
 # Skills are hard-coded the same way, so both names point at the one tracked
-# folder instead of drifting into two copies. Nothing in it is specific to
-# either agent, which is why it sits here beside the shared instructions file.
+# folder instead of drifting into two copies. Skills may include agent-specific
+# discovery metadata alongside the shared instructions.
 link_config "$SKILLS" "$HOME/.agents/skills"    # where Codex reads skills
 link_config "$SKILLS" "$HOME/.claude/skills"    # where Claude Code reads skills
 

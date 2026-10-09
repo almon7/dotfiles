@@ -45,8 +45,7 @@ something in the conversation calls for them, rather than carrying always.
 
 - **Codex reads `~/.agents/skills`, Claude Code reads `~/.claude/skills`.** The
   installer points both at the single tracked folder, [`skills/`](skills), so a
-  skill added there reaches both agents at once. Nothing in it is specific to
-  either one.
+  skill added there reaches both agents at once. Skills may include agent-specific discovery metadata alongside the shared instructions.
 - **They are tracked here rather than written into `~/.claude` by a vendor's
   setup command.** That way they reproduce on a new machine, and a change to
   one shows up in a diff instead of happening invisibly in a home directory.
@@ -62,48 +61,36 @@ The skill requires Hunk, an open review session, and an authenticated GitHub CLI
 
 The existing shared skills links make the skill available to both agents; no Hunk extension or additional installer step is needed. After adding the skill, start a new agent session if the skill is not yet listed.
 
-## Checking and refreshing the EveryInc skills
+## Matt Pocock's skills
 
-`ce-simplify-code` and `ce-code-review` are vendored from
-[EveryInc/compound-engineering-plugin](https://github.com/EveryInc/compound-engineering-plugin).
-`./install.sh agents` checks them against upstream `main` after linking them.
-To run only the check:
+The 27 skills listed in [Matt Pocock's published manifest at `b0618bc`](https://github.com/mattpocock/skills/blob/b0618bc436ad893b3c5e84e55fba86586d34a404/.claude-plugin/plugin.json) are vendored from [mattpocock/skills](https://github.com/mattpocock/skills). That commit is the initial installation snapshot; the refresh command below follows upstream `main`. Complete skill folders, including reference files, templates and agent metadata, live directly under `skills/`. The upstream [MIT licence](licenses/mattpocock-skills.txt) is retained separately.
+
+The existing shared links expose the skills to both agents. They include `grill-me`, `grill-with-docs`, `tdd`, `diagnosing-bugs`, `to-spec`, `implement`, `teach` and their supporting skills. Installing them does not run their workflows or replace the existing `ce-simplify-code` and `ce-code-review` requirements.
+
+Before using the engineering workflows in a project, ask the agent to use `setup-matt-pocock-skills` in that project. Setup is a separate, interactive step: it chooses the issue tracker and documentation layout, writes project configuration and may create tracker labels. The dotfiles installer does not run setup. Start a new agent session if the installed skills are not yet listed.
+
+## Checking and refreshing vendored skills
+
+`ce-simplify-code` and `ce-code-review` come from [EveryInc/compound-engineering-plugin](https://github.com/EveryInc/compound-engineering-plugin); the 27 Matt Pocock skills come from [mattpocock/skills](https://github.com/mattpocock/skills). `./install.sh agents` checks all 29 skills against each repository's `main` branch after linking them. To run only the check:
 
 ```sh
 ./agents/install.sh --check-updates
 ```
 
-The check downloads both skill folders into a temporary directory and compares
-all files, including references and scripts. It reports `up to date` or a
-difference and prints the upstream snapshot link. A difference can mean an
-upstream update or a local edit; this is a content comparison, not a version
-ordering claim. It never overwrites skills or runs downloaded code. Local
-skills such as `find-docs` and `trello-learning-queue` are outside this check.
+The check fetches each repository once into a temporary directory and compares all files in its selected skill folders, including references and scripts. It reports `up to date` or a difference and prints the upstream snapshot link. A difference can mean an upstream update or a local edit; this is a content comparison, not a version ordering claim. It never overwrites skills or runs downloaded code. Local skills such as `find-docs` and `trello-learning-queue` are outside this check.
 
-It requires Git, diff, and network access to GitHub. A failed check warns without
-blocking normal setup; the standalone check stops at the first fetch or comparison
-failure with exit 2, and exits 0 after a successful comparison, including when
-differences exist. Both downloads abort if the HTTP transfer stays below one byte
-per second for 60 seconds; this is a stalled-transfer limit, not a total deadline.
-The installer accepts at most one option, so a check cannot forward a refresh flag.
+The source-to-destination mapping in `check-skill-updates.sh` is explicit: upstream additions are not installed automatically. Adding another skill requires copying its complete folder, adding its mapping and retaining any required attribution.
 
-To refresh both skills from the same upstream snapshot:
+The check requires Git, diff, and network access to GitHub. A failed check warns without blocking normal setup; the standalone check stops at the first fetch or comparison failure with exit 2, and exits 0 after a successful comparison, including when differences exist. Each clone and sparse-checkout download aborts if the HTTP transfer stays below one byte per second for 60 seconds; this is a stalled-transfer limit, not a total deadline. The installer accepts at most one option, so a check cannot forward a refresh flag.
+
+To refresh all selected skills using one consistent snapshot per upstream repository:
 
 ```sh
 ./agents/install.sh --refresh-skills
-git diff -- agents/skills/ce-simplify-code agents/skills/ce-code-review
+git diff -- agents/skills
 ```
 
-Refresh requires rsync and refuses if either skill folder has staged, unstaged,
-untracked, or ignored files; unrelated dotfiles changes are allowed. It downloads
-and validates both upstream folders first, then replaces changed folders,
-including deleting files removed upstream. Committed local customizations are
-replaced too. Review and commit the resulting diff; Git retains the previous
-committed versions. Refresh never commits or pushes, and ordinary setup only
-checks. Cleanliness is checked before and after downloading and again just before
-each replacement. Copies use content checksums and are compared again before
-success is reported. If copying or verification fails, the command exits 2 and
-reports the partial refresh for inspection.
+Refresh requires rsync and refuses if any selected skill folder has staged, unstaged, untracked, or ignored files; unrelated dotfiles changes are allowed. It downloads both repositories and validates every selected source and destination before replacing any folder, including deleting files removed upstream. A fetch or source-validation failure therefore leaves all local skills untouched. Committed local customisations are replaced too. Review and commit the resulting diff; Git retains the previous committed versions. Refresh never commits or pushes, and ordinary setup only checks. Cleanliness is checked before and after downloading and again just before each replacement. Copies use content checksums and are compared again before success is reported. If copying or verification fails, the command exits 2 and reports the partial refresh for inspection.
 
 Avoid editing the skill folders while a refresh is copying: the checks do not
 lock editors out. The update check compares content, not executable permission

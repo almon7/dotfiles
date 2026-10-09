@@ -137,8 +137,7 @@ Consequences to keep in mind while working here:
   the context window of every request, plus a `references/` file read only when
   that branch is taken. Within `find-docs`, the Context7 reference is vendored from
   `upstash/context7` — keep the provenance comment at the top of
-  `references/context7.md` when refreshing it. The two EveryInc skills are also
-  vendored; their check/refresh commands and tests are documented in `agents/README.md`.
+  `references/context7.md` when refreshing it. The two EveryInc skills and 27 Matt Pocock skills are also vendored. `agents/check-skill-updates.sh` explicitly maps their upstream paths to local folders, fetches one snapshot per repository, and validates every source before refreshing any destination. Their check/refresh commands and tests are documented in `agents/README.md`.
 - **`codex/config.toml` is not linked**, because Codex writes to its own config
   and a link would hand it this repository. `codex/install.sh` compares the two
   a key at a time instead: it inserts a missing key into the table it belongs to
