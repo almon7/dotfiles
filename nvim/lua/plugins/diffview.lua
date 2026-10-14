@@ -73,7 +73,13 @@ return {
         end,
         desc = "Repository history",
       },
-      { "<leader>gvq", "<cmd>DiffviewClose<cr>", desc = "Close Diffview" },
+      {
+        "<leader>gvq",
+        function()
+          require("config.diffview").close()
+        end,
+        desc = "Close review",
+      },
       {
         "<leader>gvp",
         function()

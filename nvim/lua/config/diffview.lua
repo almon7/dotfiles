@@ -1,4 +1,5 @@
 local M = {}
+local repository = require("config.git_repository")
 
 local function notify(message, level)
   vim.notify(message, level or vim.log.levels.INFO, { title = "Git view" })
@@ -121,19 +122,6 @@ local function open_diff(repo, revision, local_files)
   require("diffview").open(args)
 end
 
--- Match repository identity without changing the user's configured transport.
-local function repository(url)
-  url = url:gsub("/+$", ""):gsub("%.git$", "")
-  local host, owner, name = url:match("^%w+://([^/]+)/([^/]+)/([^/]+)$")
-  if not host then
-    host, owner, name = url:match("^[^@]+@([^:]+):([^/]+)/([^/]+)$")
-  end
-  if host then
-    host = host:gsub("^.*@", ""):gsub(":%d+$", "")
-    return (host .. "/" .. owner .. "/" .. name):lower()
-  end
-end
-
 local function remote_for(repo, url)
   local identity = repository(url)
   for remote in git(repo, { "remote" }):gmatch("[^\n]+") do
@@ -204,7 +192,7 @@ local function fetch_pr(repo, pr)
 end
 
 local function worktree(repo, pr)
-  local path = vim.fs.joinpath(vim.fn.expand("~/reviews"), pr.identity, "pr-" .. pr.number)
+  local path = require("config.review_session").path(pr)
   local branch = "review/pr-" .. pr.number
   local stat = vim.uv.fs_lstat(path)
   if stat then
@@ -264,6 +252,10 @@ function M.open(staged)
   if repo then
     open_diff(repo, staged and "--cached" or nil)
   end
+end
+
+function M.close()
+  require("config.review_session").close()
 end
 
 function M.history(current_file)
@@ -375,35 +367,52 @@ function M.pr(in_worktree)
     local session = (in_worktree or hunk)
       and run(repo, { "tmux", "display-message", "-p", "-t", pane, "#{session_id}" })
     local pr = pr_metadata(repo, target)
-    local revision = fetch_pr(repo, pr)
-    if hunk then
-      local args = destination == "Right-hand tmux pane" and { "tmux", "split-window", "-h", "-l", "50%", "-t", pane }
-        or { "tmux", "new-window", "-t", session .. ":", "-n", pr.name .. "/pr-" .. pr.number .. " — Hunk" }
-      vim.list_extend(args, { "-c", repo, "--", hunk, "diff", revision })
-      run(repo, args)
-      return
+    local review_session = require("config.review_session")
+    local ctx
+    if in_worktree then
+      ctx = review_session.reserve(repo, pr)
+      if not ctx then
+        return
+      end
     end
-    if not in_worktree then
-      open_diff(repo, revision)
-      return
+    local ok, err = pcall(function()
+      local revision = fetch_pr(repo, pr)
+      if hunk then
+        local args = destination == "Right-hand tmux pane" and { "tmux", "split-window", "-h", "-l", "50%", "-t", pane }
+          or { "tmux", "new-window", "-t", session .. ":", "-n", pr.name .. "/pr-" .. pr.number .. " — Hunk" }
+        vim.list_extend(args, { "-c", repo, "--", hunk, "diff", revision })
+        run(repo, args)
+        return
+      end
+      if not in_worktree then
+        open_diff(repo, revision)
+        return
+      end
+      local path = worktree(repo, pr)
+      review_session.prepare(ctx, revision)
+      run(repo, {
+        "tmux",
+        "new-window",
+        "-t",
+        session .. ":",
+        "-n",
+        pr.name .. "/pr-" .. pr.number,
+        "-c",
+        path,
+        "--",
+        "bash",
+        ctx.config_dir .. "/review-session.sh",
+        vim.v.progpath,
+        ctx.record,
+      })
+      notify("Opened PR worktree: " .. path)
+    end)
+    if not ok then
+      if ctx then
+        review_session.release(ctx)
+      end
+      error(err, 0)
     end
-    local path = worktree(repo, pr)
-    local startup = string.format("lua require('diffview').open({%q, %q, %q})", "-C" .. path, revision, "--imply-local")
-    run(repo, {
-      "tmux",
-      "new-window",
-      "-t",
-      session .. ":",
-      "-n",
-      pr.name .. "/pr-" .. pr.number,
-      "-c",
-      path,
-      "--",
-      vim.v.progpath,
-      "-c",
-      startup,
-    })
-    notify("Opened PR worktree: " .. path)
   end)
 end
 

@@ -140,7 +140,7 @@ The paired [tmux bindings](../tmux/README.md#keys) work locally and when SSH con
 | `Space g v r` | Review the current branch against a prompted base |
 | `Space g v f` | Show the current file's history |
 | `Space g v h` | Show repository history |
-| `Space g v q` | Close the current Diffview |
+| `Space g v q` | Close the review; clean up a safe, managed PR worktree |
 | `Space g v p` | Pick a GitHub PR, then choose Diffview or Hunk |
 | `Space g v w` | Pick a PR to open its worktree and diff in a new tmux window |
 
@@ -160,13 +160,52 @@ Authenticate GitHub CLI once with `gh auth login`. Both PR shortcuts load the re
 
 Both viewers compare fetched commits without switching branches or including local edits, and neither creates a worktree. Diffview's `gf` action opens the current checkout's file, which can differ from the published PR; use `Space g v w` when you need to navigate or run the PR's code. Fetched refs are retained under `refs/diffview/` so open comparisons remain available locally.
 
-`Space g v w` requires Neovim to be running inside tmux. It creates `~/reviews/<host>/<owner>/<repo>/pr-<number>` on the local branch `review/pr-<number>`, then opens a new tmux window named `<repo>/pr-<number>` with Neovim rooted in that worktree and the PR's merge base compared against the working files. An existing matching worktree is reused; updates require a clean worktree and fast-forwardable history. Local edits, local commits, and unrelated directories are never replaced. Worktrees are retained after closing Neovim. Before removing a review worktree, stop its processes and clean up its dedicated resources, then use `git worktree remove <path>` from the repository.
+`Space g v w` requires Neovim to be running inside tmux. It creates `~/reviews/<host>/<owner>/<repo>/pr-<number>` on the local branch `review/pr-<number>`, then opens a new tmux window named `<repo>/pr-<number>` with Neovim rooted in that worktree and the PR's merge base compared against the working files. Opening an already-active managed review focuses its existing pane without updating its files. Otherwise, an existing matching worktree is reused; updates require a clean worktree and fast-forwardable history. Local edits, local commits, and unrelated directories are never replaced.
 
 Branch reviews (`Space g v r`) and PR worktree reviews (`Space g v w`) use real files on the right side of the diff, so `gd`, references, and other language-server features work there when the project's language server is configured. The left side remains a historical snapshot. Edits to the working files appear in the diff. Quick PR reviews (`Space g v p`) keep both sides pinned to Git commits; use the worktree shortcut for language-server navigation through the PR's code.
 
-Blank PR prompts also work from the generated review branches. Removing a worktree retains its review branch; reopening the PR reuses that branch only when it still belongs to the same PR and has no conflicting local commits.
+Blank PR prompts also work from the generated review branches. If a review branch remains after a manual worktree removal, reopening the PR reuses that branch only when it still belongs to the same PR and has no conflicting local commits.
 
-Restart Neovim after installing this configuration. The installer includes `gh`; Diffview is installed through lazy.nvim and pinned in `lazy-lock.json`. Run the offline Git/PR regression checks with `nvim --headless -u NONE -i NONE -l nvim/test_diffview.lua`.
+### Closing a review
+
+`Space g v q` closes ordinary Diffview comparisons and file history without exiting Neovim. In a managed PR review opened with `Space g v w`, the shortcut instead removes the clean worktree and its unchanged generated review branch, then closes the review editor's tmux pane. Cleanup needs no confirmation. The same cleanup works after `gf` or `gd` takes you into an ordinary editing tab. Other tmux panes and fetched `refs/diffview/` refs remain available. A Diffview for another repository opened inside the managed editor closes only that Diffview. Outside a managed session or an active Diffview, the shortcut reports `No review to close`.
+
+Unsaved buffers, changed files, unexpected untracked or ignored files, local commits, Git operations in progress, changed worktree identity, or another editor using the worktree block cleanup and leave the review editor open. Files marked `assume-unchanged` or `skip-worktree` also block cleanup because Git can otherwise hide their local edits. The generated branch is removed only if it still points at the PR commit recorded when the review opened. Cleanup never forces worktree removal or discards local changes.
+
+Use `:DiffviewClose` to close only the diff, or `:qa` to exit Neovim while retaining the worktree. Ordinary exits and crashes never request cleanup. Only sessions opened through the managed launcher can request automatic removal; an existing directory or branch name alone does not establish ownership.
+
+After the review editor exits successfully, cleanup runs from outside the worktree. Cleanup runs configured teardown and verification, checks remaining resources, removes explicitly disposable files, rechecks Git state, and removes the worktree and eligible branch. A failure after editor exit keeps the tmux pane open with the failed step and the resources or files that remain; earlier successful cleanup steps are not undone. Resolve the reported blocker before retrying or removing the worktree manually.
+
+### Project resources and disposable files
+
+`lua/config/review_projects.lua` is a trusted local configuration table, initially empty. Keys use the PR repository's `host/owner/repository` identity. Add an entry only when you know which resources belong exclusively to that review worktree. For example, replace the illustrative repository and script paths below with your own:
+
+```lua
+return {
+  ["github.com/example/api"] = {
+    teardown = { "/absolute/path/to/trusted/review-teardown" },
+    verify = { "/absolute/path/to/trusted/review-verify" },
+    disposable_paths = { ".venv", "node_modules" },
+  },
+}
+```
+
+`teardown` and `verify` are command argument lists executed with the review worktree as the working directory. `verify` is required alongside `teardown` and must exit successfully only when dedicated project resources are gone, including project-specific containers, networks, volumes and background processes. Each command has a 60-second timeout; failures and timeouts stop cleanup. Arguments are passed directly, without implicit shell evaluation. Commands are never discovered automatically from the reviewed PR. The configured teardown must preserve resources shared with other worktrees.
+
+Before removing a worktree, cleanup uses `lsof` to check processes holding files or working directories beneath the worktree. The installer supplies `lsof` on Linux; macOS uses the system command. If Docker is installed, cleanup also inspects running and stopped containers in the selected Docker context for matching bind mounts and Compose path labels. An absent Docker command skips Docker inspection; an installed but unreachable Docker daemon blocks cleanup. Resource probes have a 10-second timeout. Missing required tools, failed queries, malformed responses and timeouts block removal. Generic checks cannot discover every detached resource with no observable worktree association; configure verification for projects that create such resources. Generic Docker inspection never removes containers itself.
+
+`disposable_paths` defaults to an empty list. Each entry is a literal path relative to the worktree, not a glob. Untracked and ignored files outside the list block cleanup, including `.env` files. Allowed paths must stay inside the worktree and cannot include `.git`, a nested repository, tracked files or symlink traversal. A final symlink can be removed without following its target. Cleanup validates every disposable path before deleting any, and rechecks files after teardown and before worktree removal. Only list files or directories you are willing to lose permanently.
+
+Restart Neovim after installing this configuration. The installer includes `gh`; Diffview is installed through lazy.nvim and pinned in `lazy-lock.json`. Run the offline review checks from the dotfiles repository:
+
+```sh
+nvim --headless -u NONE -i NONE -l nvim/test_diffview.lua
+nvim --headless -u NONE -i NONE -l nvim/test_review_cleanup.lua
+nvim --headless -u NONE -i NONE -l nvim/test_review_session.lua
+python3 nvim/test_review_tmux.py
+```
+
+The Python suite uses disposable Git repositories and a separate tmux server, with real `lsof` and process inspection. It never connects to your existing tmux sessions.
 
 ## Updating
 

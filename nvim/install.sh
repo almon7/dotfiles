@@ -20,7 +20,7 @@ case "$(uname -s)" in    # branch on the kernel name
     xcode-select -p >/dev/null 2>&1 || xcode-select --install    # succeeds quietly once they are present
     ;;
   Linux)
-    brew_install neovim ripgrep fd node python lazygit gh    # no font or toolchain step needed here
+    brew_install neovim ripgrep fd node python lazygit gh lsof    # lsof checks review worktree resources before cleanup
     ;;
   *) log 'Only macOS and Linux are supported.'; exit 1 ;;    # anything else is unsupported
 esac

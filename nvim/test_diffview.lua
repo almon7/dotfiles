@@ -16,6 +16,7 @@ local opened, histories, messages, launches, calls, prompts = {}, {}, {}, {}, {}
 local listed_prs, selections, selection = {}, {}, "manual"
 local viewer, destination = "Diffview", "Right-hand tmux pane"
 local choices = {}
+local review_contexts = {}
 local hunk_path = "/tools with spaces/hunk"
 local ui_pending = 0
 local worktrees = {}
@@ -141,6 +142,13 @@ package.loaded.diffview = {
 }
 vim.system = function(args, opts, callback)
   calls[#calls + 1] = { args = vim.deepcopy(args), cwd = opts.cwd }
+  if args[1] == "ps" then
+    return {
+      wait = function()
+        return { code = 0, stdout = "test process start", stderr = "" }
+      end,
+    }
+  end
   if args[1] == "gh" or args[1] == "tmux" then
     local result = { code = 0, stdout = "", stderr = "" }
     if args[1] == "gh" then
@@ -164,15 +172,27 @@ vim.system = function(args, opts, callback)
         vim.env.TMUX_PANE = redirect_pane
         redirect_pane = nil
       end
-      callback(result)
+      if callback then
+        callback(result)
+      end
       if args[1] == "tmux" and result.code == 0 and (args[2] == "new-window" or args[2] == "split-window") then
         -- run() schedules its continuation; record completion after that continuation.
         vim.schedule(function()
           launches[#launches + 1] = args
+          if vim.tbl_contains(args, "bash") then
+            local ctx = vim.json.decode(table.concat(vim.fn.readfile(args[#args]), "\n"))
+            review_contexts[#review_contexts + 1] = ctx
+            -- The fake tmux never starts an editor; model that editor exiting normally.
+            require("config.review_session").release(ctx)
+          end
         end)
       end
     end)
-    return {}
+    return {
+      wait = function()
+        return result
+      end,
+    }
   end
   opts.env = env
   return system(args, opts, callback)
@@ -489,8 +509,10 @@ local ok, err = xpcall(function()
     assert(git(path, "symbolic-ref", "--short", "HEAD") == "review/pr-42")
     local args = launches[#launches]
     assert(args[4] == "$9:" and args[6] == "api/pr-42" and args[8] == path)
-    assert(args[#args]:find(a.base .. ".." .. a.head, 1, true))
-    assert(args[#args]:find("--imply-local", 1, true), "PR worktree diff needs real files for LSP navigation")
+    assert(args[10] == "bash" and args[11]:match("/review%-session%.sh$"))
+    local ctx = review_contexts[#review_contexts]
+    assert(ctx.revision == a.base .. ".." .. a.head)
+    assert(ctx.path == path and ctx.head == a.head and ctx.pr_url == a.pr.url)
   end)
   test("matching clean worktree is reused", function()
     invoke(function()
