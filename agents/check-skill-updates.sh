@@ -34,6 +34,7 @@ SKILLS=(
   'mattpocock/skills|skills/productivity/to-questionnaire|to-questionnaire'
   'mattpocock/skills|skills/productivity/wait-what|wait-what'
   'mattpocock/skills|skills/productivity/writing-for-agents|writing-for-agents'
+  'cursor/plugins|cursor-team-kit/skills/thermo-nuclear-code-quality-review|thermo-nuclear-code-quality-review'
 )
 export GIT_TERMINAL_PROMPT=0
 
@@ -57,7 +58,7 @@ refresh=false
 (( $# <= 1 )) || fail 'expected no arguments, --refresh, or --help'
 case "${1:-}" in
   -h|--help)
-    printf 'Usage: bash %s [--refresh]\nChecks the vendored EveryInc and Matt Pocock skills; --refresh replaces clean copies with upstream.\n' "$0"
+    printf 'Usage: bash %s [--refresh]\nChecks vendored skills; --refresh replaces clean copies with upstream.\n' "$0"
     exit 0 ;;
   '') ;;
   --refresh) refresh=true ;;

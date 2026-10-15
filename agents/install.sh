@@ -13,7 +13,7 @@ usage() {
   printf 'Usage: %s [--check-updates|--refresh-skills]\n' "$0"    # how the script is invoked
   printf 'Links AGENTS.md and skills/ to the paths Claude Code and Codex read.\n'    # what it does
   printf 'Also checks vendored skills for upstream changes; --check-updates only checks.\n'
-  printf -- '--refresh-skills replaces clean EveryInc and Matt Pocock skill folders with upstream.\n'
+  printf -- '--refresh-skills replaces clean vendored skill folders with upstream.\n'
 }
 
 if (( $# > 1 )); then

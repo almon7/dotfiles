@@ -13,6 +13,9 @@ import unittest
 
 EVERYINC = 'EveryInc/compound-engineering-plugin'
 MATTPOCOCK = 'mattpocock/skills'
+CURSOR = 'cursor/plugins'
+CURSOR_SKILL = 'thermo-nuclear-code-quality-review'
+CURSOR_PATH = f'cursor-team-kit/skills/{CURSOR_SKILL}'
 ENGINEERING_SKILLS = (
     'ask-matt', 'diagnosing-bugs', 'grill-with-docs', 'triage',
     'improve-codebase-architecture', 'setup-matt-pocock-skills', 'tdd',
@@ -41,18 +44,24 @@ def mock_tool(tool, args):
             command = command[2:]
         if command[0] == 'clone':
             second_source = args[-2] == f'https://github.com/{MATTPOCOCK}.git'
-            if scenario == 'offline' or (scenario == 'second-offline' and second_source):
+            cursor_source = args[-2] == f'https://github.com/{CURSOR}.git'
+            if (scenario == 'offline' or (scenario == 'second-offline' and second_source)
+                    or (scenario == 'cursor-offline' and cursor_source)):
                 return 1
             remote = json.loads(os.environ['TEST_REMOTES'])[args[-2]]
             shutil.copytree(remote, args[-1])
-            if scenario == 'missing' and not second_source:
+            if scenario == 'missing' and args[-2] == f'https://github.com/{EVERYINC}.git':
                 (Path(args[-1]) / 'skills/ce-code-review/SKILL.md').unlink()
             if scenario == 'second-missing' and second_source:
                 (Path(args[-1]) / 'skills/engineering/tdd/SKILL.md').unlink()
+            if scenario == 'cursor-missing' and cursor_source:
+                (Path(args[-1]) / CURSOR_PATH / 'SKILL.md').unlink()
             return 0
         if command[0] == 'sparse-checkout':
-            second_source = (working / '.fixture-repository').read_text() == MATTPOCOCK
-            if scenario == 'sparse-fail' or (scenario == 'second-sparse-fail' and second_source):
+            repository = (working / '.fixture-repository').read_text()
+            second_source = repository == MATTPOCOCK
+            if (scenario == 'sparse-fail' or (scenario == 'second-sparse-fail' and second_source)
+                    or (scenario == 'cursor-sparse-fail' and repository == CURSOR)):
                 return 1
             if scenario == 'edit-during-fetch':
                 (local / 'ce-code-review/local.md').write_text('keep me\n')
@@ -90,12 +99,15 @@ class SkillUpdatesTest(unittest.TestCase):
             EVERYINC: ['skills/ce-simplify-code', 'skills/ce-code-review'],
             MATTPOCOCK: [f'skills/engineering/{name}' for name in ENGINEERING_SKILLS]
                        + [f'skills/productivity/{name}' for name in PRODUCTIVITY_SKILLS],
+            CURSOR: [CURSOR_PATH],
         }
         self.remote = self.root / 'remote'
         self.matt_remote = self.root / 'matt-remote'
+        self.cursor_remote = self.root / 'cursor-remote'
         remotes = {}
         for repository, remote, revision in ((EVERYINC, self.remote, 'abcdef0'),
-                                              (MATTPOCOCK, self.matt_remote, '1234567')):
+                                              (MATTPOCOCK, self.matt_remote, '1234567'),
+                                              (CURSOR, self.cursor_remote, '7654321')):
             remote.mkdir()
             (remote / '.fixture-repository').write_text(repository)
             (remote / '.fixture-revision').write_text(revision)
@@ -159,7 +171,7 @@ class SkillUpdatesTest(unittest.TestCase):
         before = self.snapshot()
         result = self.run_updater('--check-updates', installer=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout.count('up to date'), 29)
+        self.assertEqual(result.stdout.count('up to date'), 30)
         self.change_remote()
         result = self.run_updater('--check-updates', installer=True)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -188,7 +200,7 @@ class SkillUpdatesTest(unittest.TestCase):
         self.commit()
         result = self.run_updater('--refresh')
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout.count('up to date'), 29)
+        self.assertEqual(result.stdout.count('up to date'), 30)
 
     def test_refresh_same_size_and_timestamp(self):
         local = self.skills / 'ce-code-review/reference.md'
@@ -208,6 +220,7 @@ class SkillUpdatesTest(unittest.TestCase):
         (tdd / 'scripts').mkdir()
         (tdd / 'scripts/check.sh').write_text('new script\n')
         (self.matt_remote / 'skills/productivity/grill-me/reference.md').write_text('new\n')
+        (self.cursor_remote / CURSOR_PATH / 'reference.md').write_text('new\n')
         # Upstream additions outside the explicit mapping are not installed.
         unselected = self.matt_remote / 'skills/engineering/unselected'
         unselected.mkdir()
@@ -222,16 +235,19 @@ class SkillUpdatesTest(unittest.TestCase):
             self.assertIn(f'https://github.com/{EVERYINC}/tree/abcdef0/skills/ce-code-review', output)
             self.assertIn(f'https://github.com/{MATTPOCOCK}/tree/1234567/skills/engineering/tdd', output)
             self.assertIn(f'https://github.com/{MATTPOCOCK}/tree/1234567/skills/productivity/grill-me', output)
+            self.assertIn(f'https://github.com/{CURSOR}/tree/7654321/{CURSOR_PATH}', output)
         self.assertEqual((self.skills / 'tdd/reference.md').read_text(), 'new\n')
         self.assertFalse((self.skills / 'tdd/obsolete.md').exists())
         self.assertEqual((self.skills / 'tdd/scripts/check.sh').read_text(), 'new script\n')
         self.assertEqual((self.skills / 'grill-me/reference.md').read_text(), 'new\n')
+        self.assertEqual((self.skills / CURSOR_SKILL / 'reference.md').read_text(), 'new\n')
         self.assertFalse((self.skills / 'engineering').exists())
         self.assertFalse((self.skills / 'productivity').exists())
+        self.assertFalse((self.skills / 'cursor-team-kit').exists())
         self.assertFalse((self.skills / 'unselected').exists())
 
     def test_local_changes_are_preserved(self):
-        for skill in ('ce-code-review', 'tdd'):
+        for skill in ('ce-code-review', 'tdd', CURSOR_SKILL):
             for kind in ('unstaged', 'staged', 'untracked', 'ignored'):
                 with self.subTest(skill=skill, kind=kind):
                     path = self.skills / skill / 'reference.md'
@@ -257,7 +273,8 @@ class SkillUpdatesTest(unittest.TestCase):
         self.change_remote()
         before = self.snapshot()
         for scenario in ('offline', 'sparse-fail', 'missing',
-                         'second-offline', 'second-sparse-fail', 'second-missing'):
+                         'second-offline', 'second-sparse-fail', 'second-missing',
+                         'cursor-offline', 'cursor-sparse-fail', 'cursor-missing'):
             with self.subTest(scenario=scenario):
                 result = self.run_updater('--refresh', scenario=scenario)
                 self.assertEqual(result.returncode, 2)
@@ -325,7 +342,7 @@ class SkillUpdatesTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         calls = self.recorded_calls()
         downloads = [call for call in calls if 'clone' in call or 'sparse-checkout' in call]
-        self.assertEqual(len(downloads), 4)
+        self.assertEqual(len(downloads), 6)
         for call in downloads:
             self.assertIn('http.lowSpeedLimit=1', call)
             self.assertIn('http.lowSpeedTime=60', call)

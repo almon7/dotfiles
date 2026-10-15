@@ -69,9 +69,15 @@ The existing shared links expose the skills to both agents. They include `grill-
 
 Before using the engineering workflows in a project, ask the agent to use `setup-matt-pocock-skills` in that project. Setup is a separate, interactive step: it chooses the issue tracker and documentation layout, writes project configuration and may create tracker labels. The dotfiles installer does not run setup. Start a new agent session if the installed skills are not yet listed.
 
+## Cursor's code-quality review skill
+
+[`thermo-nuclear-code-quality-review`](skills/thermo-nuclear-code-quality-review/SKILL.md) is vendored unchanged from [Cursor Team Kit at `e5136d8`](https://github.com/cursor/plugins/tree/e5136d82418d2db3165ea1050d17577cd618cc05/cursor-team-kit/skills/thermo-nuclear-code-quality-review). That commit is the initial installation snapshot; the refresh command below follows upstream `main`. The upstream [MIT licence](licenses/cursor-team-kit.txt) is retained separately.
+
+For a strict maintainability review of abstractions, branching complexity and large files, run `/thermo-nuclear-code-quality-review` in Claude Code, or ask Codex to “Use thermo-nuclear-code-quality-review to review my changes”. The existing shared links expose the skill to both agents. Its upstream frontmatter retains `disable-model-invocation: true`, so Claude Code requires [manual invocation](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill). Installing the skill does not run a review or replace the existing `ce-simplify-code` and `ce-code-review` requirements.
+
 ## Checking and refreshing vendored skills
 
-`ce-simplify-code` and `ce-code-review` come from [EveryInc/compound-engineering-plugin](https://github.com/EveryInc/compound-engineering-plugin); the 27 Matt Pocock skills come from [mattpocock/skills](https://github.com/mattpocock/skills). `./install.sh agents` checks all 29 skills against each repository's `main` branch after linking them. To run only the check:
+`ce-simplify-code` and `ce-code-review` come from [EveryInc/compound-engineering-plugin](https://github.com/EveryInc/compound-engineering-plugin); the 27 Matt Pocock skills come from [mattpocock/skills](https://github.com/mattpocock/skills); `thermo-nuclear-code-quality-review` comes from [cursor/plugins](https://github.com/cursor/plugins). `./install.sh agents` checks all 30 skills against the three repositories' `main` branches after linking them. To run only the check:
 
 ```sh
 ./agents/install.sh --check-updates
@@ -90,7 +96,7 @@ To refresh all selected skills using one consistent snapshot per upstream reposi
 git diff -- agents/skills
 ```
 
-Refresh requires rsync and refuses if any selected skill folder has staged, unstaged, untracked, or ignored files; unrelated dotfiles changes are allowed. It downloads both repositories and validates every selected source and destination before replacing any folder, including deleting files removed upstream. A fetch or source-validation failure therefore leaves all local skills untouched. Committed local customisations are replaced too. Review and commit the resulting diff; Git retains the previous committed versions. Refresh never commits or pushes, and ordinary setup only checks. Cleanliness is checked before and after downloading and again just before each replacement. Copies use content checksums and are compared again before success is reported. If copying or verification fails, the command exits 2 and reports the partial refresh for inspection.
+Refresh requires rsync and refuses if any selected skill folder has staged, unstaged, untracked, or ignored files; unrelated dotfiles changes are allowed. It downloads all repositories and validates every selected source and destination before replacing any folder, including deleting files removed upstream. A fetch or source-validation failure therefore leaves all local skills untouched. Committed local customisations are replaced too. Review and commit the resulting diff; Git retains the previous committed versions. Refresh never commits or pushes, and ordinary setup only checks. Cleanliness is checked before and after downloading and again just before each replacement. Copies use content checksums and are compared again before success is reported. If copying or verification fails, the command exits 2 and reports the partial refresh for inspection.
 
 Avoid editing the skill folders while a refresh is copying: the checks do not
 lock editors out. The update check compares content, not executable permission
