@@ -1,7 +1,9 @@
 # The settings ./install.sh codex looks for in ~/.codex/config.toml. It adds
 # any that are missing and leaves a key already set to something else alone,
 # so every key here is one this machine is meant to have.
-model = "gpt-5.6-sol"
+model = "gpt-6-astra"
+model_reasoning_effort = "ultra"
+plan_mode_reasoning_effort = "ultra"
 
 # Shared background server features
 [features]
