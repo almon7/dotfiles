@@ -1,6 +1,6 @@
 local M = {}
 local uv = vim.uv
-local active
+local active, active_view
 local config_dir = vim.fs.dirname(vim.fs.dirname(vim.fs.dirname(debug.getinfo(1, "S").source:sub(2))))
 
 local function command(args, cwd, input)
@@ -211,6 +211,7 @@ function M.start(record, owner_pid)
   active = ctx
   vim.cmd.cd(ctx.path)
   require("diffview").open({ "-C" .. ctx.path, ctx.revision, "--imply-local" })
+  active_view = require("diffview.lib").get_current_view()
 end
 
 local function owned_pids(ctx)
@@ -268,17 +269,7 @@ local function notify(message, level)
   vim.notify(message, level or vim.log.levels.INFO, { title = "Git view" })
 end
 
-function M.close()
-  local view = package.loaded["diffview.lib"] and require("diffview.lib").get_current_view()
-  if not active or (view and uv.fs_realpath(view.adapter.ctx.toplevel) ~= active.path) then
-    if view then
-      require("diffview").close()
-    else
-      notify("No review to close")
-    end
-    return
-  end
-  local ctx = active
+local function close_review(ctx)
   if ctx.closing then
     return
   end
@@ -336,6 +327,33 @@ function M.close()
     uv.fs_unlink(request)
     if not quit_ok then
       notify("Review remains open: " .. tostring(quit_err), vim.log.levels.WARN)
+    end
+  end)
+end
+
+function M.close()
+  local view = package.loaded["diffview.lib"] and require("diffview.lib").get_current_view()
+  if not active or (view and uv.fs_realpath(view.adapter.ctx.toplevel) ~= active.path) then
+    if view then
+      require("diffview").close()
+    else
+      notify("No review to close")
+    end
+    return
+  end
+  close_review(active)
+end
+
+function M.view_closed(view)
+  if not active or not active_view or view ~= active_view or vim.v.exiting ~= vim.NIL then
+    return
+  end
+  local ctx = active
+  active_view = nil
+  -- Diffview has already changed tabs; keep the session that owned the closed view.
+  vim.schedule(function()
+    if active == ctx and vim.v.exiting == vim.NIL then
+      close_review(ctx)
     end
   end)
 end

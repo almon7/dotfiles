@@ -4,7 +4,7 @@ vim.opt.rtp:prepend(config)
 local temp = vim.fn.tempname() .. " review sessions"
 vim.fn.mkdir(temp, "p")
 temp = assert(vim.uv.fs_realpath(temp))
-local system, expand, command = vim.system, vim.fn.expand, vim.cmd
+local system, expand, command, variables = vim.system, vim.fn.expand, vim.cmd, vim.v
 local view, token, helper_error, quit_error, process_table
 local calls, notices, diffs = {}, {}, {}
 local quits, closes, probes, cleanups, passed = 0, 0, 0, 0, 0
@@ -41,6 +41,8 @@ vim.env.TMUX, vim.env.TMUX_PANE = "/tmp/review-test,123,0", "%7"
 package.loaded.diffview = {
   open = function(args)
     diffs[#diffs + 1] = args
+    view = { adapter = { ctx = { toplevel = args[1]:sub(3) } } }
+    view.self = view -- Real view objects are not JSON session metadata.
   end,
   close = function()
     closes = closes + 1
@@ -87,7 +89,7 @@ vim.system = function(args, opts, callback)
       token = args[#args]
     end
     value = { code = 0, stdout = args[4] == "show-options" and token or "", stderr = "" }
-  elseif args[1] == vim.v.progpath and args[2] == "-l" then
+  elseif args[1] == variables.progpath and args[2] == "-l" then
     pending = function()
       callback({ code = helper_error and 1 or 0, stderr = helper_error or "", stdout = "" })
     end
@@ -144,6 +146,9 @@ end
 local ok, err = xpcall(function()
   test("ordinary diffs close without a managed session", function()
     view = { adapter = { ctx = { toplevel = repo } } }
+    session.view_closed(view)
+    vim.wait(10)
+    assert(not pending and closes == 0)
     session.close()
     assert(closes == 1 and quits == 0)
     view = nil
@@ -233,6 +238,81 @@ local ok, err = xpcall(function()
     session.run("preflight", ctx.record)
     assert(probes == 1)
   end)
+  test("closing another view in the managed worktree does not request cleanup", function()
+    session.start(ctx.record, vim.uv.os_getpid())
+    session.view_closed({ adapter = { ctx = { toplevel = ctx.path } } })
+    session.view_closed({ adapter = { ctx = { toplevel = repo } } })
+    vim.wait(10)
+    assert(not pending and not vim.uv.fs_stat(ctx.state_dir .. "/request.json"))
+  end)
+  test("the managed close hook cleans its session once without closing the newly focused view", function()
+    session.start(ctx.record, vim.uv.os_getpid())
+    local managed, before_quits, before_closes = view, quits, closes
+    view = { adapter = { ctx = { toplevel = repo } } }
+    local hook = require("plugins.diffview")[1].opts.hooks.view_closed
+    hook(managed)
+    hook(managed)
+    assert(not pending, "Cleanup must wait for Diffview to finish closing")
+    assert(vim.wait(100, function()
+      return pending ~= nil
+    end))
+    assert(read(ctx.record).pane == "%7", "View objects must stay outside serialised metadata")
+    finish_probe()
+    assert(quits == before_quits + 1 and closes == before_closes)
+    session.view_closed(managed)
+    vim.wait(10)
+    assert(not pending)
+    view = nil
+  end)
+  test("unsaved buffers survive managed view closure without authorising cleanup", function()
+    session.start(ctx.record, vim.uv.os_getpid())
+    local managed, before_quits = view, quits
+    local buffer = vim.api.nvim_create_buf(true, false)
+    vim.api.nvim_buf_set_lines(buffer, 0, -1, false, { "keep this after closing the diff" })
+    view = nil
+    session.view_closed(managed)
+    vim.wait(10)
+    assert(not pending and quits == before_quits and vim.bo[buffer].modified)
+    assert(notices[#notices]:find("Unsaved buffer", 1, true))
+    assert(not vim.uv.fs_stat(ctx.state_dir .. "/request.json"))
+    vim.api.nvim_buf_delete(buffer, { force = true })
+  end)
+  test("failed preflight after managed view closure retains the editor and worktree", function()
+    session.start(ctx.record, vim.uv.os_getpid())
+    local managed, before_quits = view, quits
+    helper_error = "The review worktree has tracked changes; keep the worktree."
+    view = nil
+    session.view_closed(managed)
+    assert(vim.wait(100, function()
+      return pending ~= nil
+    end))
+    finish_probe()
+    assert(quits == before_quits and vim.uv.fs_stat(ctx.path))
+    assert(not vim.uv.fs_stat(ctx.state_dir .. "/request.json"))
+    assert(notices[#notices]:find("tracked changes", 1, true))
+    helper_error = nil
+  end)
+  test("scheduled view closure cannot close a replacement managed session", function()
+    session.start(ctx.record, vim.uv.os_getpid())
+    session.view_closed(view)
+    session.start(ctx.record, vim.uv.os_getpid())
+    vim.wait(10)
+    assert(not pending)
+  end)
+  test("editor exit prevents both new and scheduled automatic cleanup", function()
+    session.start(ctx.record, vim.uv.os_getpid())
+    local managed = view
+    vim.v = { exiting = 0 }
+    session.view_closed(managed)
+    vim.v = variables
+    vim.wait(10)
+    assert(not pending)
+    session.view_closed(managed)
+    vim.v = { exiting = 0 }
+    vim.wait(10)
+    vim.v = variables
+    assert(not pending and not vim.uv.fs_stat(ctx.state_dir .. "/request.json"))
+  end)
   test("stale records with reused PIDs are replaced", function()
     make_stale(ctx)
     local replacement = session.reserve(repo, pr)
@@ -298,7 +378,7 @@ local ok, err = xpcall(function()
       }):wait()
       local output = table.concat(vim.fn.readfile(log), "\n")
       assert(output:find("release", 1, true))
-      assert((output:find("cleanup", 1, true) ~= nil) == (case[1] == 0))
+      assert((output:find(" cleanup ", 1, true) ~= nil) == (case[1] == 0))
       assert((value.code ~= 0) == (case[1] ~= 0 or case[2] ~= 0))
       if value.code ~= 0 then
         assert(value.stdout:find("Cleanup stopped", 1, true))
@@ -306,7 +386,7 @@ local ok, err = xpcall(function()
     end
   end)
 end, debug.traceback)
-vim.cmd, vim.system, vim.fn.expand = command, system, expand
+vim.cmd, vim.system, vim.fn.expand, vim.v = command, system, expand, variables
 vim.cmd.cd(config)
 vim.fn.delete(temp, "rf")
 if not ok then

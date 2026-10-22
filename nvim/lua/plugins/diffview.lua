@@ -4,6 +4,9 @@ return {
     cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewFileHistory", "DiffviewToggleFiles", "DiffviewFocusFiles" },
     opts = {
       hooks = {
+        view_closed = function(view)
+          require("config.review_session").view_closed(view)
+        end,
         diff_buf_win_enter = function(_, _, ctx)
           vim.opt_local.fillchars:append({ diff = " " })
           local highlights = { DiffDelete = "DiffviewMutedDelete" }
