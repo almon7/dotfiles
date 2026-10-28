@@ -53,6 +53,12 @@ something in the conversation calls for them, rather than carrying always.
   sit in the context window of every request whether the subject comes up or
   not; a skill costs one line until something activates it.
 
+## Test quality
+
+[`test-quality`](skills/test-quality/SKILL.md) helps select useful tests and review tests for regression value. Ask “Use $test-quality to review the tests in this change” or invoke it while adding coverage. The skill checks requirements, existing coverage and assertion quality, permits no new test when existing checks suffice, and preserves distinct behaviours during cleanup. Worked examples cover migration revisions, mocks, source inspection and redundant tests.
+
+The skill is maintained locally and is outside the vendored-skill refresh. The existing shared links expose it to Codex and Claude Code; start a new session if it is not yet listed.
+
 ## Uploading Hunk comments to a GitHub PR
 
 [`hunk-pr-comments`](skills/hunk-pr-comments/SKILL.md) copies your notes from an open Hunk session into one pending GitHub PR review. For example, ask your agent: “Upload my Hunk comments to a pending review on PR #123.” The agent loads Hunk's bundled instructions through `hunk skill path`, checks each comment against the PR diff, uploads your text unchanged, and returns a link. You inspect and submit the review on GitHub yourself.
