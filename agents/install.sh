@@ -28,13 +28,12 @@ case "${1:-}" in
   *) printf 'Unexpected argument: %s\n' "$1" >&2; exit 2 ;;    # anything else is a mistake
 esac
 
-# The two agents hard-code where they look, and neither reads a plain
-# ~/AGENTS.md; link_config creates the directory when the tool is not installed
-# here yet, so the file is in place the moment it is.
+# Configure the user-level instruction paths for both agents. link_config creates
+# the directory even when the tool is not installed yet.
 link_config "$FILE" "$HOME/.claude/CLAUDE.md"    # where Claude Code reads it
 link_config "$FILE" "$HOME/.codex/AGENTS.md"    # where Codex reads it
 
-# Skills are hard-coded the same way, so both names point at the one tracked
+# Both user-level skills paths point at the one tracked
 # folder instead of drifting into two copies. Skills may include agent-specific
 # discovery metadata alongside the shared instructions.
 link_config "$SKILLS" "$HOME/.agents/skills"    # where Codex reads skills

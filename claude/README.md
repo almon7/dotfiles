@@ -38,4 +38,6 @@ The effort level is the session's own, so `/effort`, a `modelSettings` entry and
 
 The installer adds `statusLine` when `~/.claude/settings.json` does not already contain it. A different existing `statusLine` remains untouched and is reported, matching the repository's local-settings-win policy.
 
+Before changing `claude/install.sh`, read the [shared installer contracts](../AGENTS.md#architecture).
+
 Run the offline regression tests with `python3 claude/test_claude.py`.

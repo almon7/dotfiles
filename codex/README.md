@@ -12,6 +12,23 @@ The tracked `[features]` settings match the shared background server requirement
 
 Use `codex` normally, and `codex-ds` for DeepSeek. `codex-ds` exports the DeepSeek key only for the Codex process it starts, so exiting that session is all switching back requires. Arguments are forwarded unchanged, for example `codex-ds --continue` or `codex-ds resume`.
 
+## Codex settings
+
+[`config.toml`](config.toml) lists the settings this machine is meant to have. It is deliberately not linked to `~/.codex/config.toml`, because Codex can write to its own configuration. `./install.sh codex` compares the tracked settings against the live file a key at a time:
+
+| In `~/.codex/config.toml` | What happens |
+| --- | --- |
+| The key holds the same value | Nothing, and the installer says so |
+| The key is absent | It is inserted into the table it belongs to |
+| The key holds a different value | It is left alone and reported |
+| The file does not exist | It is created with every tracked key |
+
+The existing value always wins. To adopt a local change in the repository, copy it into `codex/config.toml` and commit it. To restore the tracked value on the machine, delete the key from `~/.codex/config.toml` and rerun `./install.sh codex`.
+
+Top-level keys are inserted above the first TOML table header; missing tables are appended whole. Other tables, comments and arrays of tables are preserved. The installer also links `codex-ds`, its profile and its model catalogue, but does not install Codex itself. A missing Codex executable is reported without failing the settings check.
+
+Before changing `codex/install.sh`, read the [shared installer contracts](../AGENTS.md#architecture).
+
 ## DeepSeek API key
 
 The API key is deliberately outside this repository. Save only the key, with no `export` or quotes, at `~/.config/codex/deepseek-api-key`:
@@ -31,7 +48,7 @@ unset key
 
 `codex-ds` runs `codex --profile deepseek`, which layers [`deepseek.config.toml`](deepseek.config.toml) over `~/.codex/config.toml` instead of replacing it. Trust levels, plugins, skills and the `[tui]` table are untouched, and the DeepSeek settings exist only for that one command. The key reaches Codex through the provider's `env_key`, so it is never written into a config file. It does live in the session's environment, and every command, subagent, plugin and MCP server that session starts inherits it — treat a shared transcript as disclosure and rotate the key if it leaks.
 
-Two of the files here are linked into `~/.codex`, which is unusual: [`codex/config.toml`](config.toml) deliberately is **not**, because Codex writes its own settings there and a link would hand it this repository. The profile and the catalog are only ever read, which is what makes them safe to link. Codex writes to the user config, never to a profile.
+The profile and model catalogue are linked into `~/.codex` because Codex only reads them. The [settings check](#codex-settings) handles the writable user configuration separately.
 
 A missing profile is not an error to Codex — it layers nothing and the session quietly runs the default configuration against OpenAI. `codex-ds` checks for the profile itself, because that failure would otherwise be silent.
 

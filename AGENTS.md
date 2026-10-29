@@ -11,31 +11,19 @@ A cold-start dev environment: POSIX-ish bash installers plus the config files
 they link into place, so one `git clone` and one `./install.sh` reproduce the
 setup on a Mac or a Debian/Ubuntu VPS. There is no build or CI. The scripts *are* the product. The skill updater, the two agent-profile components, the Starship prompt, terminal selection, and Neovim PR review, file-location and status-bar helpers have small regression suites; the remaining installers are checked by reading and running them.
 
-## Commands
+## Verification
+
+After editing shell scripts, run the syntax check from the repository root:
 
 ```sh
-./install.sh                 # interactive checklist (arrow/jk, Space, Enter)
-./install.sh --all           # every component, no prompts
-./install.sh nvim tmux       # only the named components
-./nvim/install.sh            # a single component, standalone; takes no options
-bash -n install.sh install-lib.sh */install.sh   # syntax check after editing
-python3 agents/test_skill_updates.py            # offline skill-updater tests
-python3 claude/test_claude.py                   # Claude profile and settings tests
-python3 codex/test_codex.py                     # Codex settings check and launcher tests
-python3 starship/test_starship.py               # prompt and Bash startup regressions
-python3 tmux/test_mouse_selection.py            # isolated tmux input/selection tests
-luajit wezterm/test_selection.lua               # clipboard routing without GUI access
-nvim --headless -u NONE -i NONE -l nvim/test_diffview.lua # offline Git/PR review tests
-nvim --headless -u NONE -i NONE -l nvim/test_file_location.lua # offline file-location clipboard tests
-nvim --headless -u NONE -i NONE -l nvim/test_statusline.lua # offline directory/Git status-bar tests
+for script in install.sh install-lib.sh */install.sh; do
+  bash -n "$script" || exit
+done
 ```
 
-With no TTY (`./install.sh < /dev/null`, CI) the picker is skipped and
-everything installs — that path is worth exercising after touching `install.sh`.
+Use the relevant isolated regression suites documented in the component READMEs below. When changing `install.sh`, exercise the dispatcher, including its no-TTY path, in a disposable copy with stub component installers. With no TTY and no named components, the picker is skipped and every component runs, including `git`.
 
-Every installer is idempotent, and a rerun is the update path. Rerun freely
-while developing: Homebrew packages upgrade, correct symlinks are left alone,
-managed shell blocks are rewritten in place.
+Run installers against the live machine when installation or updating configuration is part of the requested work. Every installer is idempotent, but a rerun is an update: Homebrew packages may upgrade, existing files may be backed up and replaced with links, and managed shell blocks may be rewritten.
 
 `shfmt` and `markdownlint-cli2` are not on `PATH`; they come from Mason inside
 Neovim (`~/.local/share/nvim/mason/bin`). Lua style is `nvim/stylua.toml`
@@ -98,11 +86,7 @@ lockfile. Vendored agent skills are checked during setup and refreshed only with
 
 ### Agent configuration lives here
 
-`agents/` holds what both agents share — the instructions file and the skills
-folder — and its installer links each to the paths Claude Code and Codex
-hard-code, since neither reads a plain `~/AGENTS.md`. `codex/` is a different
-kind of component: it installs no tool, checking Codex's own settings and
-linking a DeepSeek launcher instead. The links are:
+`agents/` holds the shared instructions and skills. Its installer configures the Claude Code and Codex paths listed below. `codex/` checks Codex's own settings and links a DeepSeek launcher; it does not install Codex itself.
 
 | Repo path | Linked to |
 | --- | --- |
@@ -125,57 +109,31 @@ Consequences to keep in mind while working here:
 
 - **The links run both ways.** Editing `~/.config/nvim/...` or `~/.claude/skills/...`
   edits this repository, and shows up in `git status`.
-- **`agents/AGENTS.md` is this machine's global agent instruction file.** A
-  change to it changes how every agent behaves in every repository, so keep it
-  general — anything true of one project belongs in that project's own
-  `AGENTS.md`/`CLAUDE.md`, which each agent reads afterwards and may contradict.
-- **`agents/skills/` is the shared skill folder for both agents**, which is why
-  it sits beside `AGENTS.md` and is linked by the same installer. Skills are
-  tracked here rather than written into `~/.claude` by a vendor's setup command,
-  so they reproduce on a new machine and show up in a diff. `find-docs` is one
-  skill over two sources: a short `SKILL.md`, since a skill's description is in
-  the context window of every request, plus a `references/` file read only when
-  that branch is taken. Within `find-docs`, the Context7 reference is vendored from
-  `upstash/context7` — keep the provenance comment at the top of
-  `references/context7.md` when refreshing it. The two EveryInc skills, 27 Matt Pocock skills and Cursor's `thermo-nuclear-code-quality-review` skill are also vendored. `agents/check-skill-updates.sh` explicitly maps their upstream paths to local folders, fetches one snapshot per repository, and validates every source before refreshing any destination. Their check/refresh commands and tests are documented in `agents/README.md`.
-- **`codex/config.toml` is not linked**, because Codex writes to its own config
-  and a link would hand it this repository. `codex/install.sh` compares the two
-  a key at a time instead: it inserts a missing key into the table it belongs to
-  (a top-level key above the first `[table]` header, or the whole table appended
-  when it is absent), and reports — never rewrites — a key whose value differs,
-  since a deliberate local change is not ours to undo. Every key in the file is
-  one the machine is meant to have; there is no opt-out marker.
-- **`codex/deepseek.config.toml` and `codex/deepseek-models.json` are linked**,
-  unlike the file beside them, because Codex only ever reads them: it writes to
-  the user config, never to a profile, and never to a `model_catalog_json`
-  file. `codex-ds` selects them with `--profile deepseek`, which layers them
-  over the user config rather than replacing it, so the default Codex setup is
-  untouched and the DeepSeek API key stays out of every config file. The key
-  itself is untracked at `~/.config/codex/deepseek-api-key`, as the Claude key
-  is at `~/.config/claude/deepseek-api-key`. Codex treats a
-  missing profile as an empty layer rather than an error, so `codex-ds` checks
-  for the file itself instead of letting the session quietly run the default
-  config on OpenAI.
-- **`claude/settings.json` is not linked**, because Claude Code also writes its own settings. `claude/install.sh` adds the tracked `statusLine` only when the live file lacks that key, and reports a different existing value without replacing it. The DeepSeek API key remains untracked at `~/.config/claude/deepseek-api-key`.
-- Skills are preferred over MCP servers for the same reason `find-docs` is: an
-  MCP server's tool definitions occupy the context window of every request,
-  while a skill costs one line until it activates.
+- **`agents/AGENTS.md` supplies global instructions to both configured agents.** Keep shared defaults general and project-specific rules in the project's `AGENTS.md`/`CLAUDE.md`. Keep the instructions consistent and state any deliberate exception explicitly.
+- **`agents/skills/` is the shared skill folder for both agents.** Keep skills tracked here so installation reproduces them. Before changing discovery or refreshing vendored skills, read [agents/README.md](agents/README.md), including its Context7 provenance and refresh requirements.
+- **Existing live settings win.** `codex/config.toml` and `claude/settings.json` are not linked because the applications write their own settings. Their installers add missing settings and report differing live values without replacing them. Every tracked Codex setting is intended to be present; there is no opt-out marker. Read [codex/README.md](codex/README.md) or [claude/README.md](claude/README.md) before changing settings or launcher behaviour.
+- **DeepSeek keys stay outside Git and config files.** The launchers read the untracked files `~/.config/codex/deepseek-api-key` and `~/.config/claude/deepseek-api-key`. The component READMEs own profile, model-catalogue and launcher details.
+- Prefer skills for reusable procedures and use MCP integrations when a task needs access to an external service.
 
 ## Keeping the docs in sync
 
-The documentation is split so that each fact has one home. A change belongs in
-whichever of these owns it:
+Read the relevant document before changing the area it covers. Each document owns the detail listed below; update that document when the behaviour changes.
 
-| File | Owns |
+| Read | When changing / owns |
 | --- | --- |
-| `README.md` | the quick start and the component table — the fast path, nothing else |
-| `agents/README.md` | shared agent instructions, the shared skills folder, `find-docs` and its two sources (`ctx7`, skills.sh), the Codex settings check |
-| `git/README.md` | identity vs authentication, the SSH-key bootstrap, extra profiles |
-| `tmux/README.md` | prefix and key bindings, resurrect/continuum, copy and paste |
-| `nvim/README.md` | the manual Windows path, first launch, linting and clipboard notes |
-| `starship/README.md` | prompt layout, symbols, shell initialization, and configuration |
-| `docs/vps.md` | server setup and operations: sshd hardening, ufw, swap, tunnels, Docker |
-| `AGENTS.md` | this file — architecture and contracts, what an agent reads first |
+| [README.md](README.md) | Quick start and component selection |
+| [agents/README.md](agents/README.md) | Shared instruction installation, skill discovery, `find-docs`, vendored refresh and updater tests |
+| [codex/README.md](codex/README.md) | Codex settings, DeepSeek launcher, profiles, model catalogue and tests |
+| [claude/README.md](claude/README.md) | Claude settings, DeepSeek launcher, status line and tests |
+| [git/README.md](git/README.md) | Identity, authentication, SSH-key bootstrap and extra profiles |
+| [tmux/README.md](tmux/README.md) | Key bindings, session persistence, mouse, clipboard and selection tests |
+| [wezterm/README.md](wezterm/README.md) | Terminal keys, mouse, clipboard, typefaces, hyperlinks and tests |
+| [nvim/README.md](nvim/README.md) | Setup, navigation, PR reviews, worktree cleanup, file-location copying, status bar, linting and tests |
+| [starship/README.md](starship/README.md) | Prompt layout, shell initialisation, configuration and tests |
+| [docs/vps.md](docs/vps.md) | Server setup and operations: sshd hardening, ufw, swap, tunnels and Docker |
+| [AGENTS.md](AGENTS.md#architecture) | Shared installer contracts and configuration links |
+
+For terminal keys, mouse or clipboard changes spanning WezTerm, tmux and Neovim, read the affected sections in each component's README. For agent instructions or skills, use the installed `writing-for-agents` skill; its tracked source is [agents/skills/writing-for-agents/SKILL.md](agents/skills/writing-for-agents/SKILL.md).
 
 All of them go stale silently, because nothing here fails a build when they do.
 Treat the doc as part of the change, in the same commit:

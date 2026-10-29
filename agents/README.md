@@ -1,22 +1,19 @@
 # Agent configuration
 
-Claude Code and Codex both read a Markdown file of standing instructions and a
-folder of skills, and each hard-codes its own path for both. This component
-points every one of those paths at a single tracked file and a single tracked
-folder, so the two agents cannot drift apart.
+This component links Claude Code and Codex to one tracked file of personal instructions and one tracked skills folder, so changes reach both agents.
 
 Install both with `./install.sh agents`. The separate `codex` component checks
 the settings of Codex itself and adds a DeepSeek launcher, described in
 [Codex settings](#codex-settings) below.
+
+Before changing `agents/install.sh`, read the [shared installer contracts](../AGENTS.md#architecture).
 
 ## One set of instructions for every agent
 
 An instructions file is standing context — the preferences an agent should
 apply without being reminded, read at the start of every session.
 
-- **Claude Code reads `~/.claude/CLAUDE.md`, Codex reads `~/.codex/AGENTS.md`,
-  and neither reads a plain `~/AGENTS.md`.** So the installer links both of
-  those names to the single tracked file, [`AGENTS.md`](AGENTS.md).
+- **The installer links `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` to [`AGENTS.md`](AGENTS.md).** These are the personal instruction paths this repository configures for Claude Code and Codex.
 - **Editing it in the repository is what changes both agents**, because a
   symlink is read through: there is only ever one file.
 - **Nothing is overwritten.** A real file already sitting at either path is
@@ -30,18 +27,13 @@ A third tool that reads its own instructions file is a link away by hand:
 ln -s "$PWD/agents/AGENTS.md" ~/.cursor/AGENTS.md
 ```
 
-`~/.agents/AGENTS.md` is worth knowing about but is not enough on its own: it is
-a proposed cross-vendor convention, and neither agent installed here reads it
-today.
+Instruction discovery depends on the tool and its configuration. For example, current Claude Code can also load ancestor `AGENTS.md` files under its documented conditions. Check the [Claude Code discovery rules](https://code.claude.com/docs/en/memory#agents-md) and [Codex discovery rules](https://learn.chatgpt.com/docs/agent-configuration/agents-md) before changing the installed paths.
 
-Keep the file general. Each agent reads a project's own `AGENTS.md` or
-`CLAUDE.md` *after* this one, so repository-specific rules belong there, where
-they can contradict it.
+Keep the shared file general and put repository-specific rules in the project's `AGENTS.md` or `CLAUDE.md`. Keep shared defaults and project rules consistent; state any deliberate exception explicitly.
 
 ## One set of skills for every agent
 
-A skill is a folder holding a `SKILL.md` — instructions an agent loads only when
-something in the conversation calls for them, rather than carrying always.
+A skill is a folder holding a `SKILL.md`. Initial discovery normally exposes the skill's name and description; the instructions load when the skill is activated. See [Codex skill loading](https://learn.chatgpt.com/docs/build-skills) and [Claude Code skill loading](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill).
 
 - **Codex reads `~/.agents/skills`, Claude Code reads `~/.claude/skills`.** The
   installer points both at the single tracked folder, [`skills/`](skills), so a
@@ -49,9 +41,7 @@ something in the conversation calls for them, rather than carrying always.
 - **They are tracked here rather than written into `~/.claude` by a vendor's
   setup command.** That way they reproduce on a new machine, and a change to
   one shows up in a diff instead of happening invisibly in a home directory.
-- **Skills are preferred over MCP servers.** An MCP server's tool definitions
-  sit in the context window of every request whether the subject comes up or
-  not; a skill costs one line until something activates it.
+- **Prefer skills for reusable procedures; use MCP when a task needs an integration.** Tool-definition loading depends on the host and configuration; [Claude Code supports deferred MCP tool definitions](https://code.claude.com/docs/en/mcp#scale-with-mcp-tool-search).
 
 ## Test quality
 
@@ -119,13 +109,7 @@ personal configuration are untouched.
 
 ## find-docs, and the two things it looks up
 
-[`find-docs`](skills/find-docs/SKILL.md) is the one skill an agent reaches for
-when it needs a reference the session does not carry — worth having because an
-agent's training data goes stale on fast-moving libraries long before anything
-warns you about it. Its `SKILL.md` is short on purpose: it is in the context
-window of every request, so it holds the fast path and defers the rest to a file
-under [`references/`](skills/find-docs/references) that is read only when that
-branch is taken.
+[`find-docs`](skills/find-docs/SKILL.md) supplies documentation or a published skill when the session lacks a needed reference. Its `SKILL.md` holds the lookup steps, with source-specific detail under [`references/`](skills/find-docs/references), read only when that branch is taken.
 
 Documentation, skill, and MCP discovery stay scoped to tooling used by the project or chosen for the task: a shadcn/ui collapsible section calls for shadcn resources, not a generic search for collapsible-section skills. Broader searches are reserved for exploratory research or tooling comparisons.
 
@@ -192,36 +176,4 @@ Restore all three before committing.
 
 ## Codex settings
 
-Codex reads its own settings from `~/.codex/config.toml`, a file it writes to
-itself: logins, history, whatever a future version decides to record there. A
-symlink would hand that file to this repository, so
-[`codex/config.toml`](../codex/config.toml) is deliberately **not** linked. It is
-a list of the settings this machine is meant to have, and `./install.sh codex`
-compares it against the live file a key at a time:
-
-| In `~/.codex/config.toml` | What happens |
-|---|---|
-| the key holds the same value | nothing, and it says so |
-| the key is absent | it is inserted, into the table it belongs to |
-| the key holds a different value | it is left alone, and reported |
-| the file does not exist | it is created with every key |
-
-- **The value already in Codex's config always wins.** A setting changed there
-  was changed on purpose, and undoing it silently would be worse than leaving
-  the two out of step.
-- **To adopt a local change**, copy it into `codex/config.toml` and commit it.
-  **To revert one**, delete the key from `~/.codex/config.toml` and rerun.
-- **Placement is the part worth knowing.** TOML has no nesting markers: every
-  line after a `[table]` header belongs to that table until the next one. So a
-  top-level key such as `model` has to be inserted *above* the first header,
-  and a table that is not in the file yet is appended whole.
-- **Everything else is printed back untouched** — other tables, comments, an
-  `[[array]]` of tables.
-- **The settings check installs nothing.** Codex is not on Homebrew and arrives
-  its own way; the settings are worth checking before it lands as much as after,
-  so a missing Codex is reported rather than treated as a failure.
-- **The DeepSeek launcher is the one thing this component does install.**
-  `codex-ds` is linked along with the profile and model catalog it selects, and
-  switching back is a matter of using plain `codex`. Kept out of this file's
-  way on purpose:
-  [Codex settings and the DeepSeek launcher](../codex/README.md).
+Before changing Codex settings or the DeepSeek launcher, read [Codex settings and the DeepSeek launcher](../codex/README.md). The [settings check](../codex/README.md#codex-settings) documents how missing keys are inserted and existing values are preserved.

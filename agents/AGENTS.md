@@ -5,8 +5,8 @@
 Before making changes in a repository, bring the checkout up to date:
 
 - Check the state first with `git status`
-- If there is a remote branch, fast-forward the branch with `git pull --ff-only`
-- If there is a remote branch and the pull is refused, stop and say so rather than reaching for `--rebase`, `--force`, `stash`, or `reset`
+- If the current branch has a configured upstream, fast-forward from that upstream with `git pull --ff-only`
+- If the pull is refused, stop and say so rather than reaching for `--rebase`, `--force`, `stash`, or `reset`
 
 ## Understand the request, think before coding
 
@@ -21,11 +21,12 @@ Before answering or acting:
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
 
-
 ## Plan, implement, and verify
 
 - Use skills when explicitly requested, needed to handle a specific tool, or useful for a concrete task need. Use `find-docs` when missing documentation or a relevant skill would help complete the task. Check MCP capabilities only when the task needs an integration. Do not make general skill discovery a routine prerequisite, including for requests to commit existing changes.
-- After code changes settle and before committing, run `ce-simplify-code`, then `ce-code-review`; address findings and run relevant checks.
+- After code changes settle, run `ce-simplify-code` and then `ce-code-review` on the changes authorised for the current task. Pass the scope explicitly, preserve unrelated working-tree changes, address findings and run relevant checks before committing.
+- When adding, changing or reviewing tests, use `test-quality` and pass its requirements to testing reviewers. Its coverage-gap requirement takes precedence over a review rubric that demands changed test files: establish a gap in existing coverage before recommending another test.
+- When creating or editing agent instructions or skills, use `writing-for-agents`.
 - Before a branch merges into its base branch, through `wt land` or otherwise, run the checks the repository's instructions require before a merge, and merge only once they pass. When one fails, report it and leave the branch unmerged.
 - Before removing a worktree, evaluate whether to tear down its running stack and clean up all resources created specifically for that worktree, including background processes, containers, networks, volumes, and temporary files. Run the project’s teardown commands while the worktree still exists, and verify cleanup succeeded before removing the worktree. Preserve resources shared with other worktrees.
 
@@ -46,12 +47,14 @@ Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, sim
 **Touch only what you must. Clean up only your own mess.**
 
 When editing existing code:
+
 - Don't "improve" adjacent code, comments, or formatting.
 - Don't refactor things that aren't broken.
 - Match existing style, even if you'd do it differently.
 - If you notice unrelated dead code, mention it - don't delete it.
 
 When your changes create orphans:
+
 - Remove imports/variables/functions that YOUR changes made unused.
 - Don't remove pre-existing dead code unless asked.
 
@@ -62,12 +65,14 @@ The test: Every changed line should trace directly to the user's request.
 **Define success criteria. Loop until verified.**
 
 Transform tasks into verifiable goals:
+
 - "Add validation" → "Write tests for invalid inputs, then make them pass"
 - "Fix the bug" → "Write a test that reproduces it, then make it pass"
 - "Refactor X" → "Ensure tests pass before and after"
 
 For multi-step tasks, state a brief plan:
-```
+
+```text
 1. [Step] → verify: [check]
 2. [Step] → verify: [check]
 3. [Step] → verify: [check]
@@ -98,23 +103,11 @@ Every noun phrase in it is unanswerable: *these two* what? *The operator* is who
 
 ## Commits Style
 
-Commit messages follow Conventional Commits 1.0.0, whose requirement words carry their RFC 2119 force: MUST is absolute, SHOULD may be set aside only once the consequences are understood, MAY is a free choice.
+Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) with the subject `<type>[optional scope][!]: <description>`.
 
-```
-<type>[optional scope][!]: <description>
-
-[optional body]
-
-[optional footer(s)]
-```
-
-- The subject MUST open with a type and `: ` — `feat` for a new feature, `fix` for a bug fix, or one of `docs`, `test`, `refactor`, `perf`, `style`, `build`, `ci`, `chore` for everything else.
-- A scope MAY follow the type in parentheses, naming the part of the codebase that changed: `fix(parser): reject an unterminated string`.
-- A body MAY follow the description after one blank line, and is the place to say why the change was needed rather than what the diff already shows.
-- Footers MAY follow the body after another blank line, written as `Token: value` with hyphens standing in for spaces, e.g. `Refs: #12`.
-- A breaking change MUST be flagged, either with `!` before the colon or with a `BREAKING CHANGE: <description>` footer. That token stays uppercase; the rest of the message is case-insensitive.
-- Types and scopes SHOULD be lowercase and the subject SHOULD fit in about 72 columns, so `git log --oneline` stays readable.
-
-- Do NOT add yourself (the LLM) as a collaborator in commits
-- Do NOT name branches after yourself (eg codex/...)
-
+- Use `feat` for features and `fix` for fixes. For other changes, our allowed types are `docs`, `test`, `refactor`, `perf`, `style`, `build`, `ci` and `chore`.
+- An optional scope names the affected part of the codebase, e.g. `fix(parser): reject an unterminated string`.
+- An optional body follows a blank line and explains why the change was needed. Optional footers follow another blank line; use `Token: value`, with hyphens in multiword tokens, e.g. `Refs: #12`.
+- Flag breaking changes with `!` before the colon or a `BREAKING CHANGE: <description>` footer. Keep `BREAKING CHANGE` uppercase.
+- Our style preferences are lowercase types and scopes and a subject of about 72 columns or fewer; the specification does not impose those preferences.
+- Do not add yourself (the LLM) as a collaborator in commits or name branches after yourself (e.g. `codex/...`).
