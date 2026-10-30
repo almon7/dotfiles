@@ -142,7 +142,7 @@ The paired [tmux bindings](../tmux/README.md#keys) work locally and when SSH con
 | `Space g v h` | Show repository history |
 | `Space g v q` | Close the review; clean up a safe, managed PR worktree |
 | `Space g v p` | Pick a GitHub PR, then choose Diffview or Hunk |
-| `Space g v w` | Pick a PR to open its worktree and diff in a new tmux window |
+| `Space g v w` | Pick a PR to open its worktree and diff in a right-hand tmux pane |
 
 Inside Diffview, `Tab` / `Shift-Tab` opens the next / previous changed file, `gf` opens the actual file in a normal editing tab, `Space e` focuses the file panel, and `g?` shows the available keys. Existing Git shortcuts, including `Space g g` for LazyGit, remain available.
 
@@ -160,7 +160,7 @@ Authenticate GitHub CLI once with `gh auth login`. Both PR shortcuts load the re
 
 Both viewers compare fetched commits without switching branches or including local edits, and neither creates a worktree. Diffview's `gf` action opens the current checkout's file, which can differ from the published PR; use `Space g v w` when you need to navigate or run the PR's code. Fetched refs are retained under `refs/diffview/` so open comparisons remain available locally.
 
-`Space g v w` requires Neovim to be running inside tmux. It creates `~/reviews/<host>/<owner>/<repo>/pr-<number>` on the local branch `review/pr-<number>`, then opens a new tmux window named `<repo>/pr-<number>` with Neovim rooted in that worktree and the PR's merge base compared against the working files. Opening an already-active managed review focuses its existing pane without updating its files. Otherwise, an existing matching worktree is reused; updates require a clean worktree and fast-forwardable history. Local edits, local commits, and unrelated directories are never replaced.
+`Space g v w` requires Neovim to be running inside tmux. It creates `~/reviews/<host>/<owner>/<repo>/pr-<number>` on the local branch `review/pr-<number>`, then opens a pane to the right, taking half the invoking pane's width, with Neovim rooted in that worktree and the PR's merge base compared against the working files. Opening an already-active managed review focuses its existing pane without updating its files. Otherwise, an existing matching worktree is reused; updates require a clean worktree and fast-forwardable history. Local edits, local commits, and unrelated directories are never replaced.
 
 Branch reviews (`Space g v r`) and PR worktree reviews (`Space g v w`) use real files on the right side of the diff, so `gd`, references, and other language-server features work there when the project's language server is configured. The left side remains a historical snapshot. Edits to the working files appear in the diff. Quick PR reviews (`Space g v p`) keep both sides pinned to Git commits; use the worktree shortcut for language-server navigation through the PR's code.
 

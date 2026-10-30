@@ -327,7 +327,7 @@ function M.pr(in_worktree)
     return
   end
   if in_worktree and (not vim.env.TMUX or not vim.env.TMUX_PANE or vim.fn.executable("tmux") ~= 1) then
-    notify("Run Neovim inside tmux to open a PR worktree in a new window.", vim.log.levels.WARN)
+    notify("Run Neovim inside tmux to open a PR worktree in a right-hand pane.", vim.log.levels.WARN)
     return
   end
   local pane = vim.env.TMUX_PANE
@@ -364,8 +364,7 @@ function M.pr(in_worktree)
         end
       end
     end
-    local session = (in_worktree or hunk)
-      and run(repo, { "tmux", "display-message", "-p", "-t", pane, "#{session_id}" })
+    local session = hunk and run(repo, { "tmux", "display-message", "-p", "-t", pane, "#{session_id}" })
     local pr = pr_metadata(repo, target)
     local review_session = require("config.review_session")
     local ctx
@@ -392,11 +391,12 @@ function M.pr(in_worktree)
       review_session.prepare(ctx, revision)
       run(repo, {
         "tmux",
-        "new-window",
+        "split-window",
+        "-h",
+        "-l",
+        "50%",
         "-t",
-        session .. ":",
-        "-n",
-        pr.name .. "/pr-" .. pr.number,
+        pane,
         "-c",
         path,
         "--",

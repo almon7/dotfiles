@@ -175,7 +175,7 @@ class ReviewTmuxFixture(unittest.TestCase):
         self.worktree = Path(self.ctx["path"])
         self.git("config", f"branch.{self.ctx['branch']}.diffview-pr", self.pr["url"])
         self.review = self.tmux(
-            "new-window", "-t", "review-test", "-n", "managed-review", "-P", "-F", "#{pane_id}",
+            "split-window", "-h", "-l", "50%", "-t", self.main, "-P", "-F", "#{pane_id}",
             "-c", str(self.temp), shlex.join([
                 "bash", str(ROOT / "review-session.sh"), str(self.shim), self.ctx["record"],
             ]),
@@ -246,7 +246,7 @@ class ReviewTmuxTests(ReviewTmuxFixture):
         self.assert_other_panes_preserved()
 
     def test_duplicate_open_focuses_existing_pane(self):
-        self.tmux("select-window", "-t", self.main)
+        self.tmux("select-pane", "-t", self.main)
         before = self.tmux("list-panes", "-a", "-F", "#{pane_id}")
         result = self.run_command([NVIM, "-l", str(self.reserve)])
         self.assertIn("FOCUSED", result.stdout + result.stderr)
@@ -282,10 +282,10 @@ class ReviewTmuxTests(ReviewTmuxFixture):
         (self.temp / "fail-cleanup").touch()
         self.close_review()
         self.wait_for(
-            lambda: "Press Enter to close this pane" in self.tmux("capture-pane", "-p", "-t", self.review),
+            lambda: "Press Enter to close this pane" in self.tmux("capture-pane", "-p", "-J", "-t", self.review),
             "visible post-exit cleanup failure",
         )
-        output = self.tmux("capture-pane", "-p", "-S", "-100", "-t", self.review)
+        output = self.tmux("capture-pane", "-p", "-J", "-S", "-100", "-t", self.review)
         self.assertIn("fixture Docker became unavailable", output)
         self.assertTrue(self.worktree.exists())
         self.assertNotEqual(self.git("branch", "--list", self.ctx["branch"]), "")

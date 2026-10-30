@@ -496,6 +496,7 @@ local ok, err = xpcall(function()
   local path = temp .. "/reviews/github.com/acme/api/pr-42"
   test("worktree and tmux launch open the exact PR revision", function()
     vim.env.TMUX, vim.env.TMUX_PANE = "/tmp/test-tmux,123,0", "%1"
+    redirect, redirect_pane = b.repo, "%999"
     selection = 2
     local before_prompts, before_choices = #prompts, #choices
     invoke(function()
@@ -508,11 +509,22 @@ local ok, err = xpcall(function()
     assert(git(path, "rev-parse", "HEAD") == a.head)
     assert(git(path, "symbolic-ref", "--short", "HEAD") == "review/pr-42")
     local args = launches[#launches]
-    assert(args[4] == "$9:" and args[6] == "api/pr-42" and args[8] == path)
-    assert(args[10] == "bash" and args[11]:match("/review%-session%.sh$"))
+    assert(vim.deep_equal(vim.list_slice(args, 1, 9), {
+      "tmux",
+      "split-window",
+      "-h",
+      "-l",
+      "50%",
+      "-t",
+      "%1",
+      "-c",
+      path,
+    }))
+    assert(args[11] == "bash" and args[12]:match("/review%-session%.sh$"))
     local ctx = review_contexts[#review_contexts]
     assert(ctx.revision == a.base .. ".." .. a.head)
     assert(ctx.path == path and ctx.head == a.head and ctx.pr_url == a.pr.url)
+    vim.cmd.cd(a.repo)
   end)
   test("matching clean worktree is reused", function()
     invoke(function()
