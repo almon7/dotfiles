@@ -29,6 +29,10 @@ Top-level keys are inserted above the first TOML table header; missing tables ar
 
 Before changing `codex/install.sh`, read the [shared installer contracts](../AGENTS.md#architecture).
 
+## Scrolling
+
+`tui.mouse_scroll_speed = 10.0` makes Codex scroll 10 rows per mouse-wheel event in its fullscreen interface. `./install.sh codex` adds the setting when missing; an existing different value must be changed explicitly in `~/.codex/config.toml`. Restart or resume the Codex CLI session to load the change. The setting is documented in the [Codex configuration schema](https://learn.chatgpt.com/docs/config-schema.json).
+
 ## DeepSeek API key
 
 The API key is deliberately outside this repository. Save only the key, with no `export` or quotes, at `~/.config/codex/deepseek-api-key`:

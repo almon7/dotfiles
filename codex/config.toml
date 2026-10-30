@@ -12,6 +12,7 @@ auth_elicitation = true
 code_mode_host = true
 mcp_oauth_refresh_coordination = false
 
-# Vim mode
+# Terminal interface
 [tui]
 vim_mode_default = true
+mouse_scroll_speed = 10.0
