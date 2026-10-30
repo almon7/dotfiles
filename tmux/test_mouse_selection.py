@@ -285,8 +285,9 @@ class MouseSelectionTests(unittest.TestCase):
         return json.loads(result.stdout)
 
     def load_nvim_keymaps(self):
-        # Supply the LazyVim defaults that keymaps.lua deliberately removes.
+        # Supply LazyVim defaults and the unrelated toggle registration offline.
         setup = """
+          Snacks = { toggle = function() return { map = function() end } end }
           for _, key in ipairs({ '<C-h>', '<C-j>', '<C-k>', '<C-l>' }) do
             vim.keymap.set('n', key, '<Nop>')
           end
@@ -380,6 +381,56 @@ class MouseSelectionTests(unittest.TestCase):
                 self.assertEqual(topline, position)
                 self.assertEqual(current_mode, mode)
                 self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
+
+    @unittest.skipUnless(shutil.which('cc'), 'cc is required for the Codex input fixture')
+    def test_codex_command_scroll(self):
+        # A native input sink gives tmux the real process name without launching
+        # Codex or requiring credentials. Its log records bytes delivered to the app.
+        source = Path(self.temp.name) / 'input.c'
+        source.write_text('#include <unistd.h>\nint main(void) { char c; '
+                          'while (read(0, &c, 1) == 1) if (write(1, &c, 1) != 1) return 1; }\n')
+        binary = Path(self.temp.name) / 'codex'
+        subprocess.run(['cc', str(source), '-o', str(binary)], check=True, capture_output=True)
+        self.tmux('respawn-pane', '-k', '-t', self.right,
+                  f'stty raw -echo; exec {shlex.quote(str(binary))} > {shlex.quote(str(self.right_log))}')
+        self.drain()
+        self.tmux('select-pane', '-t', self.right)
+        with open(self.value(self.right, '#{pane_tty}'), 'wb', buffering=0) as terminal:
+            terminal.write(b'\x1b[?1049h')
+        self.enable_mouse(self.right)
+        self.assertEqual(self.value(self.right, '#{pane_current_command}'), 'codex')
+        for mode in ('emacs', 'vi'):
+            self.tmux('set-option', '-w', 'mode-keys', mode)
+            for copy_mode in (False, True):
+                for key, expected in ((SCROLL_UP, b'\x1b[1;5H'), (SCROLL_DOWN, b'\x1b[1;5F'),
+                                      (THIRD_UP, b'\x1b[5~'), (THIRD_DOWN, b'\x1b[6~')):
+                    with self.subTest(mode=mode, copy_mode=copy_mode, key=key):
+                        if copy_mode:
+                            self.select_in_copy_mode(self.right)
+                        before = self.right_log.read_bytes()
+                        self.send(key)
+                        deadline = time.monotonic() + 2
+                        while len(self.right_log.read_bytes()) < len(before) + len(expected) and time.monotonic() < deadline:
+                            self.drain(.02)
+                        self.assertEqual(self.right_log.read_bytes()[len(before):], expected)
+                        self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
+
+        # The same process in inline mode must keep tmux history navigation.
+        with open(self.value(self.right, '#{pane_tty}'), 'wb', buffering=0) as terminal:
+            terminal.write(b'\x1b[?1049l\x1b[?1003l\x1b[?1006l' + b'history line\r\n' * 100)
+        self.drain()
+        third = max(1, int(self.value(self.right, '#{pane_height}')) // 3)
+        for mode in ('emacs', 'vi'):
+            self.tmux('set-option', '-w', 'mode-keys', mode)
+            for up, down, distance in ((SCROLL_UP, SCROLL_DOWN, 1), (THIRD_UP, THIRD_DOWN, third)):
+                with self.subTest(mode=mode, inline=True, distance=distance):
+                    before = self.right_log.read_bytes()
+                    for key, position in ((up, distance), (up, 2 * distance), (down, distance)):
+                        self.send(key)
+                        self.assertEqual(int(self.value(self.right, '#{scroll_position}')), position)
+                    self.send(down)
+                    self.assertEqual(self.value(self.right, '#{pane_in_mode}'), '0')
+                    self.assertEqual(self.right_log.read_bytes(), before)
 
     def test_command_third_scroll_history(self):
         self.send(THIRD_UP)

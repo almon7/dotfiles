@@ -33,6 +33,8 @@ Before changing `codex/install.sh`, read the [shared installer contracts](../AGE
 
 `tui.mouse_scroll_speed = 10.0` makes Codex scroll 10 rows per mouse-wheel event in its fullscreen interface. `./install.sh codex` adds the setting when missing; an existing different value must be changed explicitly in `~/.codex/config.toml`. Restart or resume the Codex CLI session to load the change. The setting is documented in the [Codex configuration schema](https://learn.chatgpt.com/docs/config-schema.json).
 
+In WezTerm with this tmux configuration, Cmd-U / Cmd-D sends Page Up / Page Down to fullscreen Codex. Cmd-Up / Cmd-Down jumps to the beginning / latest output using Ctrl-Home / Ctrl-End. Codex handles the transcript directly; tmux scrollback does not contain the fullscreen conversation. Inline Codex (`--no-alt-screen`) uses the ordinary tmux history shortcuts instead.
+
 ## DeepSeek API key
 
 The API key is deliberately outside this repository. Save only the key, with no `export` or quotes, at `~/.config/codex/deepseek-api-key`:
