@@ -26,7 +26,7 @@ it rather than for the program in the pane. It is remapped from the default
 | Key | Does |
 | --- | --- |
 | `C-a d` | Detach — everything keeps running server-side |
-| `C-a c` | New window (a tab) |
+| `C-a c` | New window at number 1, shifting older windows to the right |
 | `C-a 1`…`9`, or `Cmd-1`…`9` in WezTerm | Jump to window N in the current session |
 | `C-a n` / `C-a p`, or `Cmd-n` / `Cmd-p` in WezTerm | Next / previous window, wrapping at the ends |
 | `C-a P` / `C-a N` | Swap the current window with the previous / next window, keeping focus on the moved window and stopping at either end |
@@ -46,6 +46,8 @@ it rather than for the program in the pane. It is remapped from the default
 | `C-a r` | Reload this config after editing it |
 | `C-a C-s` / `C-a C-r` | Save / restore all tmux sessions |
 | `C-a ?` | List every binding |
+
+Windows created with `C-a c` appear at the left as window 1; existing windows keep their relative order as their numbers increase. Closing a window closes the numbering gap. Switching windows does not reorder them. Plain `tmux new-window` and session restoration retain their existing placement rules; use `tmux new-window -b -t ':1'` to insert a window at the left from the command line.
 
 WezTerm sends `ESC [99;15~` for Cmd-z. tmux recognizes the sequence as `User92` and toggles zoom directly, independently of the prefix, during normal input and in both copy-mode key tables.
 
