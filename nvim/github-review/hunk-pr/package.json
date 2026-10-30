@@ -1,0 +1,10 @@
+{
+  "name": "dotfiles-github-pr",
+  "version": "1.0.0",
+  "description": "Read-only GitHub review threads inline in Hunk.",
+  "type": "module",
+  "hunk": {
+    "extensions": ["./index.ts"],
+    "apiVersion": 16
+  }
+}

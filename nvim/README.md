@@ -140,6 +140,9 @@ The paired [tmux bindings](../tmux/README.md#keys) work locally and when SSH con
 | `Space g v r` | Review the current branch against a prompted base |
 | `Space g v f` | Show the current file's history |
 | `Space g v h` | Show repository history |
+| `Space g v c` | Toggle inline GitHub comments |
+| `Space g v u` | Refresh GitHub comments |
+| `Space g v o` | Open the GitHub comment at the cursor, or the PR |
 | `Space g v q` | Close the review; clean up a safe, managed PR worktree |
 | `Space g v p` | Pick a GitHub PR, then choose Diffview or Hunk |
 | `Space g v w` | Pick a PR to open its worktree and diff in a right-hand tmux pane |
@@ -165,6 +168,16 @@ Both viewers compare fetched commits without switching branches or including loc
 Branch reviews (`Space g v r`) and PR worktree reviews (`Space g v w`) use real files on the right side of the diff, so `gd`, references, and other language-server features work there when the project's language server is configured. The left side remains a historical snapshot. Edits to the working files appear in the diff. Quick PR reviews (`Space g v p`) keep both sides pinned to Git commits; use the worktree shortcut for language-server navigation through the PR's code.
 
 Blank PR prompts also work from the generated review branches. If a review branch remains after a manual worktree removal, reopening the PR reuses that branch only when it still belongs to the same PR and has no conflicting local commits.
+
+### Inline GitHub comments
+
+PR reviews show GitHub code comments directly beneath the lines they refer to, on the old or new side of the diff. Replies stay with their thread and resolved threads are labelled. Diffview also shows file-level comments at the top of their file. No comments panel opens. Branch reviews also load inline comments when GitHub identifies a matching PR.
+
+Comment bodies remain literal Markdown: `>`, `<`, `&`, code fences and backslashes are displayed as written. Authored `&gt;` stays `&gt;`. In Diffview, comments are wrapped virtual lines: they never become source text or change line numbers, Git status or the code copied by ordinary Neovim yanks. Expanded comments can offset the visual rows between Diffview panes. `Space g v c` toggles comments, `Space g v u` refreshes them, and `Space g v o` opens the thread at the cursor (or the PR) on GitHub for its description and general discussion.
+
+Hunk uses its native read-only inline annotation cards, labelled `GitHub @author`. The launcher enables annotations; Hunk's normal `a` toggles them and `r` refreshes the review and GitHub comments. Hunk 0.21.1 cannot anchor file-level threads at a file header, so those remain available on GitHub. Existing local review notes and their save/quit controls remain unchanged. Loading comments uses the existing authenticated `gh` CLI; a fetch failure leaves the diff available.
+
+Outdated threads and comments without a valid location are not placed against current code. Comments also stay hidden when the published PR differs from the reviewed commits, or when local/unsaved edits change the relevant Diffview buffer. Refreshing comments never advances the reviewed commits; reopen the PR to review its newest revision. Staged changes, uncommitted-change views and history do not load GitHub comments.
 
 ### Closing a review
 
@@ -205,6 +218,9 @@ nvim --headless -u NONE -i NONE -l nvim/test_diffview.lua
 nvim --headless -u NONE -i NONE -l nvim/test_review_cleanup.lua
 nvim --headless -u NONE -i NONE -l nvim/test_review_session.lua
 python3 nvim/test_review_tmux.py
+python3 nvim/test_github_review.py
+nvim --headless -u NONE -i NONE -l nvim/test_github_review.lua
+node --test nvim/github-review/hunk-pr/*.test.ts
 ```
 
 The Python suite uses disposable Git repositories and a separate tmux server, with real `lsof` and process inspection. It never connects to your existing tmux sessions.

@@ -108,6 +108,7 @@ class ReviewTmuxFixture(unittest.TestCase):
             "vim.notify = function(message)\n"
             "  vim.fn.writefile({ message }, vim.env.REVIEW_TEST_DIR .. '/notices', 'a')\n"
             "end\n"
+            "package.loaded['config.github_review'] = { attach = function() end, close = function() end }\n"
             + self.viewer_config()
             + "for _, mapping in ipairs(require('plugins.diffview')[1].keys) do\n"
             "  if mapping[1] == '<leader>gvq' then\n"

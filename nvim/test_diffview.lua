@@ -293,6 +293,33 @@ local ok, err = xpcall(function()
     assert(opened[#opened][2] == a.base .. ".." .. a.head)
     listed_prs, reply = previous, "42"
   end)
+  test("PR and branch reviews attach discussion to the view they opened", function()
+    local discussion = require("config.github_review")
+    local attach, open, previous_lib = discussion.attach, package.loaded.diffview.open, package.loaded["diffview.lib"]
+    local current, attached
+    package.loaded["diffview.lib"] = {
+      get_current_view = function()
+        return current
+      end,
+    }
+    package.loaded.diffview.open = function(args)
+      open(args)
+      current = { adapter = { ctx = { toplevel = a.repo } } }
+    end
+    discussion.attach = function(repo, url, revision)
+      attached = { repo, url, revision, current }
+    end
+    invoke(review.pr)
+    assert(vim.deep_equal(attached, { a.repo, a.pr.url, a.base .. ".." .. a.head, current }))
+    current, attached, reply = nil, nil, "origin/develop"
+    invoke(review.branch)
+    assert(vim.deep_equal(attached, { a.repo, a.pr.url, opened[#opened][2], current }))
+    attached = nil
+    review.open()
+    assert(attached == nil, "Uncommitted changes must not load GitHub discussion")
+    discussion.attach, package.loaded.diffview.open, package.loaded["diffview.lib"] = attach, open, previous_lib
+    reply = "42"
+  end)
   test("published PR uses merge base and fork ref, preserving dirty checkout", function()
     write(a.repo .. "/example.txt", "local edit")
     local status = git(a.repo, "status", "--porcelain")
@@ -438,7 +465,25 @@ local ok, err = xpcall(function()
       assert(vim.deep_equal(choices[#choices].items, { "Right-hand tmux pane", "New tmux window" }))
       local expected = place == "Right-hand tmux pane" and { "tmux", "split-window", "-h", "-l", "50%", "-t", "%1" }
         or { "tmux", "new-window", "-t", "$9:", "-n", "api/pr-42 — Hunk" }
-      vim.list_extend(expected, { "-c", a.repo, "--", hunk_path, "diff", a.base .. ".." .. a.head })
+      local context_arg = launches[#launches][#expected + 5]
+      local context = vim.json.decode(assert(context_arg:match("^DOTFILES_GITHUB_REVIEW_CONTEXT=(.*)$")))
+      assert(context.repo == a.repo and context.url == a.pr.url)
+      assert(context.base == a.base and context.head == a.head)
+      assert(context.reader == config .. "/github-review/fetch.py")
+      assert(context.python ~= "")
+      vim.list_extend(expected, {
+        "-c",
+        a.repo,
+        "--",
+        "env",
+        context_arg,
+        hunk_path,
+        "diff",
+        a.base .. ".." .. a.head,
+        "--agent-notes",
+        "--extension",
+        config .. "/github-review/hunk-pr",
+      })
       assert(vim.deep_equal(launches[#launches], expected))
       for index = before + 1, #calls do
         assert(calls[index].cwd == a.repo)

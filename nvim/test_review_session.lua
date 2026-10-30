@@ -53,6 +53,10 @@ package.loaded["diffview.lib"] = {
     return view
   end,
 }
+package.loaded["config.github_review"] = {
+  attach = function() end,
+  close = function() end,
+}
 package.loaded["config.review_cleanup"] = {
   preflight = function()
     probes = probes + 1
@@ -165,9 +169,16 @@ local ok, err = xpcall(function()
     vim.fn.mkdir(vim.fs.dirname(ctx.path), "p")
     run({ "git", "worktree", "add", "-b", ctx.branch, ctx.path, head }, repo)
     session.prepare(ctx, head .. "^.." .. head)
+    local discussion = require("config.github_review")
+    local attach, attached = discussion.attach
+    discussion.attach = function(...)
+      attached = { ... }
+    end
     session.start(ctx.record, vim.uv.os_getpid())
+    discussion.attach = attach
     assert(token == ctx.token and read(ctx.record).pane == "%7")
     assert(diffs[#diffs][3] == "--imply-local" and vim.fn.getcwd() == ctx.path)
+    assert(vim.deep_equal(attached, { ctx.path, pr.url, head .. "^.." .. head }))
   end)
   test("opening an active review focuses its pane without a second launch", function()
     local before = #diffs
@@ -249,10 +260,16 @@ local ok, err = xpcall(function()
     session.start(ctx.record, vim.uv.os_getpid())
     local managed, before_quits, before_closes = view, quits, closes
     view = { adapter = { ctx = { toplevel = repo } } }
+    local discussion = require("config.github_review")
+    local close, comment_view = discussion.close
+    discussion.close = function(closed)
+      comment_view = closed
+    end
     local hook = require("plugins.diffview")[1].opts.hooks.view_closed
     hook(managed)
     hook(managed)
-    assert(not pending, "Cleanup must wait for Diffview to finish closing")
+    discussion.close = close
+    assert(comment_view == managed and not pending, "Cleanup must wait for Diffview to finish closing")
     assert(vim.wait(100, function()
       return pending ~= nil
     end))

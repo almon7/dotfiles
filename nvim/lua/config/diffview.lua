@@ -111,7 +111,7 @@ local function root()
   return found
 end
 
-local function open_diff(repo, revision, local_files)
+local function open_diff(repo, revision, local_files, pr_url)
   local args = { "-C" .. repo }
   if revision then
     args[#args + 1] = revision
@@ -119,7 +119,13 @@ local function open_diff(repo, revision, local_files)
   if local_files then
     args[#args + 1] = "--imply-local"
   end
+  local lib = package.loaded["diffview.lib"]
+  local previous = lib and lib.get_current_view()
   require("diffview").open(args)
+  lib = package.loaded["diffview.lib"]
+  if pr_url and lib and lib.get_current_view() ~= previous then
+    require("config.github_review").attach(repo, pr_url, revision)
+  end
 end
 
 local function remote_for(repo, url)
@@ -282,6 +288,7 @@ function M.branch()
   end
   async(function()
     local default = git(repo, { "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD" }, true)
+    local branch_pr
     if vim.fn.executable("gh") == 1 then
       local pr = github_pr(repo, "", "url,baseRefName", true)
       if pr then
@@ -290,6 +297,7 @@ function M.branch()
           local ok, remote = pcall(remote_for, repo, repo_url)
           if ok then
             default = remote .. "/" .. pr.baseRefName
+            branch_pr = pr
           end
         end
       end
@@ -310,7 +318,7 @@ function M.branch()
     end
     local sha = git(repo, { "rev-parse", "--verify", "--end-of-options", base .. "^{commit}" })
     local head = git(repo, { "rev-parse", "HEAD" })
-    open_diff(repo, git(repo, { "merge-base", sha, head }) .. ".." .. head, true)
+    open_diff(repo, git(repo, { "merge-base", sha, head }) .. ".." .. head, true, branch_pr and branch_pr.url)
   end)
 end
 
@@ -377,14 +385,27 @@ function M.pr(in_worktree)
     local ok, err = pcall(function()
       local revision = fetch_pr(repo, pr)
       if hunk then
+        local discussion = require("config.github_review")
         local args = destination == "Right-hand tmux pane" and { "tmux", "split-window", "-h", "-l", "50%", "-t", pane }
           or { "tmux", "new-window", "-t", session .. ":", "-n", pr.name .. "/pr-" .. pr.number .. " — Hunk" }
-        vim.list_extend(args, { "-c", repo, "--", hunk, "diff", revision })
+        vim.list_extend(args, {
+          "-c",
+          repo,
+          "--",
+          "env",
+          "DOTFILES_GITHUB_REVIEW_CONTEXT=" .. vim.json.encode(discussion.context(repo, pr.url, revision)),
+          hunk,
+          "diff",
+          revision,
+          "--agent-notes",
+          "--extension",
+          discussion.hunk_extension(),
+        })
         run(repo, args)
         return
       end
       if not in_worktree then
-        open_diff(repo, revision)
+        open_diff(repo, revision, false, pr.url)
         return
       end
       local path = worktree(repo, pr)

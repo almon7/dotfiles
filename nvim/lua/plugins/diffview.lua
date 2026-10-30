@@ -5,6 +5,7 @@ return {
     opts = {
       hooks = {
         view_closed = function(view)
+          require("config.github_review").close(view)
           require("config.review_session").view_closed(view)
         end,
         diff_buf_win_enter = function(_, _, ctx)
@@ -82,6 +83,27 @@ return {
           require("config.diffview").close()
         end,
         desc = "Close review",
+      },
+      {
+        "<leader>gvc",
+        function()
+          require("config.github_review").toggle()
+        end,
+        desc = "Toggle inline PR comments",
+      },
+      {
+        "<leader>gvu",
+        function()
+          require("config.github_review").refresh()
+        end,
+        desc = "Refresh GitHub comments",
+      },
+      {
+        "<leader>gvo",
+        function()
+          require("config.github_review").open_pr()
+        end,
+        desc = "Open GitHub PR or comment",
       },
       {
         "<leader>gvp",

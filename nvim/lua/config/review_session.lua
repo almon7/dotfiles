@@ -212,6 +212,7 @@ function M.start(record, owner_pid)
   vim.cmd.cd(ctx.path)
   require("diffview").open({ "-C" .. ctx.path, ctx.revision, "--imply-local" })
   active_view = require("diffview.lib").get_current_view()
+  require("config.github_review").attach(ctx.path, ctx.pr_url, ctx.revision)
 end
 
 local function owned_pids(ctx)
