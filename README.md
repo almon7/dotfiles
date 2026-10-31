@@ -7,33 +7,22 @@ or a Debian/Ubuntu VPS.
 
 ### macOS or Linux
 
-Install [Homebrew](https://brew.sh) — the package manager everything here comes
-from — then:
+Install [Homebrew](https://brew.sh), then:
 
 ```sh
 git clone https://github.com/almon7/dotfiles.git ~/dotfiles
 ~/dotfiles/install.sh
 ```
 
-On macOS the installer adds two things Linux does not need:
-
-- **The Xcode Command Line Tools**, because Neovim's Treesitter compiles its
-  syntax parsers from C source and needs a compiler to do it.
-- **A Nerd Font** (JetBrainsMono) — an ordinary font with icon glyphs patched
-  in, which is what draws the file-type icons and status-line symbols in the
-  editor. Set it as your terminal font afterwards or you get tofu boxes.
-
-### A fresh Debian/Ubuntu VPS
+### If on a VPS:
 
 A new server accepts password logins from the entire internet, so harden it
-before you put any work on it. That means four things, and
-[`docs/vps.md`](docs/vps.md) walks through each:
+before you put any work on it. 
+That means four things, and [`docs/vps.md`](docs/vps.md) walks through each:
 
 - Log in with an **SSH key** instead of a password.
-- **Turn password authentication off**, so a guessed password is no longer a
-  way in.
-- **Close every port but SSH** with a firewall; anything you run on the box is
-  reached through an SSH tunnel rather than published.
+- **Turn password authentication off**, 
+- **Close every port but SSH** with a firewall
 - **Add swap**, so a memory spike suspends work instead of killing the box.
 
 Then:
@@ -58,14 +47,7 @@ bash ~/dotfiles/install.sh
 
 ### Choosing what to install
 
-- `./install.sh` opens an interactive checklist (`↑`/`↓` or `j`/`k` to move,
-  Space to toggle, Enter to install).
-- Everything starts ticked but `git`: it replaces `~/.gitconfig` with one naming a fixed account and SSH key, so tick it only on a machine that should commit as `almon7`. `--all` and a run with no terminal install it like any other component.
-- `./install.sh --all` skips the prompt.
-- Components can be installed individually: `./install.sh nvim tmux`.
-- Every component folder also holds a standalone installer, so
-  `./nvim/install.sh` works on its own.
-- With no terminal to ask — a pipe, or CI — everything is installed.
+- `./install.sh` opens an interactive checklist
 
 Afterwards, set the Nerd Font as your terminal font, and see
 [`git/README.md`](git/README.md) to enroll an SSH key with GitHub and
