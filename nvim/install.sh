@@ -12,7 +12,7 @@ require_no_args "$@"    # reject anything but an empty argument list or --help
 # Install Neovim plus the command-line tools used by this configuration.
 case "$(uname -s)" in    # branch on the kernel name
   Darwin)
-    brew_install neovim ripgrep fd node python lazygit gh    # the editor and the tools it shells out to
+    brew_install tree-sitter-cli neovim ripgrep fd node python lazygit gh    # the editor and the tools it shells out to
     # All three typefaces retain the extra glyphs used by the configuration's icons.
     brew_install --cask font-jetbrains-mono-nerd-font font-intone-mono-nerd-font font-atkynson-mono-nerd-font
     # Treesitter parsers need Apple's compiler toolchain.
@@ -20,7 +20,7 @@ case "$(uname -s)" in    # branch on the kernel name
     xcode-select -p >/dev/null 2>&1 || xcode-select --install    # succeeds quietly once they are present
     ;;
   Linux)
-    brew_install neovim ripgrep fd node python lazygit gh lsof    # lsof checks review worktree resources before cleanup
+    brew_install tree-sitter-cli neovim ripgrep fd node python lazygit gh lsof    # lsof checks review worktree resources before cleanup
     ;;
   *) log 'Only macOS and Linux are supported.'; exit 1 ;;    # anything else is unsupported
 esac
@@ -33,6 +33,7 @@ done
 
 # Neovim discovers its configuration at ~/.config/nvim.
 link_config "$DIR" "$HOME/.config/nvim"    # the whole component directory is the config
+link_config "$(dirname "$DIR")/nvim-lazyvim" "$HOME/.config/nvim-lazyvim"
 # lazy.nvim installs missing plugins on the next start and holds the rest at the
 # versions in lazy-lock.json, so upgrading them stays a deliberate step.
 log 'Run nvim to finish plugin setup; use :Lazy update to move the pinned versions.'
