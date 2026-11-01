@@ -151,6 +151,10 @@ Run the isolated navigation regression check from the repository root:
 nvim --headless -u NONE -i NONE -l nvim/tests/netrw.lua
 ```
 
+### Diagnostics
+
+`Space t d` toggles diagnostic display across all buffers, including warnings and errors from linters and language servers. The shortcut appears in Which-key under **Toggle** as **Toggle Diagnostics**. Press it again to restore the diagnostics; linters and language servers keep running. The mapping uses Neovim's built-in [`vim.diagnostic.enable()`](https://neovim.io/doc/user/diagnostic/#vim.diagnostic.enable()) toggle example (`:help vim.diagnostic.enable()`).
+
 ### Diffview appearance
 
 Diffview uses `·` for filler rows where one side has no matching line, keeping the diff panes aligned with quieter markers. The dots use the comment grey with the same `dim` text attribute as Diffview comments. The setting applies only to Diffview windows.
