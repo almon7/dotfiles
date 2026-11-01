@@ -742,6 +742,13 @@ do
   --  See `:help lsp-config` for information about keys and how to configure
   ---@type table<string, vim.lsp.Config>
   local servers = {
+    -- MINE. Docs on ty and ruff websites
+    ty = {},
+    ruff = {
+      on_attach = function(client)
+        client.server_capabilities.hoverProvider = false
+      end,
+    },
     -- clangd = {},
     -- gopls = {},
     -- pyright = {},
