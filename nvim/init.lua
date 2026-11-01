@@ -89,6 +89,15 @@ P.S. You can delete this when you're done too. It's your config now! :)
 -- Core Neovim settings, leaders, options
 -- ============================================================
 do
+
+  -- MINE: Use a tree view in Netrw
+  vim.g.netrw_liststyle = 3
+
+  -- MINE: Autosave
+  vim.o.autowriteall = true
+
+
+
   -- Enable faster startup by caching compiled Lua modules
   vim.loader.enable()
 
