@@ -9,5 +9,8 @@
 [init]
 	defaultBranch = main
 
+[status]
+	showUntrackedFiles = all
+
 [include]
 	path = ~/.gitconfig.local
