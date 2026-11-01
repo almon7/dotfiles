@@ -449,8 +449,8 @@ do
   vim.cmd.colorscheme 'default'
 
   -- Highlight todo, notes, etc in comments
-  vim.pack.add { gh 'folke/todo-comments.nvim' }
-  require('todo-comments').setup { signs = false }
+  -- vim.pack.add { gh 'folke/todo-comments.nvim' }
+  -- require('todo-comments').setup { signs = false }
 
   -- [[ mini.nvim ]]
   --  A collection of various small independent plugins/modules
