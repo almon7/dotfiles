@@ -153,6 +153,8 @@ nvim --headless -u NONE -i NONE -l nvim/tests/netrw.lua
 
 ### Diffview appearance
 
+Diffview uses `·` for filler rows where one side has no matching line, keeping the diff panes aligned with quieter markers. The setting applies only to Diffview windows.
+
 Comments in Diffview use Neovim's `dim` text attribute, so comments retain the green/red diff colours with fainter text. The terminal controls how faint text is rendered. Normal editing windows keep their usual grey comments.
 
 ### FAQ

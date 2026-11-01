@@ -8,7 +8,9 @@ require('diffview').setup {
     -- This is to have changed text in a line green and red
     hooks = {
         diff_buf_win_enter = function(_, _, ctx)
+            vim.opt_local.fillchars:append { diff = '·' }
             vim.opt_local.winhighlight:append { Comment = 'DiffComment' }
+
             if ctx.layout_name ~= 'diff2_horizontal' and ctx.layout_name ~= 'diff2_vertical' then return end
 
             local colour = ctx.symbol == 'a' and 'DiffDelete' or 'DiffAdd'
