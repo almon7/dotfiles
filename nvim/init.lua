@@ -90,8 +90,11 @@ P.S. You can delete this when you're done too. It's your config now! :)
 -- ============================================================
 do
 
-  -- MINE: Use a tree view in Netrw
+  -- MINE: Use a tree view in Netrw. Can also toggle with 'i'.
   vim.g.netrw_liststyle = 3
+
+  -- MINE: Hide banner in netrw. Can also toggle with 'I'.
+  vim.g.netrw_banner = 0
 
   -- MINE: Autosave
   vim.o.autowriteall = true
