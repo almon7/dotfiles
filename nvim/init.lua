@@ -118,6 +118,11 @@ do
   -- NOTE: You can change these options as you wish!
   --  For more options, you can see `:help option-list`
 
+  -- Default to four-space indentation
+  vim.o.expandtab = true
+  vim.o.shiftwidth = 4
+  vim.o.softtabstop = 4
+
   -- Make line numbers default
   vim.o.number = false
   -- You can also add relative line numbers, to help with jumping.
