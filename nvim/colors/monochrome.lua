@@ -15,3 +15,4 @@ end
 vim.api.nvim_set_hl(0, 'DiffAdd', { fg = '#9ece6a', bg = 'NONE' })
 vim.api.nvim_set_hl(0, 'DiffDelete', { fg = '#f7768e', bg = 'NONE' })
 vim.api.nvim_set_hl(0, 'DiffChange', { bg = 'NONE' })
+vim.api.nvim_set_hl(0, 'DiffComment', { fg = vim.api.nvim_get_hl(0, { name = 'Comment', link = false }).fg, dim = true })

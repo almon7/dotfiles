@@ -151,6 +151,10 @@ Run the isolated navigation regression check from the repository root:
 nvim --headless -u NONE -i NONE -l nvim/tests/netrw.lua
 ```
 
+### Diffview appearance
+
+Comments in Diffview use Neovim's `dim` text attribute, so comments retain the green/red diff colours with fainter text. The terminal controls how faint text is rendered. Normal editing windows keep their usual grey comments.
+
 ### FAQ
 
 * What should I do if I already have a pre-existing Neovim configuration?
