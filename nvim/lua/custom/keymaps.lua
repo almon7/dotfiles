@@ -3,6 +3,20 @@ vim.keymap.set('n', '<leader>e', '<cmd>Explore<CR>', {
   desc = 'Open file explorer',
 })
 
+-- Register an alternative before netrw opens so it leaves Ctrl-H for window navigation.
+vim.keymap.set('n', '<leader>nh', '<Plug>NetrwHideEdit', { desc = 'Netrw: edit hidden-file patterns' })
+
+vim.api.nvim_create_autocmd('FileType', {
+  group = vim.api.nvim_create_augroup('custom-netrw-keymaps', { clear = true }),
+  pattern = 'netrw',
+  callback = function(event)
+    vim.keymap.set('n', 'h', '<Plug>NetrwTreeSqueeze', {
+      buffer = event.buf,
+      desc = 'Collapse containing directory',
+    })
+  end,
+})
+
 -- Space i d: insert today's date below the cursor.
 vim.keymap.set('n', '<leader>id', function()
   vim.api.nvim_put({ os.date('%d %b %Y, %a') }, 'l', true, false)

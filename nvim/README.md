@@ -139,6 +139,18 @@ examples of adding popularly requested plugins.
 
 [The Only Video You Need to Get Started with Neovim](https://youtu.be/m8C0Cq9Uv9o)
 
+### Netrw navigation
+
+`Space e` opens netrw. In tree view, `Enter` expands or collapses the directory under the cursor; `h` collapses the directory containing the cursor and selects that directory's row. The displayed root cannot be collapsed: use `-` to browse its parent.
+
+The `h` mapping is installed for every netrw buffer. `Space n h` edits netrw's hidden-file patterns; registering that alternative before netrw opens prevents netrw's default `Ctrl-H` mapping from conflicting with window navigation.
+
+Run the isolated navigation regression check from the repository root:
+
+```sh
+nvim --headless -u NONE -i NONE -l nvim/tests/netrw.lua
+```
+
 ### FAQ
 
 * What should I do if I already have a pre-existing Neovim configuration?
