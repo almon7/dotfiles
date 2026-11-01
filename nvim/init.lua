@@ -1042,6 +1042,11 @@ do
   -- require 'custom.plugins.colorscheme'
   -- require 'custom.plugins.ui'
   -- require 'custom.plugins.git'
+
+  -- Mine: add keymaps
+  require 'custom.keymaps'
+
+
 end
 
 -- The line beneath this is called `modeline`. See `:help modeline`
