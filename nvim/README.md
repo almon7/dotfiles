@@ -157,9 +157,15 @@ nvim --headless -u NONE -i NONE -l nvim/tests/netrw.lua
 
 ### Diffview appearance
 
-Diffview uses `·` for filler rows where one side has no matching line, keeping the diff panes aligned with quieter markers. The dots use the comment grey with the same `dim` text attribute as Diffview comments. The setting applies only to Diffview windows.
+Diffview uses `·` for filler rows where one side has no matching line, keeping the diff panes aligned with quieter markers. The dots use the comment grey with Neovim's `dim` text attribute. The setting applies only to Diffview windows.
 
-Comments in Diffview use Neovim's `dim` text attribute, so comments retain the green/red diff colours with fainter text. The terminal controls how faint text is rendered. Normal editing windows keep their usual grey comments.
+Added comments and documentation strings, including Python docstrings, use dark green (`#52773d`); deleted comments and docstrings use dark red (`#9b4a59`). Code keeps the brighter diff colours, and unchanged comments and docstrings stay grey. Tree-sitter identifies the comment and docstring ranges, so the language's parser and highlight queries must be available. The colours apply only in two-pane Diffview comparisons and update when files change or scroll; normal editing windows keep their existing appearance.
+
+Run the rendering and lifecycle regression check with the configured Diffview and Tree-sitter plugins and the Python parser installed:
+
+```sh
+python3 nvim/tests/diffview_comments.py
+```
 
 ### FAQ
 
