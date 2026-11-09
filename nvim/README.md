@@ -167,6 +167,11 @@ Run the rendering and lifecycle regression check with the configured Diffview an
 python3 nvim/tests/diffview_comments.py
 ```
 
+### Language-server reference highlights
+
+Pause on a symbol for 250 ms to underline its references in the current file.
+This requires an LSP supporting document highlights. See `:help vim.lsp.buf.document_highlight()`.
+
 ### FAQ
 
 * What should I do if I already have a pre-existing Neovim configuration?

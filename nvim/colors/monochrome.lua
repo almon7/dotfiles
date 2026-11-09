@@ -18,3 +18,6 @@ vim.api.nvim_set_hl(0, 'DiffChange', { bg = 'NONE' })
 vim.api.nvim_set_hl(0, 'DiffComment', { fg = vim.api.nvim_get_hl(0, { name = 'Comment', link = false }).fg, dim = true })
 vim.api.nvim_set_hl(0, 'DiffCommentAdd', { fg = '#52773d' })
 vim.api.nvim_set_hl(0, 'DiffCommentDelete', { fg = '#9b4a59' })
+
+-- Underline same variable and function
+vim.api.nvim_set_hl(0, 'LspReferenceText', { underline = true })
