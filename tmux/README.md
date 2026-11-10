@@ -138,7 +138,7 @@ Fullscreen Codex owns its transcript instead of using tmux history. In Codex, Cm
 
 **Colors.** The config sets `default-terminal` and truecolor overrides because the Catppuccin/Tokyonight setup uses `transparent = true`. Without them tmux advertises a lesser color capability and the colorscheme renders wrong.
 
-**Autosave.** `focus-events on` is required: [`autosave.lua`](../nvim/lua/config/autosave.lua) writes the buffer on `FocusLost` and reloads externally-changed files on `FocusGained`. tmux swallows both events by default, so without it neither fires inside tmux.
+**Autosave.** `focus-events on` forwards terminal and pane focus changes for [Neovim autosave](../nvim/README.md#autosave).
 
 ## Selection integration
 

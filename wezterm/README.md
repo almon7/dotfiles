@@ -57,7 +57,7 @@ On macOS, `./install.sh wezterm` installs all three Nerd Font families: `JetBrai
 
 The keyboard configuration permits applications to request Kitty keyboard encoding. tmux negotiates extended keys with WezTerm and forwards modified keys such as Shift-Enter using CSI-u. Keep these paired settings together when troubleshooting input.
 
-The installer sources WezTerm's shell integration in Bash or Zsh, but skips it in Neovim terminals to avoid visible escape sequences. tmux enables passthrough for supported metadata and focus events for Neovim autosave and external-file checks.
+The installer sources WezTerm's shell integration in Bash or Zsh, but skips it in Neovim terminals to avoid visible escape sequences. tmux enables passthrough for supported metadata and forwards focus events for [Neovim autosave](../nvim/README.md#autosave).
 
 WezTerm automatically reloads its config when it changes; use Cmd-R or Ctrl-Shift-R to force a reload. Reload tmux separately with `C-a r`, and start a fresh Neovim session to load changed Lua mappings. Plugin versions remain pinned in Neovim's lockfile.
 

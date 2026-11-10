@@ -98,6 +98,7 @@ do
 
   -- MINE: Autosave
   vim.o.autowriteall = true
+  require 'custom.autosave'
 
 
 
