@@ -19,6 +19,7 @@ for _, group in ipairs {
   vim.api.nvim_set_hl(0, group, { link = 'Normal' })
 end
 
+-- Git filename highlights inherit these icon groups; use coloured groups that the monochrome syntax overrides do not affect.
 for group, target in pairs {
   NvimTreeGitNewIcon = 'GitSignsAdd',
   NvimTreeGitStagedIcon = 'GitSignsAdd',
