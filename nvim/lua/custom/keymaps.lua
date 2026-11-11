@@ -1,6 +1,6 @@
--- Space e: Open Netrw
-vim.keymap.set('n', '<leader>e', '<cmd>Explore<CR>', {
-  desc = 'Open file explorer',
+-- Space e: Toggle NvimTree at the current file.
+vim.keymap.set('n', '<leader>e', '<cmd>NvimTreeFindFileToggle<CR>', {
+  desc = 'Toggle file tree at current file',
 })
 
 -- Register an alternative before netrw opens so it leaves Ctrl-H for window navigation.

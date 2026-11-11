@@ -139,9 +139,17 @@ examples of adding popularly requested plugins.
 
 [The Only Video You Need to Get Started with Neovim](https://youtu.be/m8C0Cq9Uv9o)
 
+### File-tree navigation
+
+`Space e` toggles NvimTree and selects the current file when opening the tree. The tree follows the active file within its root directory as you switch buffers, stays open after you open a file from the tree and preserves the proportions of your existing editor splits. Folder grouping, indent guides and diagnostic indicators are disabled.
+
+Inside NvimTree, `h` collapses the open directory under the cursor or selects its parent if the directory is already closed or the cursor is on a file. `l` expands a closed directory or opens a file; pressing `l` on an open directory leaves it open. Neither key changes the tree root; use `-` to browse its parent. The mappings use NvimTree's public API and adapt its [official navigation recipe](https://github.com/nvim-tree/nvim-tree.lua/wiki/Recipes#basic-aria-navigation-arrows-and-vim-keys). Press `g?` inside the tree to see all mappings.
+
+The `monochrome` theme gives NvimTree monochrome filenames and icons while retaining coloured Git status icons and filenames. File-type icon colours are disabled through NvimTree's configuration; the remaining colours use its documented highlight groups in [`colors/monochrome.lua`](colors/monochrome.lua).
+
 ### Netrw navigation
 
-`Space e` opens netrw. In tree view, `Enter` expands or collapses the directory under the cursor; `h` collapses the directory containing the cursor and selects that directory's row. The displayed root cannot be collapsed: use `-` to browse its parent.
+The existing netrw mappings remain available when using netrw directly. In tree view, `Enter` expands or collapses the directory under the cursor; `h` collapses the directory containing the cursor and selects that directory's row. The displayed root cannot be collapsed: use `-` to browse its parent.
 
 The `h` mapping is installed for every netrw buffer. `Space n h` edits netrw's hidden-file patterns; registering that alternative before netrw opens prevents netrw's default `Ctrl-H` mapping from conflicting with window navigation.
 

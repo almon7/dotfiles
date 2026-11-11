@@ -6,6 +6,30 @@ for _, group in ipairs { 'Constant', 'Identifier', 'Function', 'Statement', 'Pre
   vim.api.nvim_set_hl(0, group, { link = 'Normal' })
 end
 
+-- NvimTree uses monochrome names and icons, with colour reserved for Git status.
+for _, group in ipairs {
+  'NvimTreeFolderName',
+  'NvimTreeEmptyFolderName',
+  'NvimTreeOpenedFolderName',
+  'NvimTreeSymlinkFolderName',
+  'NvimTreeFolderIcon',
+  'NvimTreeExecFile',
+  'NvimTreeImageFile',
+} do
+  vim.api.nvim_set_hl(0, group, { link = 'Normal' })
+end
+
+for group, target in pairs {
+  NvimTreeGitNewIcon = 'GitSignsAdd',
+  NvimTreeGitStagedIcon = 'GitSignsAdd',
+  NvimTreeGitDirtyIcon = 'GitSignsChange',
+  NvimTreeGitRenamedIcon = 'GitSignsChange',
+  NvimTreeGitDeletedIcon = 'GitSignsDelete',
+  NvimTreeGitMergeIcon = 'DiagnosticWarn',
+} do
+  vim.api.nvim_set_hl(0, group, { link = target })
+end
+
 -- Comments, including TODO annotations, use the existing grey.
 for _, group in ipairs { 'SpecialComment', 'Todo', '@comment.error', '@comment.warning', '@comment.note', '@comment.todo' } do
   vim.api.nvim_set_hl(0, group, { link = 'Comment' })
