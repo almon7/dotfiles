@@ -22,6 +22,9 @@ vim.keymap.set('n', '<leader>id', function()
   vim.api.nvim_put({ os.date('%d %b %Y, %a') }, 'l', true, false)
 end, { desc = "Insert today's date line" })
 
+-- Space y: copy explicitly to the system clipboard while keeping ordinary yanks internal.
+vim.keymap.set({ 'n', 'x' }, '<leader>y', '"+y', { desc = 'Copy to system clipboard' })
+
 -- Space f y: copy the current file location to the system clipboard.
 vim.keymap.set('n', '<leader>fy', function()
   local path = vim.api.nvim_buf_get_name(0)
