@@ -492,6 +492,16 @@ do
   -- - sr)'  - [S]urround [R]eplace [)] [']
   require('mini.surround').setup()
 
+  local map = require 'mini.map'
+  map.setup {
+    symbols = { scroll_line = '▪', scroll_view = '' },
+    window = { width = 1, winblend = 100, show_integration_count = false },
+  }
+  vim.api.nvim_create_autocmd({ 'VimEnter', 'TabNewEntered' }, {
+    group = vim.api.nvim_create_augroup('file-position-marker', { clear = true }),
+    callback = function() map.open() end,
+  })
+
   -- Simple and easy statusline.
   --  You could remove this setup call if you don't like it,
   --  and try some other statusline plugin

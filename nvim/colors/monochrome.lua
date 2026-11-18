@@ -1,6 +1,9 @@
 vim.cmd.runtime 'colors/default.vim'
 vim.g.colors_name = 'monochrome'
 
+-- Keep the square opaque inside mini.map's transparent column.
+vim.api.nvim_set_hl(0, 'MiniMapSymbolLine', { fg = vim.api.nvim_get_hl(0, { name = 'LineNr', link = false }).fg, blend = 0 })
+
 -- Code uses the existing normal text colour.
 for _, group in ipairs { 'Constant', 'Identifier', 'Function', 'Statement', 'PreProc', 'Type', 'Special', 'String' } do
   vim.api.nvim_set_hl(0, group, { link = 'Normal' })

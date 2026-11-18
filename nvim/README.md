@@ -139,6 +139,10 @@ examples of adding popularly requested plugins.
 
 [The Only Video You Need to Get Started with Neovim](https://youtu.be/m8C0Cq9Uv9o)
 
+### File position
+
+A small grey `▪` at the right edge tracks the cursor’s position in the active file. The square uses the line-number colour. Run `:lua MiniMap.toggle()` to hide or show it in the current tab.
+
 ### File-tree navigation
 
 `Space e` toggles NvimTree and selects the current file when opening the tree. The tree follows the active file within its root directory as you switch buffers, stays open after you open a file from the tree and preserves the proportions of your existing editor splits. Folder grouping, indent guides and diagnostic indicators are disabled.
