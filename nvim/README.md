@@ -151,11 +151,14 @@ A small grey `▪` at the right edge tracks the cursor’s position in the activ
 
 ### File-tree navigation
 
-`Space e` toggles NvimTree and selects the current file when opening the tree. The tree follows the active file within its root directory as you switch buffers, stays open after you open a file from the tree and preserves the proportions of your existing editor splits. Folder grouping, indent guides and diagnostic indicators are disabled.
+`Space e` toggles NvimTree.
+The tree follows the active file.
+Use `h` and `l` to open and close directories.
+Press `g?` inside the tree to see all mappings.
 
-Inside NvimTree, `h` collapses the open directory under the cursor or selects its parent if the directory is already closed or the cursor is on a file. `l` expands a closed directory or opens a file; pressing `l` on an open directory leaves it open. Neither key changes the tree root; use `-` to browse its parent. The mappings use NvimTree's public API and adapt its [official navigation recipe](https://github.com/nvim-tree/nvim-tree.lua/wiki/Recipes#basic-aria-navigation-arrows-and-vim-keys). Press `g?` inside the tree to see all mappings.
-
-The `monochrome` theme gives NvimTree monochrome filenames and icons while retaining coloured Git status icons and filenames. File-type icon colours are disabled through NvimTree's configuration; the remaining colours use its documented highlight groups in [`colors/monochrome.lua`](colors/monochrome.lua).
+The `monochrome` theme gives NvimTree monochrome filenames and icons while retaining coloured Git status icons and filenames.
+File-type icon colours are disabled through NvimTree's configuration;
+Tthe remaining colours use its documented highlight groups in [`colors/monochrome.lua`](colors/monochrome.lua).
 
 ### Symbol outline
 

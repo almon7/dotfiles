@@ -9,15 +9,14 @@ require('nvim-tree').setup {
 
     vim.keymap.set('n', 'h', function()
       local node = api.tree.get_node_under_cursor()
-      -- Ignore non-node rows and the root; opening the root would move the tree up a directory.
+      -- Skip the root so h cannot collapse the whole tree.
       if not node or not node.parent then return end
-      -- open.edit() toggles directories, so an open directory is collapsed here.
       if node.open then
-        api.node.open.edit()
+        api.node.collapse(node)
       else
         api.node.navigate.parent()
       end
-    end, { buffer = bufnr, desc = 'Collapse directory or go to parent' })
+    end, { buffer = bufnr, desc = 'Collapse directory recursively or go to parent' })
 
     vim.keymap.set('n', 'l', function()
       local node = api.tree.get_node_under_cursor()
