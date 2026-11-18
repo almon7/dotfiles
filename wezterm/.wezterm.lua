@@ -139,11 +139,6 @@ config.keys = {
   { key = 'f', mods = 'SHIFT|SUPER', action = typeface_picker },
   { key = 'w', mods = 'SUPER', action = act.CloseCurrentTab { confirm = false } },
   { key = 'w', mods = 'CTRL|SHIFT', action = act.CloseCurrentTab { confirm = false } },
-  -- Dedicated terminal keys keep Ctrl-h/j/k/l and Option-j/k available to apps. tmux and Neovim share this mapping, including through SSH.
-  { key = 'h', mods = 'SUPER', action = act.SendKey { key = 'F1', mods = 'CTRL' } },
-  { key = 'j', mods = 'SUPER', action = act.SendKey { key = 'F2', mods = 'CTRL' } },
-  { key = 'k', mods = 'SUPER', action = act.SendKey { key = 'F3', mods = 'CTRL' } },
-  { key = 'l', mods = 'SUPER', action = act.SendKey { key = 'F4', mods = 'CTRL' } },
   { key = 'n', mods = 'SUPER', action = act.SendKey { key = 'F5', mods = 'CTRL' } },
   { key = 'p', mods = 'SUPER', action = act.SendKey { key = 'F6', mods = 'CTRL' } },
   { key = ']', mods = 'SUPER', action = act.SendKey { key = 'F7', mods = 'CTRL' } },

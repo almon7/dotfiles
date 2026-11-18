@@ -36,7 +36,7 @@ it rather than for the program in the pane. It is remapped from the default
 | `C-a %` / `C-a \|` | Split into side-by-side panes in the active pane's current directory |
 | `C-a "` / `C-a -` | Split into stacked panes in the active pane's current directory |
 | `C-a h/j/k/l` | Move between panes, stopping at the outer edges |
-| `Cmd-h/j/k/l` (WezTerm) | Move between panes **and** Neovim splits, stopping at the outer edges |
+| `Ctrl-h/j/k/l` | Move between panes and Neovim splits, stopping at the outer edges |
 | `Cmd-]` / `Cmd-[` (WezTerm) | Next / previous session in name order, stopping at either end |
 | `C-a a` | Return to the last window |
 | `C-a C-a` | Send `C-a` to the program in the pane |
@@ -53,7 +53,7 @@ WezTerm sends `ESC [99;15~` for Cmd-z. tmux recognizes the sequence as `User92` 
 
 Click to focus a pane and drag to select terminal text within that pane, including over inline Codex and shells. Applications that request mouse input receive ordinary clicks and drags: Hunk handles file and menu navigation, while Neovim/Vim handles cursor placement, text selection, and editor-divider resizing. Drag tmux borders to resize tmux panes. The wheel scrolls applications that request mouse input; over inline Codex, shells, and other applications without mouse reporting, it scrolls the pane's retained terminal output. Ctrl-click opens detected links in the OS browser.
 
-Neovim navigation works in Normal mode, plain `:terminal` buffers, Snacks terminals, and pickers. Ordinary editing buffers keep their Insert-mode shortcuts. In pickers, Cmd-h/l moves between panels; Cmd-j/k moves to tmux panes above/below, while j/k or Ctrl-n/p moves through results. See the [Neovim navigation notes](../nvim/README.md#navigation).
+Neovim handles Ctrl-h/j/k/l in Normal mode and in `:terminal`. See the [Neovim navigation notes](../nvim/README.md#navigation).
 
 New splits start in the active pane's current directory, including after a shell changes directory. New windows (`C-a c`) start in the session's directory (set with `tmux new -s dev -c /path/to/project`).
 
@@ -128,7 +128,7 @@ Fullscreen Codex owns its transcript instead of using tmux history. In Codex, Cm
 
 **Over SSH.** OSC 52 lets explicit clipboard yanks in remote tmux or Neovim reach your laptop. Use a supporting terminal such as WezTerm, Kitty, Ghostty, or iTerm2. The Neovim provider is copy-only: paste with `Cmd-V` / `Ctrl-Shift-V`; `Space p` shows a reminder. The supported route is WezTerm → SSH → remote tmux/Neovim. Nesting a remote session inside local tmux requires a separate key-forwarding setup.
 
-**Clear screen.** Ordinary `C-l` reaches the shell again; `C-a C-l` remains an explicit alternative. The old `C-h/j/k/l` and `Option-j/k` navigation bindings are removed on reload.
+**Clear screen.** Press `C-a C-l` to send Ctrl-l to the shell and clear the screen.
 
 ## Config notes
 
@@ -147,3 +147,5 @@ Fullscreen Codex owns its transcript instead of using tmux history. In Codex, Cm
 WezTerm sends the private sequences `ESC [ 99 ; 13 ~` (copy) and `ESC [ 99 ; 14 ~` (cancel before paste) only when the flag is active in the alternate screen. tmux reserves `user-keys[90]` / `User90` and `user-keys[91]` / `User91` for the bridge and consumes both harmlessly outside copy mode. These sequences are used because tmux does not accept F13/F14 key names. Both copy-mode key tables are replaced on reload so old bindings cannot consume typing.
 
 Run `python3 tmux/test_mouse_selection.py` from the repository root for isolated two-pane terminal-protocol tests. The tests check selection boundaries, clipboard output, first-key delivery, navigation, paste, scrollback boundaries, selecting older output, inactive-pane scrolling, application clicks, drags, releases, multiple clicks, wheel forwarding, reload, and detach, including both copy-mode key tables, without touching the running server or the system clipboard. When `nvim` is installed, real Neovim tests also check divider resizing, cursor placement, text and multiple-click selection, release handling, and clearing copy mode after reload. Run `luajit wezterm/test_selection.lua` to check the terminal-side copy/paste routing. Rendering, actual OS clipboard access, and Ctrl-click browser opening still need a WezTerm GUI check.
+
+The navigation tests still send the former Cmd-h/j/k/l sequences. `test_command_navigation_and_released_keys` also expects Ctrl-h/j/k/l to reach the shell, so it fails with the current pane bindings.

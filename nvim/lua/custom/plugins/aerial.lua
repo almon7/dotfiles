@@ -31,6 +31,7 @@ end
 
 aerial.setup {
   attach_mode = 'global',
+  keymaps = { ['<C-j>'] = false, ['<C-k>'] = false },
   nerd_font = false,
   -- With on_attach set, Aerial needs lazy_load to wait until you first use it.
   lazy_load = true,

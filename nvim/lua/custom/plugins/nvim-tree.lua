@@ -5,6 +5,7 @@ require('nvim-tree').setup {
     local api = require 'nvim-tree.api'
     -- A custom on_attach replaces the default mappings, so restore them before adding h/l.
     api.map.on_attach.default(bufnr)
+    vim.keymap.del('n', '<C-k>', { buffer = bufnr }) -- Use the global pane navigation mapping.
 
     vim.keymap.set('n', 'h', function()
       local node = api.tree.get_node_under_cursor()

@@ -12,7 +12,7 @@ On macOS, Ctrl-Cmd-F and Option-Return toggle native full screen in a separate S
 | Right Option | Composes symbols using the keyboard layout |
 | Option-Left / Option-Right | Sends Alt-b / Alt-f for shell word movement |
 | Option-3 | Types `#` for the British Mac keyboard layout |
-| Cmd-H/J/K/L | Moves left/down/up/right through tmux panes and Neovim splits |
+| Ctrl-H/J/K/L | Moves left/down/up/right through Neovim splits and tmux panes |
 | Cmd-1…9 | Selects tmux window 1…9 in the current session using Ctrl-a, then the number |
 | Cmd-Shift-[ / Cmd-Shift-], or Ctrl-Shift-Tab / Ctrl-Tab | Previous / next WezTerm tab |
 | Ctrl-Shift-1…9 | Selects a WezTerm tab directly; 9 selects the last tab |
@@ -37,9 +37,9 @@ tmux handles terminal selection when the application does not request mouse inpu
 
 Applications that request mouse input receive ordinary clicks and drags, including Hunk file and menu navigation and Neovim/Vim window-divider resizing. Copy a Neovim selection with `Space y`; `Cmd-C` / `Ctrl-Shift-C` copies terminal selections only. Shift-click and Shift-drag preserve the selection and clipboard. Ctrl-click opens links. The wheel scrolls applications that request mouse input; otherwise tmux scrolls the pane's retained terminal output, including inline Codex chats and shell output, without changing keyboard focus. Outside mouse-reporting applications, WezTerm handles normal text selection. Alt explicitly bypasses mouse reporting and therefore does not respect tmux pane boundaries. See [tmux copy and paste](../tmux/README.md#copy-and-paste).
 
-Command navigation replaces WezTerm’s Cmd-H (hide), Cmd-K (clear scrollback), Cmd-N (new native window), and Cmd-1 through Cmd-9 (numbered tab selection); the Ctrl-Shift alternatives above remain available. Cmd-Shift-[/] and Ctrl-Tab / Ctrl-Shift-Tab still switch native WezTerm tabs. Cmd-1 through Cmd-9 requires tmux's Ctrl-a prefix, including over SSH. Ctrl-H/J/K/L and Option-J/K now reach applications without triggering pane or session navigation.
+Cmd-H hides WezTerm and Cmd-K clears its scrollback. Use Ctrl-Shift-N for a new native window and Ctrl-Shift-1 through Ctrl-Shift-9 for numbered tabs. Cmd-Shift-[/] and Ctrl-Tab / Ctrl-Shift-Tab switch native tabs. Cmd-1 through Cmd-9 requires tmux's Ctrl-a prefix, including over SSH. Option-J/K reaches the application.
 
-WezTerm sends Ctrl-F1/F2/F3/F4 for Command pane navigation, Ctrl-F5/F6 for windows, Ctrl-F7/F8 for sessions, Ctrl-F9/F10 for Cmd-Up/Down, and Ctrl-F11/F12 for Cmd-U/D. tmux routes the scroll keys to fullscreen Codex as described above; terminal history and Neovim use the line and one-third distances. These terminal keys are reserved by the paired tmux and Neovim configuration, including over SSH; other terminal emulators must send the same keys to use this navigation. On Linux, `SUPER` is the Super/Windows modifier rather than Command. Window and session shortcuts require tmux.
+WezTerm passes Ctrl-H/J/K/L directly to tmux or Neovim. WezTerm sends Ctrl-F5/F6 for windows, Ctrl-F7/F8 for sessions, Ctrl-F9/F10 for Cmd-Up/Down, and Ctrl-F11/F12 for Cmd-U/D. Other terminal emulators must send the same keys for the window, session and scroll shortcuts. On Linux, `SUPER` is the Super/Windows modifier. Window and session shortcuts require tmux.
 
 Cmd-Z sends the reserved sequence `ESC [99;15~`, which tmux maps to `User92` for pane zoom. The shortcut works independently of the tmux prefix, including over SSH when the remote tmux configuration has the same binding.
 
