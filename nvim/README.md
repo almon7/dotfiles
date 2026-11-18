@@ -177,6 +177,19 @@ nvim --headless -u NONE -i NONE -l nvim/tests/netrw.lua
 
 `Space t d` toggles diagnostic display across all buffers, including warnings and errors from linters and language servers. The shortcut appears in Which-key under **Toggle** as **Toggle Diagnostics**. Press it again to restore the diagnostics; linters and language servers keep running. The mapping uses Neovim's built-in [`vim.diagnostic.enable()`](https://neovim.io/doc/user/diagnostic/#vim.diagnostic.enable()) toggle example (`:help vim.diagnostic.enable()`).
 
+### Git commit graph
+
+`Space g t` or `:GitLog` shows the latest 200 commits across all refs in Fugitive. Use `:GitLog 20` to show the latest 20.
+
+```text
+* 4m   almon7 · 0b47246 [HEAD -> main] · fix(nvim): let Space f y wait for the final key
+* 4m   almon7 · d03dfd5 · feat(terminal): use Ctrl-h/j/k/l to navigate Neovim and tmux
+```
+
+Put the cursor on a hash and press `Enter` to inspect the commit.
+`gq` closes the log.
+Lines do not wrap, so use Neovim's normal horizontal scrolling (`zh` / `zl`) for long rows.
+
 ### Autosave
 
 [`custom/autosave.lua`](lua/custom/autosave.lua) extends `autowriteall` to save files when leaving a buffer or window, including Diffview, and all modified, loaded files on `FocusLost`.
