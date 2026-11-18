@@ -153,7 +153,13 @@ The `monochrome` theme gives NvimTree monochrome filenames and icons while retai
 
 ### Symbol outline
 
-`Space o` toggles Aerial’s outline at the far right and keeps focus in the code when opening it. The outline uses 30 columns when space permits and follows the active editing split, showing classes, methods and functions. Inside the outline, `h` collapses a node, `l` expands it and `Enter` jumps to the declaration. Use `gO` for a fuzzy search of the current file’s symbols when its language server supports document symbols.
+`Space o` toggles Aerial’s outline at the far right and keeps focus in the code when opening it. The outline uses 30 columns when space permits and follows the active editing split. As you move through code, Aerial expands the enclosing symbol and its parents. For example, moving into a method inside a collapsed class reveals the method while other classes stay folded. Inside the outline, `h` collapses a node, `l` expands it and `Enter` jumps to the declaration. Use `gO` for a fuzzy search of the current file’s symbols when its language server supports document symbols.
+
+Run the outline regression check with Aerial and the Lua parser installed:
+
+```sh
+nvim --headless -n -u NONE -i NONE -l nvim/tests/aerial.lua
+```
 
 ### Netrw navigation
 
