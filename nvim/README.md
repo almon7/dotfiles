@@ -147,6 +147,10 @@ Inside NvimTree, `h` collapses the open directory under the cursor or selects it
 
 The `monochrome` theme gives NvimTree monochrome filenames and icons while retaining coloured Git status icons and filenames. File-type icon colours are disabled through NvimTree's configuration; the remaining colours use its documented highlight groups in [`colors/monochrome.lua`](colors/monochrome.lua).
 
+### Symbol outline
+
+`Space o` toggles Aerial’s outline at the far right and keeps focus in the code when opening it. The outline uses 30 columns when space permits and follows the active editing split, showing classes, methods and functions. Inside the outline, `h` collapses a node, `l` expands it and `Enter` jumps to the declaration. Use `gO` for a fuzzy search of the current file’s symbols when its language server supports document symbols.
+
 ### Netrw navigation
 
 The existing netrw mappings remain available when using netrw directly. In tree view, `Enter` expands or collapses the directory under the cursor; `h` collapses the directory containing the cursor and selects that directory's row. The displayed root cannot be collapsed: use `-` to browse its parent.
