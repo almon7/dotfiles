@@ -26,6 +26,8 @@ require('nvim-tree').setup {
   end,
   -- Opening a file must not equalise the existing editor splits.
   view = { preserve_window_proportions = true },
+  -- Keep the tree at the width you chose when opening a file.
+  actions = { open_file = { resize_window = false } },
   -- Follow buffer changes while retaining the current tree root.
   update_focused_file = { enable = true },
   renderer = {

@@ -153,6 +153,7 @@ A small grey `▪` at the right edge tracks the cursor’s position in the activ
 
 `Space e` toggles NvimTree.
 The tree follows the active file.
+If you resize the tree sidebar, it keeps your chosen width when you open a file.
 Use `h` and `l` to open and close directories.
 Press `g?` inside the tree to see all mappings.
 
