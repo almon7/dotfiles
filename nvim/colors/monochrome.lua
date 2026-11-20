@@ -1,6 +1,8 @@
 vim.cmd.runtime 'colors/default.vim'
 vim.g.colors_name = 'monochrome'
 
+vim.api.nvim_set_hl(0, 'WinSeparator', { link = 'LineNr' })
+
 -- Keep the square opaque inside mini.map's transparent column.
 vim.api.nvim_set_hl(0, 'MiniMapSymbolLine', { fg = vim.api.nvim_get_hl(0, { name = 'LineNr', link = false }).fg, blend = 0 })
 

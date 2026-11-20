@@ -143,6 +143,8 @@ examples of adding popularly requested plugins.
 
 `Ctrl-h/j/k/l` moves left/down/up/right between Neovim splits in Normal mode and in `:terminal`. At the edge of the editor, `vim-tmux-navigator` moves focus into the adjacent tmux pane. The same keys work from shell panes. At the outer edge, focus stays put.
 
+Split dividers, including the NvimTree divider, use the same muted grey as line numbers.
+
 `Space f f` formats in Normal and Visual modes. In Normal mode, `Space f y` copies the file path, line and column.
 
 ### File position
