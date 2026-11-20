@@ -1,4 +1,4 @@
--- Normal .1729-px/app/common/athena_chat.py Git ce1bdbf (detached) Diff ~4 W4 47:1
+-- Normal .1729-px/app/common/athena_chat.py ce1bdbf (detached) Diff ~4 W4 47
 -- File type, size and LSP counts are omitted.
 local M = {}
 local statusline = require 'mini.statusline'
@@ -33,7 +33,7 @@ local function git_head()
       head = commit .. ' (detached)'
     end
   end
-  return 'Git ' .. escape(head)
+  return escape(head)
 end
 
 -- Show non-zero errors (E) and warnings (W); Space t d also hides these counts.
@@ -57,8 +57,6 @@ local function file_format()
   return table.concat(parts, ' ')
 end
 
--- Check from the repository root with Mini, Gitsigns and Fugitive installed:
--- nvim --headless -u NONE -i NONE -l nvim/tests/statusline.lua
 function M.setup()
   statusline.setup {
     use_icons = vim.g.have_nerd_font,
@@ -77,8 +75,8 @@ function M.setup()
           { hl = 'MiniStatuslineFilename', strings = { filename() } },
           { hl = 'MiniStatuslineDevinfo', strings = info },
           { hl = 'MiniStatuslineFileinfo', strings = { file_format() } },
-          -- Show search counts while highlighting is active at 75+ columns; cursor position is line:column.
-          { hl = mode_hl, strings = { statusline.section_searchcount { trunc_width = 75 }, '%2l:%-2v' } },
+          -- Show search counts while highlighting is active at 75+ columns.
+          { hl = mode_hl, strings = { statusline.section_searchcount { trunc_width = 75 }, '%l' } },
         }
         -- Measure without padding or truncation, dropping diff then Git before shortening the filename.
         local width = vim.o.laststatus == 3 and vim.o.columns or vim.api.nvim_win_get_width(0)

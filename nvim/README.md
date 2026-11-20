@@ -149,6 +149,8 @@ Split dividers, including the NvimTree divider, use the same muted grey as line 
 
 ### File position
 
+The status line shows the current line number. When the Git branch is visible, it appears by name, for example `dev`.
+
 A small grey `▪` at the right edge tracks the cursor’s position in the active file. The square uses the line-number colour. Run `:lua MiniMap.toggle()` to hide or show it in the current tab.
 
 ### File-tree navigation
